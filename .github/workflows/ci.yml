@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   db:
-    name: Migrazioni e test di isolamento
+    name: Migrazioni, isolamento e autorizzazione
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -36,3 +36,4 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test:db
+      - run: pnpm test:core

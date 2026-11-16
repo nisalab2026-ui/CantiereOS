@@ -1,0 +1,26 @@
+{
+  "name": "@cantiereos/core",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Casi d'uso di dominio condivisi da web e worker: sessione verificata, autorizzazione, accesso dati con RLS",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "jose": "6.2.17",
+    "pg": "8.23.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@cantiereos/db": "workspace:*",
+    "@types/node": "22.20.5",
+    "@types/pg": "8.23.1",
+    "typescript": "5.9.3",
+    "vitest": "4.1.12"
+  }
+}

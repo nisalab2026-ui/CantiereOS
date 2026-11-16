@@ -12,7 +12,8 @@
     "test": "pnpm -r test",
     "test:db": "pnpm --filter @cantiereos/db test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:core": "pnpm --filter @cantiereos/core test"
   },
   "devDependencies": {
     "prettier": "3.10.1",
