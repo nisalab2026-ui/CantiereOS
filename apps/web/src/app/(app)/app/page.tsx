@@ -81,6 +81,7 @@ function DashboardBody({ data }: { data: DashboardData }) {
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {data.activeMembers !== null && (
               <KpiCard
+                index={0}
                 label="Utenti attivi"
                 value={data.activeMembers}
                 {...(data.seats !== null ? { suffix: `/ ${data.seats} posti` } : {})}
@@ -90,6 +91,7 @@ function DashboardBody({ data }: { data: DashboardData }) {
             )}
             {data.pendingInvitations !== null && (
               <KpiCard
+                index={1}
                 label="Inviti in attesa"
                 value={data.pendingInvitations}
                 icon={MailPlus}
@@ -98,6 +100,7 @@ function DashboardBody({ data }: { data: DashboardData }) {
             )}
             {data.customers !== null && (
               <KpiCard
+                index={2}
                 label="Clienti attivi"
                 value={data.customers}
                 icon={Building2}
@@ -106,6 +109,7 @@ function DashboardBody({ data }: { data: DashboardData }) {
             )}
             {data.suppliers !== null && (
               <KpiCard
+                index={3}
                 label="Fornitori attivi"
                 value={data.suppliers}
                 icon={Truck}
@@ -114,6 +118,7 @@ function DashboardBody({ data }: { data: DashboardData }) {
             )}
             {data.employees !== null && (
               <KpiCard
+                index={4}
                 label="Personale attivo"
                 value={data.employees}
                 icon={HardHat}
@@ -127,7 +132,11 @@ function DashboardBody({ data }: { data: DashboardData }) {
               Periodo di prova fino al {formatDate(data.trialEndsAt)}.
             </p>
           )}
-          {data.recentActivity !== null && <RecentActivity entries={data.recentActivity} />}
+          {data.recentActivity !== null && (
+            <div className="cos-enter" style={{ "--i": 5 } as React.CSSProperties}>
+              <RecentActivity entries={data.recentActivity} />
+            </div>
+          )}
         </>
       );
     case "manager":
@@ -136,6 +145,7 @@ function DashboardBody({ data }: { data: DashboardData }) {
           <div className="grid gap-4 sm:grid-cols-3">
             {data.employees !== null && (
               <KpiCard
+                index={0}
                 label="Personale attivo"
                 value={data.employees}
                 icon={HardHat}
@@ -144,6 +154,7 @@ function DashboardBody({ data }: { data: DashboardData }) {
             )}
             {data.customers !== null && (
               <KpiCard
+                index={1}
                 label="Clienti attivi"
                 value={data.customers}
                 icon={Building2}
@@ -151,10 +162,14 @@ function DashboardBody({ data }: { data: DashboardData }) {
               />
             )}
             {data.sites !== null && (
-              <KpiCard label="Sedi dei clienti" value={data.sites} icon={Building2} />
+              <KpiCard index={2} label="Sedi dei clienti" value={data.sites} icon={Building2} />
             )}
           </div>
-          {data.teams !== null && <Teams teams={data.teams} title="Squadre" />}
+          {data.teams !== null && (
+            <div className="cos-enter" style={{ "--i": 3 } as React.CSSProperties}>
+              <Teams teams={data.teams} title="Squadre" />
+            </div>
+          )}
         </>
       );
     case "technician":

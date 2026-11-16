@@ -27,9 +27,9 @@ export function MobileNav({
         <Menu className="size-5" />
       </DialogPrimitive.Trigger>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/40 lg:hidden" />
+        <DialogPrimitive.Overlay className="cos-overlay fixed inset-0 z-40 bg-black/40 lg:hidden" />
         <DialogPrimitive.Content
-          className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-navy text-navy-foreground shadow-lg lg:hidden"
+          className="cos-slide fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-navy text-navy-foreground shadow-lg lg:hidden"
           aria-describedby={undefined}
         >
           <div className="flex h-14 items-center gap-2 px-4">

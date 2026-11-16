@@ -61,8 +61,16 @@ Mai comunicare uno stato **solo** con il colore: c'è sempre un'etichetta o un'i
 - Griglia di 4 px. Padding standard: card 20–24 px, celle di tabella 12×16 px.
 - Raggi: `sm` 6 px (input, badge), `md` 8 px (bottoni), `lg` 12 px (card, modali).
 - Ombre minime: solo card sollevate e menu/modali (`shadow-sm` / `shadow-lg`).
-- Movimento: 150–200 ms `ease-out` per hover, menu e modali; nessuna animazione con
-  `prefers-reduced-motion: reduce`.
+- Movimento (classi in `globals.css`, componenti in `components/motion/`):
+  - ingresso dei contenuti `cos-enter` (fade + 8 px, 360 ms) a cascata con `--i`, anche sulle righe
+    delle tabelle; `app/(app)/app/template.tsx` lo applica a ogni cambio pagina;
+  - menu, popover e modali `cos-pop` (scala + leggera rotazione 3D, 180 ms); menu mobile `cos-slide`;
+  - **profondità 3D**: `Tilt` inclina le card KPI verso il puntatore (max 6°, solo mouse/penna, mai
+    su touch) con riflesso luminoso; i numeri dei KPI salgono fino al valore reale (`CountUp`, il
+    valore vero è già nel markup);
+  - pannello del marchio nelle pagine di accesso: marchio fluttuante inclinabile (max 14°) e piano di
+    cantiere in prospettiva che scorre.
+  - Con `prefers-reduced-motion: reduce` animazioni e inclinazioni si spengono.
 - Bersagli touch: almeno 40 px (44 px nelle schermate del tecnico).
 
 ### Marchio

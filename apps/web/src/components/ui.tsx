@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Tilt } from "@/components/motion/tilt";
 import Link from "next/link";
 
 export function Field({
@@ -64,23 +65,47 @@ export function AuthShell({
       <aside className="relative hidden overflow-hidden bg-[#050B1A] lg:flex lg:flex-col lg:justify-between lg:p-12">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(36,86,230,0.35),transparent_60%)]"
+          className="cos-glow pointer-events-none absolute -right-1/4 -bottom-1/4 size-[80%] rounded-full bg-[radial-gradient(circle,rgba(36,86,230,0.45),transparent_65%)]"
         />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-[-30%] bottom-0 h-[52%] overflow-hidden"
+        >
+          <div className="cos-floor absolute inset-0" />
+        </div>
         <Image
           src="/brand/logo-full.png"
           alt="CantiereOS — Gestisci, organizza, cresci"
           width={640}
           height={161}
           priority
-          className="relative h-auto w-full max-w-md"
+          className="cos-enter relative h-auto w-full max-w-sm"
         />
-        <p className="relative max-w-sm text-sm leading-relaxed text-[#98A1B3]">
+        <div className="relative flex flex-1 items-center justify-center py-8">
+          <div className="cos-float">
+            <Tilt max={14} className="rounded-3xl">
+              <div className="cos-depth rounded-3xl border border-white/10 bg-white/[0.04] p-10 shadow-[0_30px_80px_-20px_rgba(36,86,230,0.55)] backdrop-blur-sm">
+                <Image
+                  src="/brand/logo-mark.png"
+                  alt=""
+                  width={268}
+                  height={256}
+                  className="h-40 w-auto drop-shadow-[0_18px_30px_rgba(36,86,230,0.45)] xl:h-48"
+                />
+              </div>
+            </Tilt>
+          </div>
+        </div>
+        <p
+          className="cos-enter relative max-w-sm text-sm leading-relaxed text-[#98A1B3]"
+          style={{ "--i": 2 } as React.CSSProperties}
+        >
           Cantieri, squadre, rapportini e documenti della tua impresa in un unico posto, con i dati
           di ogni azienda separati e protetti.
         </p>
       </aside>
       <main className="flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-sm space-y-6">
+        <div className="cos-enter w-full max-w-sm space-y-6">
           <div className="space-y-4">
             <div className="flex items-center gap-2 lg:hidden">
               <span className="flex size-9 items-center justify-center rounded-lg bg-navy">

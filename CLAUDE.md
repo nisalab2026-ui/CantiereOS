@@ -49,6 +49,8 @@ Sviluppo dell'app in locale: `node scripts/local-auth-env.mjs` (segreti casuali 
 da git), `docker compose --env-file .env.local-auth --profile auth up -d auth-db gotrue
 auth-gateway mailpit`, `node scripts/local-auth-migrate.mjs`, poi `pnpm --filter @cantiereos/web dev`.
 Le email (conferme, recupero password, inviti) si leggono su http://127.0.0.1:8025 (mailpit).
+Dati DEMO in locale: `psql "$DATABASE_URL" -f supabase/seeds/development.sql`, poi
+`node scripts/local-demo-login.mjs` (password casuale per gli utenti `@demo.cantiereos.invalid`, solo stack locale).
 
 `TEST_DATABASE_URL` punta a un server PostgreSQL di sviluppo/CI (es.
 `postgresql://postgres@127.0.0.1:54329/postgres`). I test creano un database con nome casuale

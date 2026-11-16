@@ -89,9 +89,9 @@ export function CommandPalette({ permissions }: { permissions: string[] }) {
       </button>
       <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
         <DialogPrimitive.Portal>
-          <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40" />
+          <DialogPrimitive.Overlay className="cos-overlay fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]" />
           <DialogPrimitive.Content
-            className="fixed top-[12vh] left-1/2 z-50 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-lg border border-border bg-card shadow-lg"
+            className="cos-pop fixed top-[12vh] left-1/2 z-50 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-lg border border-border bg-card shadow-lg"
             aria-describedby={undefined}
           >
             <DialogPrimitive.Title className="sr-only">Ricerca globale</DialogPrimitive.Title>

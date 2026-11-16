@@ -87,8 +87,12 @@ export function DataTable<T extends { id: string }>({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-b border-border last:border-0 hover:bg-accent/40">
+            {rows.map((row, i) => (
+              <tr
+                key={row.id}
+                className="cos-enter border-b border-border transition-colors last:border-0 hover:bg-accent/40"
+                style={{ "--i": Math.min(i, 12) } as React.CSSProperties}
+              >
                 {columns.map((c) => (
                   <td
                     key={c.key}
