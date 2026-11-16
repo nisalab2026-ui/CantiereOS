@@ -3,11 +3,11 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import pg from "pg";
 import type { TestProject } from "vitest/node";
-import { applyMigrations, loadMigrations } from "../../src/migrations.js";
+import { applyMigrations, loadMigrations, SEED_FILE } from "../../src/migrations.js";
 
 /**
- * Crea un database PostgreSQL effimero, applica lo shim Supabase (solo test) e
- * tutte le migrazioni, poi lo elimina a fine run.
+ * Crea un database PostgreSQL effimero, applica lo shim Supabase (solo test),
+ * tutte le migrazioni e il seed di sviluppo, poi lo elimina a fine run.
  *
  * TEST_DATABASE_URL deve puntare a un server PostgreSQL di sviluppo/CI con un
  * utente che possa creare database e ruoli. Mai un database di produzione.
@@ -34,6 +34,10 @@ export default async function setup(project: TestProject) {
     const shim = await readFile(path.join(import.meta.dirname, "../supabase-shim.sql"), "utf8");
     await client.query(shim);
     await applyMigrations(client, await loadMigrations());
+    // Il seed di sviluppo viene applicato DUE volte: verifica che sia idempotente.
+    const seed = await readFile(SEED_FILE, "utf8");
+    await client.query(seed);
+    await client.query(seed);
   } finally {
     await client.end();
   }

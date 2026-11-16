@@ -50,12 +50,15 @@ docker compose --profile test up -d postgres-test   # PostgreSQL usa-e-getta su 
 ## Struttura
 
 - `supabase/migrations/` — schema (fonte di verità)
+- `supabase/seeds/development.sql` — dati DEMO solo per sviluppo (mai in produzione, mai nelle migrazioni)
 - `packages/db/` — runner migrazioni per i test, shim Supabase **solo test**, test RLS
 - `apps/web/`, `apps/worker/`, `packages/core/` — dalla fase 2 (vedi `docs/ROADMAP.md`)
 
 ## Come aggiungere una tabella di dominio
 
-1. Nuova migrazione con timestamp successivo; segui il modello di `business_partners`.
+1. Nuova migrazione con timestamp successivo; segui il modello di `customers` e usa gli helper
+   `app.attach_tenant_table_triggers`, `app.grant_tenant_table`, `app.create_tenant_policies`
+   (esempio in `docs/DATABASE.md` §2).
 2. Aggiungi i permessi nel catalogo (`permissions`) e nella matrice (`role_permissions`).
 3. Scrivi i test di isolamento per la tabella (lettura, scrittura, update, delete cross-tenant,
    permessi per ruolo). Le guardie di `schema-guards.test.ts` girano automaticamente.

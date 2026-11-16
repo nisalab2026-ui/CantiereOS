@@ -38,14 +38,14 @@
 
 | Dominio (codice) | Modulo prodotto | Possiede (tabelle principali)                                                                    | Dipende da                                  | Eventi emessi (esempi)                |
 | ---------------- | --------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------- | ------------------------------------- |
-| `tenancy`        | 19, 20          | tenants, tenant_memberships, permissions, role_permissions                                       | —                                           | `tenant.created`, `member.invited`    |
-| `identity`       | —               | profiles (auth.users è di Supabase)                                                              | tenancy                                     | `user.registered`                     |
+| `tenancy`        | 19, 20          | tenants, tenant_settings, memberships, roles, permissions, role_permissions, subscriptions       | —                                           | `tenant.created`, `member.invited`    |
+| `identity`       | —               | users (auth.users è di Supabase)                                                                 | tenancy                                     | `user.registered`                     |
 | `audit`          | trasversale     | audit_log                                                                                        | tenancy                                     | —                                     |
 | `files`          | trasversale     | files, file_versions                                                                             | tenancy                                     | `file.uploaded`, `file.scanned`       |
 | `notifications`  | 17              | notifications, notification_preferences, push_subscriptions                                      | identity                                    | —                                     |
-| `partners`       | 3               | business_partners, partner_contacts                                                              | tenancy                                     | `partner.created`                     |
+| `partners`       | 3               | customers, suppliers, contacts, customer_sites                                                   | tenancy                                     | `partner.created`                     |
 | `crm`            | 2               | leads, opportunities, crm_activities                                                             | partners                                    | `opportunity.won`                     |
-| `sites`          | 4               | sites, assets (impianti)                                                                         | partners                                    | —                                     |
+| `sites`          | 4               | customer_sites, assets                                                                           | partners                                    | —                                     |
 | `workforce`      | 8               | employees, teams, team_members, qualifications                                                   | identity                                    | —                                     |
 | `projects`       | 5               | projects (cantieri/commesse), project_phases, project_budgets                                    | partners, sites                             | `project.closed`                      |
 | `work_orders`    | 6               | work_orders (interventi), work_order_assignments                                                 | sites, projects, workforce                  | `work_order.completed`                |
@@ -63,24 +63,27 @@
 
 ## Glossario (italiano → codice)
 
-| Termine                    | Codice             | Note                                    |
-| -------------------------- | ------------------ | --------------------------------------- |
-| Azienda (cliente SaaS)     | `tenant`           | Radice dell'isolamento                  |
-| Cliente / fornitore        | `business_partner` | `is_customer` / `is_supplier`           |
-| Sede d'intervento          | `site`             | Indirizzo dove si lavora                |
-| Impianto                   | `asset`            | Caldaia, impianto elettrico, copertura… |
-| Cantiere / commessa        | `project`          | Unità di costo e ricavo                 |
-| Intervento                 | `work_order`       | Attività da eseguire                    |
-| Rapportino                 | `field_report`     | Consuntivo del lavoro svolto            |
-| Squadra                    | `team`             |                                         |
-| Dipendente                 | `employee`         | Può avere o no un account utente        |
-| Preventivo                 | `quote`            | Con revisioni                           |
-| Ordine a fornitore         | `purchase_order`   |                                         |
-| Fattura                    | `invoice`          | Attiva o passiva                        |
-| Articolo di magazzino      | `item`             |                                         |
-| Movimento di magazzino     | `stock_movement`   | Carico/scarico/trasferimento            |
-| Piano di manutenzione      | `maintenance_plan` |                                         |
-| Attestato / certificazione | `certification`    | Con scadenza                            |
+| Termine                    | Codice             | Note                                     |
+| -------------------------- | ------------------ | ---------------------------------------- |
+| Azienda (cliente SaaS)     | `tenant`           | Radice dell'isolamento                   |
+| Cliente                    | `customer`         | Tabelle separate per clienti e fornitori |
+| Fornitore                  | `supplier`         |                                          |
+| Referente                  | `contact`          | Di un cliente oppure di un fornitore     |
+| Sede del cliente           | `customer_site`    | Indirizzo d'intervento                   |
+| Sede d'intervento          | `site`             | Indirizzo dove si lavora                 |
+| Impianto                   | `asset`            | Caldaia, impianto elettrico, copertura…  |
+| Cantiere / commessa        | `project`          | Unità di costo e ricavo                  |
+| Intervento                 | `work_order`       | Attività da eseguire                     |
+| Rapportino                 | `field_report`     | Consuntivo del lavoro svolto             |
+| Squadra                    | `team`             |                                          |
+| Dipendente                 | `employee`         | Può avere o no un account utente         |
+| Preventivo                 | `quote`            | Con revisioni                            |
+| Ordine a fornitore         | `purchase_order`   |                                          |
+| Fattura                    | `invoice`          | Attiva o passiva                         |
+| Articolo di magazzino      | `item`             |                                          |
+| Movimento di magazzino     | `stock_movement`   | Carico/scarico/trasferimento             |
+| Piano di manutenzione      | `maintenance_plan` |                                          |
+| Attestato / certificazione | `certification`    | Con scadenza                             |
 
 ## Struttura di un modulo nel codice (fase 2)
 

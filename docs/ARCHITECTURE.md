@@ -84,7 +84,7 @@ cantiere-os/
 2. Il server legge l'utente **dal token verificato**, mai da parametri del client.
 3. L'**azienda attiva** è salvata in un cookie firmato; a ogni richiesta il server verifica che
    l'utente sia membro attivo di quell'azienda. Un valore non valido viene ignorato.
-4. Il caso d'uso (`packages/core`) controlla il permesso (`partners.write`, …) e apre una
+4. Il caso d'uso (`packages/core`) controlla il permesso (`customers.write`, …) e apre una
    transazione con:
    ```sql
    set local role authenticated;

@@ -8,7 +8,13 @@ import {
   tx,
   type Db,
 } from "./helpers/db.js";
-import { seedTwoTenants, type Seed } from "./helpers/fixtures.js";
+import { seedTwoTenants, type Seed, type TenantData } from "./helpers/fixtures.js";
+
+/**
+ * Attacchi cross-tenant: l'owner dell'azienda A (che in A ha TUTTI i permessi)
+ * prova a leggere, inserire, modificare, spostare e cancellare dati
+ * dell'azienda B, tabella per tabella.
+ */
 
 let db: Db;
 let s: Seed;
@@ -22,154 +28,363 @@ afterAll(async () => {
   await db.end();
 });
 
-async function visiblePartnerTenants(): Promise<string[]> {
-  const { rows } = await db.query<{ tenant_id: string }>(
-    "select distinct tenant_id from public.business_partners",
-  );
-  return rows.map((r) => r.tenant_id).sort();
+interface TableCase {
+  table: string;
+  /** colonna modificabile da authenticated (null = nessun privilegio UPDATE) */
+  updatable: { col: string; value: unknown } | null;
+  /** l'utente può cancellare righe di questa tabella? (privilegio DELETE) */
+  deletable: boolean;
+  /** insert che prova a creare una riga nell'azienda indicata */
+  insert: (tenantId: string, d: TenantData) => { sql: string; params: unknown[] };
 }
 
-describe("Isolamento in lettura", () => {
-  it("l'owner di A vede solo i clienti di A", async () => {
-    await asUser(db, s.users.aliceOwnerA, async () => {
-      expect(await visiblePartnerTenants()).toEqual([s.tenantA]);
-      const { rows } = await db.query("select id from public.business_partners");
-      expect(rows.map((r) => r.id).sort()).toEqual([s.partners.a1, s.partners.a2].sort());
-    });
-  });
+const rnd = () => Math.random().toString(36).slice(2, 10);
 
-  it("l'owner di B vede solo i clienti di B", async () => {
-    await asUser(db, s.users.daveOwnerB, async () => {
-      expect(await visiblePartnerTenants()).toEqual([s.tenantB]);
-    });
-  });
+const TABLES: TableCase[] = [
+  {
+    table: "customers",
+    updatable: { col: "notes", value: "manomesso" },
+    deletable: true,
+    insert: (t) => ({
+      sql: "insert into public.customers (tenant_id, display_name) values ($1, 'Intruso')",
+      params: [t],
+    }),
+  },
+  {
+    table: "suppliers",
+    updatable: { col: "notes", value: "manomesso" },
+    deletable: true,
+    insert: (t) => ({
+      sql: "insert into public.suppliers (tenant_id, display_name) values ($1, 'Intruso')",
+      params: [t],
+    }),
+  },
+  {
+    table: "contacts",
+    updatable: { col: "notes", value: "manomesso" },
+    deletable: true,
+    insert: (t, d) => ({
+      sql: "insert into public.contacts (tenant_id, customer_id, first_name) values ($1, $2, 'Intruso')",
+      params: [t, d.customer],
+    }),
+  },
+  {
+    table: "customer_sites",
+    updatable: { col: "access_notes", value: "manomesso" },
+    deletable: true,
+    insert: (t, d) => ({
+      sql: "insert into public.customer_sites (tenant_id, customer_id, name, address_line, city) values ($1, $2, 'X', 'Via X', 'Roma')",
+      params: [t, d.customer],
+    }),
+  },
+  {
+    table: "employees",
+    updatable: { col: "notes", value: "manomesso" },
+    deletable: true,
+    insert: (t) => ({
+      sql: "insert into public.employees (tenant_id, first_name, last_name) values ($1, 'In', 'Truso')",
+      params: [t],
+    }),
+  },
+  {
+    table: "teams",
+    updatable: { col: "description", value: "manomesso" },
+    deletable: true,
+    insert: (t) => ({
+      sql: "insert into public.teams (tenant_id, name) values ($1, $2)",
+      params: [t, `Intrusi ${rnd()}`],
+    }),
+  },
+  {
+    table: "team_members",
+    updatable: { col: "joined_on", value: "2020-01-01" },
+    deletable: true,
+    insert: (t, d) => ({
+      sql: "insert into public.team_members (tenant_id, team_id, employee_id) values ($1, $2, $3)",
+      params: [t, d.team, d.employee2],
+    }),
+  },
+  {
+    table: "roles",
+    updatable: { col: "description", value: "manomesso" },
+    deletable: true,
+    insert: (t) => ({
+      sql: "insert into public.roles (tenant_id, key, name) values ($1, $2, 'Intruso')",
+      params: [t, `custom_${rnd()}`],
+    }),
+  },
+  {
+    table: "role_permissions",
+    updatable: null,
+    deletable: true,
+    insert: (_t, d) => ({
+      sql: "insert into public.role_permissions (role_id, permission_id) select $1, id from public.permissions where key = 'customers.write'",
+      params: [d.customRole],
+    }),
+  },
+  {
+    table: "memberships",
+    updatable: { col: "status", value: "suspended" },
+    deletable: true,
+    insert: (t) => ({
+      sql: "insert into public.memberships (tenant_id, user_id, role_id, status) select $1, $2, id, 'invited' from public.roles where tenant_id is null and key = 'viewer'",
+      params: [t, s.users.outsider],
+    }),
+  },
+  {
+    table: "tenant_settings",
+    updatable: { col: "brand_color", value: "#FF0000" },
+    deletable: false,
+    insert: (t) => ({
+      sql: "insert into public.tenant_settings (tenant_id) values ($1)",
+      params: [t],
+    }),
+  },
+  {
+    table: "subscriptions",
+    updatable: null,
+    deletable: false,
+    insert: (t) => ({
+      sql: "insert into public.subscriptions (tenant_id, plan_code, seats) values ($1, 'free', 1000)",
+      params: [t],
+    }),
+  },
+];
 
-  it("filtrare per tenant_id di un'altra azienda non restituisce nulla", async () => {
+async function countForTenant(table: string, tenantId: string): Promise<number> {
+  const { rows } = await db.query<{ n: string }>(
+    `select count(*) as n from public.${table} where tenant_id = $1`,
+    [tenantId],
+  );
+  return Number(rows[0]!.n);
+}
+
+describe.each(TABLES)("Isolamento della tabella $table", (c) => {
+  it("non legge righe dell'altra azienda", async () => {
     await asUser(db, s.users.aliceOwnerA, async () => {
-      const { rowCount } = await db.query(
-        "select 1 from public.business_partners where tenant_id = $1",
-        [s.tenantB],
+      expect(await countForTenant(c.table, s.tenantB)).toBe(0);
+      const { rows } = await db.query<{ tenant_id: string | null }>(
+        `select distinct tenant_id from public.${c.table}`,
       );
-      expect(rowCount).toBe(0);
-      const byId = await db.query("select 1 from public.business_partners where id = $1", [
-        s.partners.b1,
-      ]);
-      expect(byId.rowCount).toBe(0);
-    });
-  });
-
-  it("un utente senza aziende non vede nulla", async () => {
-    await asUser(db, s.users.outsider, async () => {
-      for (const table of ["tenants", "tenant_memberships", "business_partners", "audit_log"]) {
-        const { rowCount } = await db.query(`select 1 from public.${table}`);
-        expect(rowCount, table).toBe(0);
+      for (const r of rows) {
+        // NULL ammesso solo per righe globali (ruoli di sistema)
+        expect([s.tenantA, null]).toContain(r.tenant_id);
       }
     });
   });
 
-  it("anon non ha alcun privilegio sulle tabelle di dominio", async () => {
-    await asUser(db, null, async () => {
-      await expectPgError(db.query("select 1 from public.business_partners"), "42501");
+  it("non inserisce righe nell'altra azienda", async () => {
+    await asUser(db, s.users.aliceOwnerA, async () => {
+      const q = c.insert(s.tenantB, s.b);
+      await expectPgError(db.query(q.sql, q.params), "42501");
     });
   });
 
-  it("un membro sospeso non vede i dati dell'azienda", async () => {
-    await asUser(db, s.users.frankSuspendedA, async () => {
-      expect(await visiblePartnerTenants()).toEqual([]);
-      const { rowCount } = await db.query("select 1 from public.tenants");
-      expect(rowCount).toBe(0);
+  it("non modifica righe dell'altra azienda", async () => {
+    await tx(db, async () => {
+      const before = await countForTenant(c.table, s.tenantB);
+      await become(db, s.users.aliceOwnerA);
+      if (c.updatable) {
+        const res = await db.query(
+          `update public.${c.table} set ${c.updatable.col} = $1 where tenant_id = $2`,
+          [c.updatable.value, s.tenantB],
+        );
+        expect(res.rowCount).toBe(0);
+      } else {
+        await db.query("savepoint attempt");
+        await expectPgError(
+          db.query(`update public.${c.table} set tenant_id = tenant_id where tenant_id = $1`, [
+            s.tenantB,
+          ]),
+          "42501",
+        );
+        await db.query("rollback to savepoint attempt");
+      }
+      await becomeSuperuser(db);
+      expect(await countForTenant(c.table, s.tenantB)).toBe(before);
     });
   });
 
-  it("un utente solo invitato non vede i dati finché non accetta", async () => {
-    await asUser(db, s.users.ivanInvitedA, async () => {
-      expect(await visiblePartnerTenants()).toEqual([]);
+  it("non cancella righe dell'altra azienda", async () => {
+    await tx(db, async () => {
+      const before = await countForTenant(c.table, s.tenantB);
+      expect(before).toBeGreaterThan(0);
+      await become(db, s.users.aliceOwnerA);
+      if (c.deletable) {
+        const res = await db.query(`delete from public.${c.table} where tenant_id = $1`, [
+          s.tenantB,
+        ]);
+        expect(res.rowCount).toBe(0);
+      } else {
+        await db.query("savepoint attempt");
+        await expectPgError(
+          db.query(`delete from public.${c.table} where tenant_id = $1`, [s.tenantB]),
+          "42501",
+        );
+        await db.query("rollback to savepoint attempt");
+      }
+      await becomeSuperuser(db);
+      expect(await countForTenant(c.table, s.tenantB)).toBe(before);
     });
   });
 
-  it("un utente in due aziende vede entrambe, e solo quelle", async () => {
-    await asUser(db, s.users.eveMulti, async () => {
-      expect(await visiblePartnerTenants()).toEqual([s.tenantA, s.tenantB].sort());
+  it("non sposta le proprie righe nell'altra azienda", async () => {
+    await asUser(db, s.users.aliceOwnerA, async () => {
+      await expectPgError(
+        db.query(`update public.${c.table} set tenant_id = $1 where tenant_id = $2`, [
+          s.tenantB,
+          s.tenantA,
+        ]),
+        "42501",
+      );
     });
+  });
+});
+
+describe("Riferimenti incrociati tra aziende (FK composte)", () => {
+  const cases: { name: string; sql: (a: Seed) => { sql: string; params: unknown[] } }[] = [
+    {
+      name: "contatto di A collegato a un cliente di B",
+      sql: (x) => ({
+        sql: "insert into public.contacts (tenant_id, customer_id, first_name) values ($1, $2, 'X')",
+        params: [x.tenantA, x.b.customer],
+      }),
+    },
+    {
+      name: "contatto di A collegato a un fornitore di B",
+      sql: (x) => ({
+        sql: "insert into public.contacts (tenant_id, supplier_id, first_name) values ($1, $2, 'X')",
+        params: [x.tenantA, x.b.supplier],
+      }),
+    },
+    {
+      name: "sede di A collegata a un cliente di B",
+      sql: (x) => ({
+        sql: "insert into public.customer_sites (tenant_id, customer_id, name, address_line, city) values ($1, $2, 'X', 'Via X', 'Roma')",
+        params: [x.tenantA, x.b.customer],
+      }),
+    },
+    {
+      name: "membro di squadra di A con un dipendente di B",
+      sql: (x) => ({
+        sql: "insert into public.team_members (tenant_id, team_id, employee_id) values ($1, $2, $3)",
+        params: [x.tenantA, x.a.team, x.b.employee2],
+      }),
+    },
+    {
+      name: "membro di squadra di A in una squadra di B",
+      sql: (x) => ({
+        sql: "insert into public.team_members (tenant_id, team_id, employee_id) values ($1, $2, $3)",
+        params: [x.tenantA, x.b.team, x.a.employee2],
+      }),
+    },
+    {
+      name: "squadra di A con caposquadra di B",
+      sql: (x) => ({
+        sql: "insert into public.teams (tenant_id, name, leader_employee_id) values ($1, 'X-team', $2)",
+        params: [x.tenantA, x.b.employee],
+      }),
+    },
+    {
+      name: "dipendente di A collegato a un utente che è solo in B",
+      sql: (x) => ({
+        sql: "insert into public.employees (tenant_id, user_id, first_name, last_name) values ($1, $2, 'X', 'Y')",
+        params: [x.tenantA, x.users.daveOwnerB],
+      }),
+    },
+    {
+      name: "membership di A con un ruolo personalizzato di B",
+      sql: (x) => ({
+        sql: "insert into public.memberships (tenant_id, user_id, role_id, status) values ($1, $2, $3, 'invited')",
+        params: [x.tenantA, x.users.outsider, x.b.customRole],
+      }),
+    },
+  ];
+
+  it.each(cases)("rifiutato: $name", async (c) => {
+    await asUser(db, s.users.aliceOwnerA, async () => {
+      const q = c.sql(s);
+      await expectPgError(db.query(q.sql, q.params), "23503");
+    });
+  });
+
+  it("aggiornare un riferimento verso un record di B è rifiutato", async () => {
+    await asUser(db, s.users.aliceOwnerA, async () => {
+      await expectPgError(
+        db.query("update public.teams set leader_employee_id = $1 where id = $2", [
+          s.b.employee,
+          s.a.team,
+        ]),
+        "23503",
+      );
+    });
+  });
+});
+
+describe("Chi può vedere qualcosa", () => {
+  it("un utente senza aziende non vede nulla", async () => {
+    await asUser(db, s.users.outsider, async () => {
+      for (const t of [
+        "tenants",
+        "tenant_settings",
+        "memberships",
+        "subscriptions",
+        "customers",
+        "suppliers",
+        "contacts",
+        "customer_sites",
+        "employees",
+        "teams",
+        "team_members",
+        "audit_log",
+      ]) {
+        const { rowCount } = await db.query(`select 1 from public.${t}`);
+        expect(rowCount, t).toBe(0);
+      }
+      const roles = await db.query("select 1 from public.roles where tenant_id is not null");
+      expect(roles.rowCount).toBe(0);
+    });
+  });
+
+  it("anon non ha alcun privilegio", async () => {
+    for (const t of ["customers", "employees", "tenants", "users", "roles"]) {
+      await asUser(db, null, async () => {
+        await expectPgError(db.query(`select 1 from public.${t}`), "42501");
+      });
+    }
+  });
+
+  it("un membro sospeso o solo invitato non vede i dati", async () => {
+    for (const u of [s.users.frankSuspendedA, s.users.ivanInvitedA]) {
+      await asUser(db, u, async () => {
+        const { rowCount } = await db.query("select 1 from public.customers");
+        expect(rowCount).toBe(0);
+      });
+    }
   });
 
   it("un'azienda sospesa perde l'accesso ai dati operativi", async () => {
     await tx(db, async () => {
       await db.query("update public.tenants set status = 'suspended' where id = $1", [s.tenantB]);
       await become(db, s.users.daveOwnerB);
-      expect(await visiblePartnerTenants()).toEqual([]);
+      const { rowCount } = await db.query("select 1 from public.customers");
+      expect(rowCount).toBe(0);
     });
   });
 
-  it("l'owner di A non vede l'azienda, i membri né l'audit di B", async () => {
-    await asUser(db, s.users.aliceOwnerA, async () => {
-      const tenants = await db.query<{ id: string }>("select id from public.tenants");
-      expect(tenants.rows.map((r) => r.id)).toEqual([s.tenantA]);
-      const members = await db.query(
-        "select 1 from public.tenant_memberships where tenant_id = $1",
-        [s.tenantB],
-      );
-      expect(members.rowCount).toBe(0);
-      const audit = await db.query("select 1 from public.audit_log where tenant_id = $1", [
-        s.tenantB,
-      ]);
-      expect(audit.rowCount).toBe(0);
-    });
-  });
-});
-
-describe("Isolamento in scrittura", () => {
-  it("non si può inserire un record con il tenant_id di un'altra azienda", async () => {
-    await asUser(db, s.users.aliceOwnerA, async () => {
-      await expectPgError(
-        db.query(
-          "insert into public.business_partners (tenant_id, display_name) values ($1, 'Intruso')",
-          [s.tenantB],
-        ),
-        "42501",
-      );
-    });
-  });
-
-  it("non si possono modificare record di un'altra azienda", async () => {
-    await tx(db, async () => {
-      await become(db, s.users.aliceOwnerA);
-      const res = await db.query(
-        "update public.business_partners set display_name = 'Manomesso' where id = $1",
-        [s.partners.b1],
-      );
-      expect(res.rowCount).toBe(0);
-      await becomeSuperuser(db);
-      const { rows } = await db.query(
-        "select display_name from public.business_partners where id = $1",
-        [s.partners.b1],
-      );
-      expect(rows[0].display_name).toBe("Cliente B1");
-    });
-  });
-
-  it("non si possono eliminare record di un'altra azienda", async () => {
-    await tx(db, async () => {
-      await become(db, s.users.aliceOwnerA);
-      const res = await db.query("delete from public.business_partners where id = $1", [
-        s.partners.b1,
-      ]);
-      expect(res.rowCount).toBe(0);
-      await becomeSuperuser(db);
-      const check = await db.query("select 1 from public.business_partners where id = $1", [
-        s.partners.b1,
-      ]);
-      expect(check.rowCount).toBe(1);
-    });
-  });
-
-  it("non si può spostare un proprio record in un'altra azienda", async () => {
+  it("un utente in due aziende vede entrambe con i permessi di ciascuna", async () => {
     await asUser(db, s.users.eveMulti, async () => {
-      // Eve è office in B (può scrivere) ma solo viewer in A.
+      // fornitori: viewer in A (suppliers.read) e office in B (suppliers.read)
+      const { rows } = await db.query<{ tenant_id: string }>(
+        "select distinct tenant_id from public.suppliers order by 1",
+      );
+      expect(rows.map((r) => r.tenant_id)).toEqual([s.tenantA, s.tenantB].sort());
+    });
+    await asUser(db, s.users.eveMulti, async () => {
+      // ma scrive solo in B
       await expectPgError(
-        db.query("update public.business_partners set tenant_id = $1 where id = $2", [
+        db.query("insert into public.customers (tenant_id, display_name) values ($1, 'X')", [
           s.tenantA,
-          s.partners.b1,
         ]),
         "42501",
       );
@@ -180,54 +395,29 @@ describe("Isolamento in scrittura", () => {
     await tx(db, async () => {
       await db.query("set local role service_role");
       await expectPgError(
-        db.query("update public.business_partners set tenant_id = $1 where id = $2", [
+        db.query("update public.customers set tenant_id = $1 where id = $2", [
           s.tenantB,
-          s.partners.a1,
+          s.a.customer,
         ]),
         "42501",
       );
     });
   });
 
-  it("un contatto non può riferirsi a un cliente di un'altra azienda (FK composta)", async () => {
-    await asUser(db, s.users.aliceOwnerA, async () => {
+  it("created_by non è falsificabile dal client", async () => {
+    await asUser(db, s.users.carolOfficeA, async () => {
       await expectPgError(
         db.query(
-          "insert into public.partner_contacts (tenant_id, partner_id, full_name) values ($1, $2, 'Mario Rossi')",
-          [s.tenantA, s.partners.b1],
-        ),
-        "23503",
-      );
-    });
-  });
-
-  it("un contatto non può essere creato nell'azienda altrui", async () => {
-    await asUser(db, s.users.aliceOwnerA, async () => {
-      await expectPgError(
-        db.query(
-          "insert into public.partner_contacts (tenant_id, partner_id, full_name) values ($1, $2, 'Mario Rossi')",
-          [s.tenantB, s.partners.b1],
+          "insert into public.customers (tenant_id, display_name, created_by) values ($1, 'X', $2)",
+          [s.tenantA, s.users.daveOwnerB],
         ),
         "42501",
       );
     });
-  });
-
-  it("un contatto valido nella propria azienda viene accettato", async () => {
-    await asUser(db, s.users.carolOfficeA, async () => {
-      const res = await db.query(
-        "insert into public.partner_contacts (tenant_id, partner_id, full_name) values ($1, $2, 'Mario Rossi') returning id",
-        [s.tenantA, s.partners.a1],
-      );
-      expect(res.rowCount).toBe(1);
-    });
-  });
-
-  it("created_by non è falsificabile dal client", async () => {
     await asUser(db, s.users.carolOfficeA, async () => {
       const { rows } = await db.query<{ created_by: string }>(
-        "insert into public.business_partners (tenant_id, display_name, created_by) values ($1, 'Nuovo', $2) returning created_by",
-        [s.tenantA, s.users.daveOwnerB],
+        "insert into public.customers (tenant_id, display_name) values ($1, 'X') returning created_by",
+        [s.tenantA],
       );
       expect(rows[0]!.created_by).toBe(s.users.carolOfficeA);
     });
