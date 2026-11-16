@@ -1,4 +1,8 @@
-import type { Metadata } from "next";
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
+import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
+import { parseTheme, THEME_COOKIE, themeClass } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,9 +11,22 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f7f9" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0f1c" },
+  ],
+};
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
   return (
-    <html lang="it">
+    <html
+      lang="it"
+      className={[GeistSans.variable, GeistMono.variable, themeClass(theme)]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <body className="min-h-dvh font-sans antialiased">{children}</body>
     </html>
   );

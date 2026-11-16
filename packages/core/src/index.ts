@@ -4,3 +4,7 @@ export * from "./auth/access";
 export * from "./auth/invitations";
 export * from "./auth/companies";
 export * from "./db/transaction";
+export * from "./workspace/notifications";
+export * from "./workspace/search";
+export * from "./workspace/dashboard";
+export * from "./directory/lists";

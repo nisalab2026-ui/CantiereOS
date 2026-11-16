@@ -50,6 +50,7 @@ describe("Audit log", () => {
         "employees",
         "invitations",
         "memberships",
+        "notifications",
         "role_permissions",
         "roles",
         "subscriptions",

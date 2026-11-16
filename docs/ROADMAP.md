@@ -37,12 +37,19 @@
 - [ ] Template email italiani, SMTP e progetto Supabase di produzione (serve un account)
 - [ ] Rate limiting applicativo (Redis), CSP con nonce, codici di recupero MFA
 
-## Fase 2b — Interfaccia e primo modulo
+## Fase 2b — Interfaccia ✅ (in revisione)
 
-- Design system completo (`docs/DESIGN_SYSTEM.md`), sidebar, header, ricerca, notifiche, tema
-- Dashboard per ruolo; tabelle, filtri, modali e moduli riutilizzabili
-- Modulo **Clienti e fornitori** (lista, filtri, scheda, contatti, sedi), pagina audit log
-- Conferma ADR-006 (Kysely) e ADR-007 (BullMQ)
+- [x] Design system (`docs/DESIGN_SYSTEM.md`), marchio CantiereOS, tema chiaro/scuro/sistema
+- [x] Sidebar filtrata per permessi, selettore azienda con badge DEMO, header, menu utente
+- [x] Ricerca globale (Ctrl/⌘ K) lato server con RLS; notifiche in-app (tabella `notifications`)
+- [x] Dashboard per ruolo (amministrazione, responsabile, tecnico, cliente esterno) con soli dati reali
+- [x] Tabelle server-side con ricerca, filtri, ordinamento e paginazione nell'URL; modali, conferme,
+      stati di caricamento/vuoto/errore/non permesso
+- [x] Elenchi clienti, fornitori, personale, squadre; creazione cliente; gestione utenti restyling
+- [ ] Scheda di dettaglio, modifica ed eliminazione di clienti/fornitori/personale/squadre, contatti e
+      sedi (con il modulo cantieri)
+- [ ] Pagina del registro attività (audit log) completa
+- [ ] Conferma ADR-006 (Kysely) e ADR-007 (BullMQ)
 
 ## Fase 3 — Operatività di campo
 

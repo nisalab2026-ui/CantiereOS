@@ -17,22 +17,22 @@ cantiere. Il prodotto ha un'identità propria: non copia interfacce né testi di
 
 ## 2. Utenti e ruoli
 
-| Persona                          | Ruolo di sistema                          | Dispositivo principale     | Obiettivi                                       |
-| -------------------------------- | ----------------------------------------- | -------------------------- | ----------------------------------------------- |
-| Titolare                         | `owner`                                   | Desktop, smartphone        | Controllo margini, cassa, avanzamento commesse  |
-| Amministratore                   | `admin`                                   | Desktop                    | Utenti, impostazioni, fatturazione, documenti   |
-| Responsabile / capocantiere      | `manager`                                 | Tablet, desktop            | Pianificazione squadre, approvazione rapportini |
-| Ufficio tecnico / amministrativo | `office`                                  | Desktop                    | Clienti, preventivi, ordini, fatture, archivio  |
-| Tecnico / operaio                | `technician`                              | Smartphone (anche offline) | Agenda del giorno, rapportini, foto, firme      |
-| Consultazione                    | `viewer`                                  | Desktop                    | Sola lettura (es. commercialista, consulente)   |
-| Cliente finale                   | portale cliente (fase successiva)         | Web                        | Interventi, documenti, firme, pagamenti         |
-| Operatore piattaforma            | amministratore SaaS (separato dai tenant) | Desktop                    | Aziende, abbonamenti, supporto                  |
+| Persona                | Ruolo di sistema                          | Dispositivo principale     | Obiettivi                                      |
+| ---------------------- | ----------------------------------------- | -------------------------- | ---------------------------------------------- |
+| Titolare               | `owner` (Proprietario azienda)            | Desktop, smartphone        | Controllo margini, cassa, avanzamento commesse |
+| Amministratore         | `admin` (Amministratore)                  | Desktop                    | Utenti, impostazioni, fatturazione, documenti  |
+| Responsabile operativo | `operations_manager`                      | Desktop, tablet            | Pianificazione, squadre, personale             |
+| Capocantiere           | `site_manager` (Responsabile cantiere)    | Tablet, smartphone         | Gestione cantieri e squadre, approvazioni      |
+| Ufficio amministrativo | `back_office` (Amministrazione)           | Desktop                    | Clienti, preventivi, ordini, fatture, archivio |
+| Tecnico / operaio      | `technician` (Tecnico)                    | Smartphone (anche offline) | Agenda del giorno, rapportini, foto, firme     |
+| Cliente finale         | `external_client` (Cliente esterno)       | Web                        | Interventi, documenti, firme, pagamenti        |
+| Operatore piattaforma  | amministratore SaaS (separato dai tenant) | Desktop                    | Aziende, abbonamenti, supporto                 |
 
 Requisito di scala: aziende con **oltre 100 utenti** attivi, decine di cantieri in parallelo e
 migliaia di rapportini al mese per azienda.
 
-I permessi sono granulari (`modulo.azione`) e assegnati ai ruoli; la matrice iniziale è nella
-migrazione `20261116190000_core_tenancy.sql`. Ruoli personalizzati per azienda sono previsti in
+I permessi sono granulari (`modulo.azione`) e assegnati ai ruoli; la matrice è descritta in
+[DATABASE.md](DATABASE.md) §3. Ruoli personalizzati per azienda sono previsti in
 roadmap.
 
 ## 3. Piattaforme

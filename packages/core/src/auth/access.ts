@@ -9,6 +9,8 @@ export interface CompanyMembership {
   roleName: string;
   /** Valorizzato solo per il ruolo "Cliente esterno". */
   customerId: string | null;
+  /** Azienda dimostrativa del seed di sviluppo (mostrata con il badge DEMO). */
+  isDemo: boolean;
 }
 
 /**
@@ -30,7 +32,7 @@ export interface TenantAccess {
 export async function listMyCompanies(tx: UserTx): Promise<CompanyMembership[]> {
   const { rows } = await tx.query<CompanyMembership>(
     `select t.id as "tenantId", t.name, t.slug, r.key as "roleKey", r.name as "roleName",
-            m.customer_id as "customerId"
+            m.customer_id as "customerId", t.is_demo as "isDemo"
        from public.memberships m
        join public.tenants t on t.id = m.tenant_id and t.status in ('trial', 'active')
        join public.roles r on r.id = m.role_id

@@ -1,0 +1,82 @@
+import {
+  Building2,
+  HardHat,
+  LayoutDashboard,
+  ShieldCheck,
+  Truck,
+  Users,
+  UsersRound,
+  type LucideIcon,
+} from "lucide-react";
+
+export interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  /** La voce compare solo se il server conferma questo permesso. */
+  permission?: string;
+  group: "lavoro" | "anagrafiche" | "azienda" | "account";
+}
+
+/** Solo voci con una pagina reale dietro (niente voci "in arrivo"). */
+export const NAV_ITEMS: NavItem[] = [
+  { href: "/app", label: "Panoramica", icon: LayoutDashboard, group: "lavoro" },
+  {
+    href: "/app/clienti",
+    label: "Clienti",
+    icon: Building2,
+    permission: "customers.read",
+    group: "anagrafiche",
+  },
+  {
+    href: "/app/fornitori",
+    label: "Fornitori",
+    icon: Truck,
+    permission: "suppliers.read",
+    group: "anagrafiche",
+  },
+  {
+    href: "/app/personale",
+    label: "Personale",
+    icon: HardHat,
+    permission: "employees.read",
+    group: "anagrafiche",
+  },
+  {
+    href: "/app/squadre",
+    label: "Squadre",
+    icon: UsersRound,
+    permission: "teams.read",
+    group: "anagrafiche",
+  },
+  {
+    href: "/app/membri",
+    label: "Utenti e accessi",
+    icon: Users,
+    permission: "members.read",
+    group: "azienda",
+  },
+  { href: "/account/sicurezza", label: "Sicurezza", icon: ShieldCheck, group: "account" },
+];
+
+export const NAV_GROUPS: Record<NavItem["group"], string> = {
+  lavoro: "Lavoro",
+  anagrafiche: "Anagrafiche",
+  azienda: "Azienda",
+  account: "Account",
+};
+
+export function visibleNav(permissions: readonly string[]): NavItem[] {
+  const set = new Set(permissions);
+  return NAV_ITEMS.filter((i) => !i.permission || set.has(i.permission));
+}
+
+export function isActive(pathname: string, href: string): boolean {
+  return href === "/app"
+    ? pathname === "/app"
+    : pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export function titleFor(pathname: string): string {
+  return NAV_ITEMS.find((i) => isActive(pathname, i.href))?.label ?? "CantiereOS";
+}

@@ -1,3 +1,5 @@
+import Image from "next/image";
+import { Tilt } from "@/components/motion/tilt";
 import Link from "next/link";
 
 export function Field({
@@ -43,6 +45,10 @@ export function Field({
 }
 
 /** Contenitore centrato per le pagine di accesso. */
+/**
+ * Pagine di accesso: pannello del marchio a sinistra (desktop), modulo a destra.
+ * Su mobile il marchio resta in alto, compatto.
+ */
 export function AuthShell({
   title,
   subtitle,
@@ -55,17 +61,76 @@ export function AuthShell({
   footer?: React.ReactNode;
 }) {
   return (
-    <main className="flex min-h-dvh items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="space-y-1">
-          <p className="text-sm font-semibold tracking-tight text-brand">CantiereOS</p>
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-          {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
+    <div className="grid min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+      <aside className="relative hidden overflow-hidden bg-[#050B1A] lg:flex lg:flex-col lg:justify-between lg:p-12">
+        <div
+          aria-hidden
+          className="cos-glow pointer-events-none absolute -right-1/4 -bottom-1/4 size-[80%] rounded-full bg-[radial-gradient(circle,rgba(36,86,230,0.45),transparent_65%)]"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-[-30%] bottom-0 h-[52%] overflow-hidden"
+        >
+          <div className="cos-floor absolute inset-0" />
         </div>
-        <div className="rounded-xl border border-line bg-surface p-6 shadow-sm">{children}</div>
-        {footer && <div className="text-center text-sm text-muted">{footer}</div>}
-      </div>
-    </main>
+        <Image
+          src="/brand/logo-full.png"
+          alt="CantiereOS — Gestisci, organizza, cresci"
+          width={640}
+          height={161}
+          priority
+          className="cos-enter relative h-auto w-full max-w-sm"
+        />
+        <div className="relative flex flex-1 items-center justify-center py-8">
+          <div className="cos-float">
+            <Tilt max={14} className="rounded-3xl">
+              <div className="cos-depth rounded-3xl border border-white/10 bg-white/[0.04] p-10 shadow-[0_30px_80px_-20px_rgba(36,86,230,0.55)] backdrop-blur-sm">
+                <Image
+                  src="/brand/logo-mark.png"
+                  alt=""
+                  width={268}
+                  height={256}
+                  className="h-40 w-auto drop-shadow-[0_18px_30px_rgba(36,86,230,0.45)] xl:h-48"
+                />
+              </div>
+            </Tilt>
+          </div>
+        </div>
+        <p
+          className="cos-enter relative max-w-sm text-sm leading-relaxed text-[#98A1B3]"
+          style={{ "--i": 2 } as React.CSSProperties}
+        >
+          Cantieri, squadre, rapportini e documenti della tua impresa in un unico posto, con i dati
+          di ogni azienda separati e protetti.
+        </p>
+      </aside>
+      <main className="flex items-center justify-center px-4 py-12">
+        <div className="cos-enter w-full max-w-sm space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 lg:hidden">
+              <span className="flex size-9 items-center justify-center rounded-lg bg-navy">
+                <Image
+                  src="/brand/logo-mark.png"
+                  alt=""
+                  width={268}
+                  height={256}
+                  className="h-6 w-auto"
+                />
+              </span>
+              <span className="text-base font-semibold tracking-tight">
+                Cantiere<span className="text-primary">OS</span>
+              </span>
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+              {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+            </div>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-6 shadow-sm">{children}</div>
+          {footer && <div className="text-center text-sm text-muted-foreground">{footer}</div>}
+        </div>
+      </main>
+    </div>
   );
 }
 

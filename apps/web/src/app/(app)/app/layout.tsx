@@ -20,12 +20,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     );
   }
   return (
-    <AppShell
-      email={ctx.session.email}
-      companies={ctx.companies}
-      activeTenantId={ctx.access.tenantId}
-      canSeeMembers={ctx.access.permissions.has("members.read")}
-    >
+    <AppShell session={ctx.session} companies={ctx.companies} access={ctx.access}>
       {children}
     </AppShell>
   );

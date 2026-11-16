@@ -1,6 +1,28 @@
+import {
+  getDashboard,
+  type AuditEntry,
+  type DashboardData,
+  type TeamSummary,
+} from "@cantiereos/core";
+import {
+  Building2,
+  CalendarClock,
+  HardHat,
+  MailPlus,
+  Truck,
+  Users,
+  UsersRound,
+} from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Notice } from "@/components/ui";
-import { getAppContext } from "@/lib/auth";
+import { Badge, DemoBadge } from "@/components/ui/badge";
+import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import { KpiCard } from "@/components/ui/kpi-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState } from "@/components/ui/states";
+import { asCurrentUser, getAppContext } from "@/lib/auth";
+import { formatDate, formatRelative } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Panoramica" };
 
@@ -10,7 +32,7 @@ const NOTICES: Record<string, string> = {
   "password=aggiornata": "Password aggiornata. Le altre sessioni sono state chiuse.",
 };
 
-export default async function AppHome({
+export default async function DashboardPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
@@ -20,40 +42,279 @@ export default async function AppHome({
     const [key, value] = k.split("=");
     return sp[key!] === value;
   })?.[1];
-  const { company, access, session } = await getAppContext();
-  const permissions = [...access.permissions].sort();
+  const { company, access } = await getAppContext();
+  const data = await asCurrentUser((tx) => getDashboard(tx, access));
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid={`dashboard-${data.kind}`}>
       {notice && <Notice>{notice}</Notice>}
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight" data-testid="company-name">
-          {company.name}
-        </h1>
-        <p className="text-sm text-muted">
-          Ruolo: <span data-testid="role-name">{company.roleName}</span> · Sessione{" "}
-          {session.aal === "aal2" ? "con verifica in due passaggi" : "con sola password"}
+      <PageHeader
+        title={company.name}
+        testId="company-name"
+        description={
+          <span className="inline-flex flex-wrap items-center gap-2">
+            <span>
+              Ruolo: <span data-testid="role-name">{company.roleName}</span>
+            </span>
+            {company.isDemo && <DemoBadge />}
+          </span>
+        }
+      />
+      {company.isDemo && (
+        <p
+          className="rounded-md border border-warning/40 bg-warning/10 px-4 py-2.5 text-sm text-warning"
+          data-testid="demo-notice"
+        >
+          Azienda dimostrativa: tutti i dati che vedi vengono dal seed di sviluppo e non sono reali.
         </p>
-      </div>
-      <section className="rounded-xl border border-line bg-surface p-5">
-        <h2 className="mb-1 font-medium">Cosa puoi fare in questa azienda</h2>
-        <p className="mb-3 text-sm text-muted">
-          Permessi verificati sul server e nel database a ogni richiesta. I moduli operativi
-          arrivano nelle prossime fasi.
-        </p>
-        <ul className="flex flex-wrap gap-2" data-testid="permissions">
-          {permissions.map((p) => (
-            <li key={p} className="rounded-md border border-line px-2 py-0.5 font-mono text-xs">
-              {p}
+      )}
+      <DashboardBody data={data} />
+    </div>
+  );
+}
+
+function DashboardBody({ data }: { data: DashboardData }) {
+  switch (data.kind) {
+    case "admin":
+      return (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {data.activeMembers !== null && (
+              <KpiCard
+                index={0}
+                label="Utenti attivi"
+                value={data.activeMembers}
+                {...(data.seats !== null ? { suffix: `/ ${data.seats} posti` } : {})}
+                icon={Users}
+                href="/app/membri"
+              />
+            )}
+            {data.pendingInvitations !== null && (
+              <KpiCard
+                index={1}
+                label="Inviti in attesa"
+                value={data.pendingInvitations}
+                icon={MailPlus}
+                href="/app/membri"
+              />
+            )}
+            {data.customers !== null && (
+              <KpiCard
+                index={2}
+                label="Clienti attivi"
+                value={data.customers}
+                icon={Building2}
+                href="/app/clienti"
+              />
+            )}
+            {data.suppliers !== null && (
+              <KpiCard
+                index={3}
+                label="Fornitori attivi"
+                value={data.suppliers}
+                icon={Truck}
+                href="/app/fornitori"
+              />
+            )}
+            {data.employees !== null && (
+              <KpiCard
+                index={4}
+                label="Personale attivo"
+                value={data.employees}
+                icon={HardHat}
+                href="/app/personale"
+              />
+            )}
+          </div>
+          {data.trialEndsAt && (
+            <p className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CalendarClock className="size-4" aria-hidden />
+              Periodo di prova fino al {formatDate(data.trialEndsAt)}.
+            </p>
+          )}
+          {data.recentActivity !== null && (
+            <div className="cos-enter" style={{ "--i": 5 } as React.CSSProperties}>
+              <RecentActivity entries={data.recentActivity} />
+            </div>
+          )}
+        </>
+      );
+    case "manager":
+      return (
+        <>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {data.employees !== null && (
+              <KpiCard
+                index={0}
+                label="Personale attivo"
+                value={data.employees}
+                icon={HardHat}
+                href="/app/personale"
+              />
+            )}
+            {data.customers !== null && (
+              <KpiCard
+                index={1}
+                label="Clienti attivi"
+                value={data.customers}
+                icon={Building2}
+                href="/app/clienti"
+              />
+            )}
+            {data.sites !== null && (
+              <KpiCard index={2} label="Sedi dei clienti" value={data.sites} icon={Building2} />
+            )}
+          </div>
+          {data.teams !== null && (
+            <div className="cos-enter" style={{ "--i": 3 } as React.CSSProperties}>
+              <Teams teams={data.teams} title="Squadre" />
+            </div>
+          )}
+        </>
+      );
+    case "technician":
+      return (
+        <>
+          <Card>
+            <CardHeader title="La tua scheda" />
+            <CardBody>
+              {data.employee ? (
+                <p className="text-sm">
+                  <span className="font-medium">
+                    {data.employee.firstName} {data.employee.lastName}
+                  </span>
+                  {data.employee.jobTitle && (
+                    <span className="text-muted-foreground"> · {data.employee.jobTitle}</span>
+                  )}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Il tuo account non è ancora collegato a una scheda del personale. Chiedi
+                  all&apos;ufficio di collegarlo.
+                </p>
+              )}
+              <p className="mt-2 text-sm text-muted-foreground">
+                L&apos;agenda degli interventi comparirà qui con il modulo cantieri e interventi.
+              </p>
+            </CardBody>
+          </Card>
+          {data.teams !== null && <Teams teams={data.teams} title="Le tue squadre" />}
+        </>
+      );
+    case "portal":
+      return (
+        <Card>
+          <CardHeader title="Area cliente" />
+          <CardBody>
+            <p className="text-sm">
+              {data.customer ? (
+                <>
+                  Accesso per <span className="font-medium">{data.customer.name}</span>.
+                </>
+              ) : (
+                "Il tuo accesso non è collegato a un cliente."
+              )}
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Documenti e avanzamento lavori compariranno qui con il portale clienti.
+            </p>
+          </CardBody>
+        </Card>
+      );
+  }
+}
+
+function Teams({ teams, title }: { teams: TeamSummary[]; title: string }) {
+  return (
+    <Card>
+      <CardHeader title={title} />
+      {teams.length === 0 ? (
+        <EmptyState
+          icon={UsersRound}
+          title="Nessuna squadra"
+          description="Le squadre create compariranno qui."
+        />
+      ) : (
+        <ul className="divide-y divide-border" data-testid="team-list">
+          {teams.map((t) => (
+            <li key={t.id}>
+              <Link
+                href={`/app/squadre?id=${t.id}`}
+                className="flex items-center gap-3 px-5 py-3 text-sm hover:bg-accent/40"
+              >
+                <span
+                  className="size-2.5 shrink-0 rounded-full border border-border"
+                  style={{ backgroundColor: t.color ?? "transparent" }}
+                  aria-hidden
+                />
+                <span className="flex-1 font-medium">{t.name}</span>
+                <span className="text-muted-foreground">
+                  {t.leader ? `Caposquadra: ${t.leader}` : "Senza caposquadra"}
+                </span>
+                <Badge>
+                  {t.members} {t.members === 1 ? "persona" : "persone"}
+                </Badge>
+              </Link>
             </li>
           ))}
         </ul>
-        {access.permissionsRequiringMfa.size > 0 && (
-          <p className="mt-3 text-sm text-muted">
-            {access.permissionsRequiringMfa.size} permessi amministrativi richiedono la verifica in
-            due passaggi.
-          </p>
-        )}
-      </section>
-    </div>
+      )}
+    </Card>
+  );
+}
+
+const TABLE_LABELS: Record<string, string> = {
+  customers: "cliente",
+  customer_sites: "sede cliente",
+  contacts: "contatto",
+  suppliers: "fornitore",
+  employees: "scheda personale",
+  teams: "squadra",
+  team_members: "componente squadra",
+  memberships: "accesso utente",
+  invitations: "invito",
+  tenants: "dati azienda",
+  notifications: "notifica",
+};
+
+const ACTION_LABELS: Record<string, string> = {
+  insert: "Creato",
+  update: "Modificato",
+  delete: "Eliminato",
+};
+
+function RecentActivity({ entries }: { entries: AuditEntry[] }) {
+  return (
+    <Card>
+      <CardHeader
+        title="Attività recenti"
+        description="Dal registro delle modifiche dell'azienda."
+      />
+      {entries.length === 0 ? (
+        <EmptyState
+          icon={CalendarClock}
+          title="Nessuna attività"
+          description="Le modifiche ai dati compariranno qui."
+        />
+      ) : (
+        <ul className="divide-y divide-border" data-testid="recent-activity">
+          {entries.map((e) => (
+            <li key={e.id} className="flex items-center gap-3 px-5 py-2.5 text-sm">
+              <span className="flex-1">
+                {ACTION_LABELS[e.action.toLowerCase()] ?? e.action}{" "}
+                {e.tableName ? (TABLE_LABELS[e.tableName] ?? e.tableName) : ""}
+                {e.actor && <span className="text-muted-foreground"> · {e.actor}</span>}
+              </span>
+              <time
+                dateTime={new Date(e.createdAt).toISOString()}
+                className="text-xs text-muted-foreground tabular-nums"
+              >
+                {formatRelative(e.createdAt)}
+              </time>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   );
 }

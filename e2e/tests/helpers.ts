@@ -106,7 +106,7 @@ export async function enrollMfa(page: Page): Promise<string> {
   await page.getByRole("button", { name: "Configura app di autenticazione" }).click();
   const secret = (await page.getByTestId("totp-secret").textContent())!.trim();
   await page.getByLabel("Codice").fill(await freshTotp(secret));
-  await page.getByRole("button", { name: "Attiva" }).click();
+  await page.getByRole("button", { name: "Attiva", exact: true }).click();
   await expect(page.getByTestId("mfa-active")).toContainText("Sessione corrente: verificata");
   return secret;
 }
