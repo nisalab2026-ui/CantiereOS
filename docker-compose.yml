@@ -1,0 +1,32 @@
+# Servizi di supporto per lo SVILUPPO LOCALE. Non usare in produzione.
+# PostgreSQL, Auth e Storage (con API S3-compatibile) arrivano da Supabase CLI
+# (`supabase start`), non da qui. Il provider S3 di produzione è ancora da scegliere.
+name: cantiereos-dev
+
+services:
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # PostgreSQL usa-e-getta per i test di isolamento (pnpm test:db).
+  postgres-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "127.0.0.1:54329:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    profiles: ["test"]
+
+volumes:
+  redis-data:

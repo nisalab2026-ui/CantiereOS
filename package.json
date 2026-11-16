@@ -1,0 +1,21 @@
+{
+  "name": "cantiereos",
+  "private": true,
+  "version": "0.1.0",
+  "description": "CantiereOS — ERP SaaS multi-azienda per imprese edili e servizi tecnici",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:db": "pnpm --filter @cantiereos/db test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.10.1",
+    "typescript": "5.9.3"
+  }
+}
