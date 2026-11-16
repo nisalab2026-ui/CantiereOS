@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { Users } from "lucide-react";
 import { ActionForm, SubmitButton } from "@/components/forms";
-import { Field, Notice } from "@/components/ui";
+import { Notice } from "@/components/ui";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import { FormField, Input, Select } from "@/components/ui/input";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState, ForbiddenState } from "@/components/ui/states";
 import { asCurrentUser, getAppContext } from "@/lib/auth";
-import { inviteMember, revokeInvite } from "../../actions";
+import { formatDate } from "@/lib/format";
+import { sectionGate } from "@/lib/permissions";
+import { inviteMember } from "../../actions";
+import { RevokeInvitationButton } from "./revoke-button";
 
-export const metadata: Metadata = { title: "Membri" };
+export const metadata: Metadata = { title: "Utenti e accessi" };
 
 const INVITABLE_ROLES = [
   ["admin", "Amministratore"],
@@ -16,9 +24,16 @@ const INVITABLE_ROLES = [
   ["owner", "Proprietario azienda"],
 ] as const;
 
+const STATUS = {
+  active: <Badge tone="success">Attivo</Badge>,
+  suspended: <Badge tone="warning">Sospeso</Badge>,
+  invited: <Badge tone="info">Invitato</Badge>,
+} as Record<string, React.ReactNode>;
+
 export default async function MembersPage() {
   const { access, company } = await getAppContext();
-  if (!access.permissions.has("members.read")) redirect("/app");
+  const gate = sectionGate(access, "members.read");
+  if (gate !== "ok") return <ForbiddenState needsMfa={gate === "mfa"} />;
   const canManage = access.permissions.has("members.manage");
 
   const { members, invitations } = await asCurrentUser(async (tx) => {
@@ -34,7 +49,7 @@ export default async function MembersPage() {
          join public.users u on u.id = m.user_id
          join public.roles r on r.id = m.role_id
         where m.tenant_id = $1
-        order by u.email`,
+        order by lower(coalesce(u.full_name, u.email))`,
       [access.tenantId],
     );
     const invitations = canManage
@@ -50,88 +65,107 @@ export default async function MembersPage() {
   });
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Membri di {company.name}</h1>
-        <p className="text-sm text-muted">Chi può accedere all&apos;azienda e con quale ruolo.</p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Utenti e accessi"
+        description={`Chi può accedere a ${company.name} e con quale ruolo.`}
+      />
 
-      <section className="overflow-x-auto rounded-xl border border-line bg-surface">
-        <table className="w-full text-sm" data-testid="members-table">
-          <thead className="border-b border-line text-left text-muted">
-            <tr>
-              <th className="px-4 py-2 font-medium">Persona</th>
-              <th className="px-4 py-2 font-medium">Ruolo</th>
-              <th className="px-4 py-2 font-medium">Stato</th>
-            </tr>
-          </thead>
-          <tbody>
-            {members.map((m) => (
-              <tr key={m.id} className="border-b border-line last:border-0">
-                <td className="px-4 py-2">
-                  {m.full_name ? `${m.full_name} · ` : ""}
-                  {m.email}
-                </td>
-                <td className="px-4 py-2">{m.role}</td>
-                <td className="px-4 py-2">
-                  {m.status === "active"
-                    ? "Attivo"
-                    : m.status === "suspended"
-                      ? "Sospeso"
-                      : "Invitato"}
-                </td>
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm" data-testid="members-table">
+            <caption className="sr-only">Utenti dell&apos;azienda</caption>
+            <thead>
+              <tr className="border-b border-border bg-background/60 text-left">
+                <th scope="col" className="px-4 py-2.5 text-xs font-medium text-muted-foreground">
+                  Persona
+                </th>
+                <th scope="col" className="px-4 py-2.5 text-xs font-medium text-muted-foreground">
+                  Ruolo
+                </th>
+                <th scope="col" className="px-4 py-2.5 text-xs font-medium text-muted-foreground">
+                  Stato
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+            </thead>
+            <tbody>
+              {members.map((m) => (
+                <tr key={m.id} className="border-b border-border last:border-0">
+                  <td className="px-4 py-2.5">
+                    <p className="font-medium">{m.full_name ?? m.email}</p>
+                    {m.full_name && <p className="text-xs text-muted-foreground">{m.email}</p>}
+                  </td>
+                  <td className="px-4 py-2.5">{m.role}</td>
+                  <td className="px-4 py-2.5">{STATUS[m.status] ?? m.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
       {canManage ? (
-        <section className="grid gap-6 md:grid-cols-2">
-          <div className="rounded-xl border border-line bg-surface p-5">
-            <h2 className="mb-3 font-medium">Invita una persona</h2>
-            <ActionForm action={inviteMember}>
-              <Field label="Email" name="email" type="email" autoComplete="off" />
-              <label className="block space-y-1.5">
-                <span className="text-sm font-medium">Ruolo</span>
-                <select
-                  name="roleKey"
-                  defaultValue="technician"
-                  className="h-10 w-full rounded-md border border-line bg-surface px-3 text-sm"
-                >
-                  {INVITABLE_ROLES.filter(([k]) => k !== "owner" || access.roleKey === "owner").map(
-                    ([k, label]) => (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader
+              title="Invita una persona"
+              description="Riceverà un link valido 7 giorni, da aprire con questa email."
+            />
+            <CardBody>
+              <ActionForm action={inviteMember}>
+                <FormField id="invite-email" label="Email" required>
+                  <Input
+                    id="invite-email"
+                    name="email"
+                    type="email"
+                    autoComplete="off"
+                    required
+                    maxLength={320}
+                  />
+                </FormField>
+                <FormField id="invite-role" label="Ruolo" required>
+                  <Select id="invite-role" name="roleKey" defaultValue="technician">
+                    {INVITABLE_ROLES.filter(
+                      ([k]) => k !== "owner" || access.roleKey === "owner",
+                    ).map(([k, label]) => (
                       <option key={k} value={k}>
                         {label}
                       </option>
-                    ),
-                  )}
-                </select>
-              </label>
-              <SubmitButton>Invia invito</SubmitButton>
-            </ActionForm>
-          </div>
-          <div className="rounded-xl border border-line bg-surface p-5">
-            <h2 className="mb-3 font-medium">Inviti in attesa</h2>
+                    ))}
+                  </Select>
+                </FormField>
+                <SubmitButton>Invia invito</SubmitButton>
+              </ActionForm>
+            </CardBody>
+          </Card>
+          <Card>
+            <CardHeader title="Inviti in attesa" />
             {invitations.length === 0 ? (
-              <p className="text-sm text-muted">Nessun invito in attesa.</p>
+              <EmptyState
+                icon={Users}
+                title="Nessun invito in attesa"
+                description="Gli inviti inviati e non ancora accettati compariranno qui."
+              />
             ) : (
-              <ul className="space-y-2" data-testid="pending-invitations">
+              <ul className="divide-y divide-border" data-testid="pending-invitations">
                 {invitations.map((i) => (
-                  <li key={i.id} className="flex items-center justify-between gap-2 text-sm">
-                    <span>
-                      {i.email} · {i.role} · scade il {i.expires_at.toLocaleDateString("it-IT")}
-                    </span>
-                    <form action={revokeInvite}>
-                      <input type="hidden" name="invitationId" value={i.id} />
-                      <button className="text-danger hover:underline">Revoca</button>
-                    </form>
+                  <li
+                    key={i.id}
+                    className="flex items-center justify-between gap-3 px-5 py-3 text-sm"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{i.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {i.role} · scade il {formatDate(i.expires_at)}
+                      </p>
+                    </div>
+                    <RevokeInvitationButton id={i.id} email={i.email} />
                   </li>
                 ))}
               </ul>
             )}
-          </div>
-        </section>
+          </Card>
+        </div>
       ) : access.permissionsRequiringMfa.has("members.manage") ? (
         <Notice>Per invitare persone serve la verifica in due passaggi.</Notice>
       ) : null}

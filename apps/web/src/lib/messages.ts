@@ -30,4 +30,8 @@ export interface FormState {
   message?: string;
   /** Dati da mostrare una sola volta (es. link d'invito se l'email non è configurata). */
   detail?: string;
+  /** Errori per campo (chiave = nome del campo). */
+  fieldErrors?: Record<string, string>;
+  /** Id dell'elemento creato, per aprirlo dopo il salvataggio. */
+  createdId?: string;
 }

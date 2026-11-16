@@ -30,8 +30,9 @@ test("registrazione azienda: conferma email, creazione azienda, MFA obbligatoria
 }) => {
   owner = await createOwner(page, "titolare", company);
   await expect(page.getByTestId("role-name")).toHaveText("Proprietario azienda");
-  await expect(page.getByText("con verifica in due passaggi")).toBeVisible();
-  await expect(page.getByTestId("permissions")).toContainText("members.manage");
+  // Dashboard di amministrazione e voce "Utenti e accessi" (permesso members.read, sessione aal2).
+  await expect(page.getByTestId("dashboard-admin")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Utenti e accessi" })).toBeVisible();
 });
 
 test("login: password errata con messaggio generico; il titolare deve verificare la MFA", async ({
@@ -88,11 +89,23 @@ test("invito: email reale, accettazione con l'indirizzo invitato, ruolo Tecnico"
   await expect(invitee).toHaveURL(/\/app\?invito=accettato/);
   await expect(invitee.getByTestId("company-name")).toHaveText(company);
   await expect(invitee.getByTestId("role-name")).toHaveText("Tecnico");
-  await expect(invitee.getByTestId("permissions")).not.toContainText("members.manage");
-  // Il tecnico non entra nella gestione membri (né dal menu né dall'URL).
-  await expect(invitee.getByRole("link", { name: "Membri" })).toHaveCount(0);
+  await expect(invitee.getByTestId("dashboard-technician")).toBeVisible();
+  // Il tecnico non entra nella gestione utenti (né dal menu né dall'URL).
+  await expect(invitee.getByRole("link", { name: "Utenti e accessi" })).toHaveCount(0);
   await invitee.goto("/app/membri");
-  await expect(invitee).toHaveURL(/\/app$/);
+  await expect(invitee.getByTestId("forbidden")).toBeVisible();
+  await expect(invitee.getByTestId("members-table")).toHaveCount(0);
+
+  // Chi ha invitato riceve una notifica reale (trigger nel database).
+  await page.reload();
+  await expect(page.getByTestId("notifications-unread")).toHaveText("1");
+  await page.getByTestId("notifications").click();
+  await expect(page.getByTestId("notification-item").first()).toContainText("Invito accettato");
+  await page.getByRole("button", { name: "Segna tutte come lette" }).click();
+  await expect(page.getByTestId("notifications-unread")).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await page.reload();
+  await expect(page.getByTestId("notifications-unread")).toHaveCount(0);
 
   // Lo stesso link non funziona una seconda volta.
   await invitee.goto(link);
@@ -185,29 +198,37 @@ test("cambio azienda: un id di un'altra azienda inviato dal browser viene ignora
   await expect(tech.getByTestId("company-name")).toHaveText(companyB);
 
   // Selettore azienda: torna alla prima azienda.
-  await tech.getByLabel("Seleziona azienda").selectOption({ label: `${company} — Tecnico` });
-  await tech.getByRole("button", { name: "Cambia" }).click();
+  const optionFor = (page: Page, name: string) =>
+    page.getByTestId("company-option").filter({ has: page.getByText(name, { exact: true }) });
+  await tech.getByTestId("company-switcher").click();
+  const tenantB = await optionFor(tech, companyB).getAttribute("data-tenant-id");
+  await optionFor(tech, company).click();
   await expect(tech.getByTestId("company-name")).toHaveText(company);
 
-  // Un terzo utente con una sola azienda prova a "selezionare" l'azienda B
-  // modificando il valore nel browser: il server lo verifica e lo ignora.
-  const tenantB = await tech
-    .getByLabel("Seleziona azienda")
-    .locator("option", { hasText: companyB })
-    .getAttribute("value");
+  // Il titolare A (una sola azienda) prova a selezionare l'azienda B
+  // manomettendo la richiesta inviata dal browser: il server verifica
+  // l'appartenenza nel database e la ignora.
   const ownerA = await newPage(browser);
   await signIn(ownerA, owner.email);
   await verifyMfa(ownerA, owner.secret);
-  await ownerA.getByLabel("Seleziona azienda").evaluate((el, id) => {
-    const select = el as HTMLSelectElement;
-    select.options[0]!.value = id;
-    select.value = id;
-  }, tenantB!);
-  await ownerA
-    .getByLabel("Seleziona azienda")
-    .evaluate((el) => (el as HTMLSelectElement).form!.requestSubmit());
+  await ownerA.getByTestId("company-switcher").click();
+  const ownTenant = (await optionFor(ownerA, company).getAttribute("data-tenant-id"))!;
+  let tampered = 0;
+  await ownerA.route("**/app**", async (route) => {
+    const req = route.request();
+    const body = req.postData();
+    if (req.method() === "POST" && req.headers()["next-action"] && body?.includes(ownTenant)) {
+      tampered++;
+      await route.continue({ postData: body.replaceAll(ownTenant, tenantB!) });
+    } else {
+      await route.continue();
+    }
+  });
+  await optionFor(ownerA, company).click();
+  await expect.poll(() => tampered).toBeGreaterThan(0);
   await ownerA.waitForLoadState("networkidle");
   await expect(ownerA.getByTestId("company-name")).toHaveText(company);
+  await expect(ownerA.getByTestId("active-company")).toHaveText(company);
 });
 
 test("esci da tutti i dispositivi: le altre sessioni sono rifiutate subito", async ({

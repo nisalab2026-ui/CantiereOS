@@ -13,6 +13,8 @@ const config: NextConfig = {
   transpilePackages: ["@cantiereos/core"],
   serverExternalPackages: ["pg"],
   poweredByHeader: false,
+  // le regole per gli assistenti sono in CLAUDE.md alla radice del repository
+  agentRules: false,
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

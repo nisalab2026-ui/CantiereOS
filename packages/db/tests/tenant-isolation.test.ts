@@ -150,6 +150,15 @@ const TABLES: TableCase[] = [
     }),
   },
   {
+    table: "notifications",
+    updatable: { col: "read_at", value: new Date() },
+    deletable: false,
+    insert: (t) => ({
+      sql: "insert into public.notifications (tenant_id, user_id, kind, title) values ($1, auth.uid(), 'x.y', 'Intrusa')",
+      params: [t],
+    }),
+  },
+  {
     table: "subscriptions",
     updatable: null,
     deletable: false,

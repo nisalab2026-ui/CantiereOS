@@ -1,25 +1,12 @@
 "use server";
 
-import {
-  createInvitation,
-  resolveActiveTenant,
-  revokeInvitation,
-  switchActiveTenant,
-} from "@cantiereos/core";
+import { createInvitation, resolveActiveTenant, revokeInvitation } from "@cantiereos/core";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { asCurrentUser } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { sendMail } from "@/lib/mail";
 import { userMessage, type FormState } from "@/lib/messages";
 import { createSupabaseServerClient } from "@/lib/supabase";
-
-/** Cambio azienda attiva: il valore del modulo è solo una richiesta, verificata nel DB. */
-export async function switchCompany(form: FormData): Promise<void> {
-  const tenantId = String(form.get("tenantId") ?? "");
-  await asCurrentUser((tx) => switchActiveTenant(tx, tenantId)).catch(() => undefined);
-  redirect("/app");
-}
 
 const ROLE_KEYS = new Set([
   "owner",
@@ -72,10 +59,13 @@ export async function inviteMember(_: FormState, form: FormData): Promise<FormSt
   }
 }
 
-export async function revokeInvite(form: FormData): Promise<void> {
-  const id = String(form.get("invitationId") ?? "");
-  await asCurrentUser(async (tx) => revokeInvitation(tx, await resolveActiveTenant(tx), id));
+/** Revoca da finestra di conferma. L'id arriva dal client: il core e la RLS verificano azienda e permesso. */
+export async function revokeInviteById(invitationId: string): Promise<void> {
+  await asCurrentUser(async (tx) =>
+    revokeInvitation(tx, await resolveActiveTenant(tx), invitationId),
+  );
   revalidatePath("/app/membri");
+  revalidatePath("/app");
 }
 
 // --- Sicurezza account: MFA TOTP ------------------------------------------------

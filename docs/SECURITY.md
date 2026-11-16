@@ -99,6 +99,12 @@ Le email di autenticazione le invia Supabase Auth con il proprio SMTP.
 - Le query girano in `withUserTransaction`: `set local role authenticated` + claim + `request_id`.
 - `withServiceTransaction` (bypass RLS) è riservata a worker e operazioni di piattaforma e
   dichiara l'attore per l'audit.
+- Liste e ricerche: ordinamenti e filtri arrivano dall'URL solo come chiavi validate contro una
+  whitelist; i termini di ricerca sono parametri (con `%`, `_`, `\` neutralizzati), mai SQL.
+- Le voci di menu e i pulsanti nascosti sono solo comodità: ogni pagina mostra "Sezione non
+  disponibile" (o "serve la verifica in due passaggi") se il server non conferma il permesso.
+- Cambio azienda: l'id inviato dal browser è solo una richiesta; un test E2E manomette la richiesta
+  verso un'azienda di cui l'utente non è membro e verifica che venga ignorata.
 - CSRF: verifica dell'origine nativa delle Server Actions; le route POST (`/esci`) si basano su
   cookie `SameSite=Lax`.
 

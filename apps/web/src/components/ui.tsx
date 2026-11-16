@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export function Field({
@@ -43,6 +44,10 @@ export function Field({
 }
 
 /** Contenitore centrato per le pagine di accesso. */
+/**
+ * Pagine di accesso: pannello del marchio a sinistra (desktop), modulo a destra.
+ * Su mobile il marchio resta in alto, compatto.
+ */
 export function AuthShell({
   title,
   subtitle,
@@ -55,17 +60,52 @@ export function AuthShell({
   footer?: React.ReactNode;
 }) {
   return (
-    <main className="flex min-h-dvh items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="space-y-1">
-          <p className="text-sm font-semibold tracking-tight text-brand">CantiereOS</p>
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-          {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
+    <div className="grid min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+      <aside className="relative hidden overflow-hidden bg-[#050B1A] lg:flex lg:flex-col lg:justify-between lg:p-12">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(36,86,230,0.35),transparent_60%)]"
+        />
+        <Image
+          src="/brand/logo-full.png"
+          alt="CantiereOS — Gestisci, organizza, cresci"
+          width={640}
+          height={161}
+          priority
+          className="relative h-auto w-full max-w-md"
+        />
+        <p className="relative max-w-sm text-sm leading-relaxed text-[#98A1B3]">
+          Cantieri, squadre, rapportini e documenti della tua impresa in un unico posto, con i dati
+          di ogni azienda separati e protetti.
+        </p>
+      </aside>
+      <main className="flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 lg:hidden">
+              <span className="flex size-9 items-center justify-center rounded-lg bg-navy">
+                <Image
+                  src="/brand/logo-mark.png"
+                  alt=""
+                  width={268}
+                  height={256}
+                  className="h-6 w-auto"
+                />
+              </span>
+              <span className="text-base font-semibold tracking-tight">
+                Cantiere<span className="text-primary">OS</span>
+              </span>
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+              {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+            </div>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-6 shadow-sm">{children}</div>
+          {footer && <div className="text-center text-sm text-muted-foreground">{footer}</div>}
         </div>
-        <div className="rounded-xl border border-line bg-surface p-6 shadow-sm">{children}</div>
-        {footer && <div className="text-center text-sm text-muted">{footer}</div>}
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
 

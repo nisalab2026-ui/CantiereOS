@@ -70,7 +70,15 @@ async function seedTenantData(db: Db, tenantId: string, linkedUserId: string) {
     token_hash: createHash("sha256").update(randomBytes(32)).digest("hex"),
     expires_at: new Date(Date.now() + 86_400_000),
   });
+  const notification = await insertRow(db, "notifications", {
+    tenant_id: tenantId,
+    user_id: linkedUserId,
+    kind: "test.notice",
+    title: "Notifica di prova",
+    link: "/app",
+  });
   return {
+    notification,
     invitation,
     customer,
     supplier,
