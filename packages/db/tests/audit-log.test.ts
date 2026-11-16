@@ -38,10 +38,11 @@ describe("Audit log", () => {
 
   it("registra le insert di ogni tabella aziendale", async () => {
     const { rows } = await db.query<{ table_name: string }>(
-      "select distinct table_name from public.audit_log where tenant_id = $1 and action = 'INSERT' order by 1",
+      "select distinct table_name from public.audit_log where tenant_id = $1 and action = 'INSERT'",
       [s.tenantA],
     );
-    expect(rows.map((r) => r.table_name)).toEqual(
+    // ordinamento in JS: l'ORDER BY SQL dipende dalla collation del server
+    expect(rows.map((r) => r.table_name).sort()).toEqual(
       [
         "contacts",
         "customer_sites",
