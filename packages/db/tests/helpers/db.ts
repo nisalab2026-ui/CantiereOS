@@ -32,9 +32,13 @@ export async function tx<T>(db: Db, fn: () => Promise<T>): Promise<T> {
  * e claim JWT `sub`. Con userId null impersona `anon`.
  * Va chiamata dentro tx(): `set local` vale fino a fine transazione.
  */
-export async function become(db: Db, userId: string | null): Promise<void> {
+export async function become(
+  db: Db,
+  userId: string | null,
+  aal: "aal1" | "aal2" = "aal2",
+): Promise<void> {
   const role = userId ? "authenticated" : "anon";
-  const claims = JSON.stringify(userId ? { sub: userId, role } : { role });
+  const claims = JSON.stringify(userId ? { sub: userId, role, aal } : { role });
   await db.query(`set local role ${role}`);
   await db.query("select set_config('request.jwt.claims', $1, true)", [claims]);
 }
@@ -45,9 +49,18 @@ export async function becomeSuperuser(db: Db): Promise<void> {
   await db.query("select set_config('request.jwt.claims', '', true)");
 }
 
-export async function asUser<T>(db: Db, userId: string | null, fn: () => Promise<T>): Promise<T> {
+/**
+ * Esegue fn come utente. Default aal2 (sessione con MFA verificata): i test
+ * sul livello aal1 lo indicano esplicitamente.
+ */
+export async function asUser<T>(
+  db: Db,
+  userId: string | null,
+  fn: () => Promise<T>,
+  aal: "aal1" | "aal2" = "aal2",
+): Promise<T> {
   return tx(db, async () => {
-    await become(db, userId);
+    await become(db, userId, aal);
     return fn();
   });
 }
@@ -60,7 +73,7 @@ export async function expectPgError(promise: Promise<unknown>, code: string): Pr
 
 export async function createUser(db: Db, label: string): Promise<string> {
   const { rows } = await db.query<{ id: string }>(
-    "insert into auth.users (email) values ($1) returning id",
+    "insert into auth.users (email, email_confirmed_at) values ($1, now()) returning id",
     [`${uniq(label)}@test.invalid`],
   );
   return rows[0]!.id;
@@ -72,7 +85,7 @@ export async function createTenant(db: Db, name: string, ownerId: string): Promi
   try {
     await db.query("set local role service_role");
     const { rows } = await db.query<{ id: string }>(
-      "select app.create_tenant($1, $2, $3, 'test', 5, now() + interval '30 days') as id",
+      "select app.create_tenant($1, $2, $3, 'test', 50, now() + interval '30 days') as id",
       [name, uniq("t"), ownerId],
     );
     await db.query("commit");

@@ -39,6 +39,7 @@ const MATRIX: { user: UserKey; table: string; read: boolean; write: boolean }[] 
   { user: "bobTechA", table: "suppliers", read: false, write: false },
   { user: "bobTechA", table: "employees", read: true, write: false },
   { user: "victorViewerA", table: "suppliers", read: true, write: false },
+  { user: "victorViewerA", table: "teams", read: true, write: true },
   { user: "victorViewerA", table: "customers", read: true, write: false },
 ];
 
@@ -112,40 +113,6 @@ describe("Gestione membri e prevenzione dell'escalation", () => {
         [s.tenantA, s.users.aliceOwnerA],
       );
       expect(res.rowCount).toBe(0);
-    });
-  });
-
-  it("i nuovi membri nascono solo come invitati e invited_by non è falsificabile", async () => {
-    const viewerRole = "(select id from public.roles where tenant_id is null and key = 'viewer')";
-    await asUser(db, s.users.graceAdminA, async () => {
-      await expectPgError(
-        db.query(
-          `insert into public.memberships (tenant_id, user_id, role_id, status) values ($1, $2, ${viewerRole}, 'active')`,
-          [s.tenantA, s.users.outsider],
-        ),
-        "42501",
-      );
-    });
-    await asUser(db, s.users.graceAdminA, async () => {
-      const { rows } = await db.query<{ invited_by: string }>(
-        `insert into public.memberships (tenant_id, user_id, role_id, status) values ($1, $2, ${viewerRole}, 'invited') returning invited_by`,
-        [s.tenantA, s.users.outsider],
-      );
-      expect(rows[0]!.invited_by).toBe(s.users.graceAdminA);
-    });
-  });
-
-  it("l'invitato accetta il proprio invito e ottiene accesso", async () => {
-    await asUser(db, s.users.ivanInvitedA, async () => {
-      await db.query("select app.accept_invitation($1)", [s.tenantA]);
-      const { rowCount } = await db.query("select 1 from public.customers");
-      expect(rowCount).toBeGreaterThan(0);
-    });
-  });
-
-  it("non si accetta un invito inesistente", async () => {
-    await asUser(db, s.users.outsider, async () => {
-      await expectPgError(db.query("select app.accept_invitation($1)", [s.tenantA]), "P0002");
     });
   });
 
@@ -223,7 +190,7 @@ describe("Ruoli personalizzati", () => {
     await asUser(db, s.users.aliceOwnerA, async () => {
       await expectPgError(
         db.query(
-          "insert into public.role_permissions (role_id, permission_id) select r.id, p.id from public.roles r, public.permissions p where r.tenant_id is null and r.key = 'viewer' and p.key = 'customers.delete'",
+          "insert into public.role_permissions (role_id, permission_id) select r.id, p.id from public.roles r, public.permissions p where r.tenant_id is null and r.key = 'technician' and p.key = 'customers.delete'",
         ),
         "42501",
       );

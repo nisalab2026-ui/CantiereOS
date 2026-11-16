@@ -127,8 +127,17 @@ const TABLES: TableCase[] = [
     updatable: { col: "status", value: "suspended" },
     deletable: true,
     insert: (t) => ({
-      sql: "insert into public.memberships (tenant_id, user_id, role_id, status) select $1, $2, id, 'invited' from public.roles where tenant_id is null and key = 'viewer'",
+      sql: "insert into public.memberships (tenant_id, user_id, role_id, status) select $1, $2, id, 'active' from public.roles where tenant_id is null and key = 'technician'",
       params: [t, s.users.outsider],
+    }),
+  },
+  {
+    table: "invitations",
+    updatable: { col: "revoked_at", value: "2026-01-01" },
+    deletable: false,
+    insert: (t) => ({
+      sql: "insert into public.invitations (tenant_id, email, role_id, token_hash, expires_at) select $1, 'intruso@test.invalid', id, repeat('c', 64), now() + interval '1 day' from public.roles where tenant_id is null and key = 'technician'",
+      params: [t],
     }),
   },
   {
@@ -293,10 +302,17 @@ describe("Riferimenti incrociati tra aziende (FK composte)", () => {
       }),
     },
     {
-      name: "membership di A con un ruolo personalizzato di B",
+      name: "invito di A con un ruolo personalizzato di B",
       sql: (x) => ({
-        sql: "insert into public.memberships (tenant_id, user_id, role_id, status) values ($1, $2, $3, 'invited')",
-        params: [x.tenantA, x.users.outsider, x.b.customRole],
+        sql: "insert into public.invitations (tenant_id, email, role_id, token_hash, expires_at) values ($1, 'x@test.invalid', $2, repeat('a', 64), now() + interval '1 day')",
+        params: [x.tenantA, x.b.customRole],
+      }),
+    },
+    {
+      name: "invito di A per un cliente esterno di B",
+      sql: (x) => ({
+        sql: "insert into public.invitations (tenant_id, email, role_id, customer_id, token_hash, expires_at) select $1, 'y@test.invalid', id, $2, repeat('b', 64), now() + interval '1 day' from public.roles where tenant_id is null and key = 'external_client'",
+        params: [x.tenantA, x.b.customer],
       }),
     },
   ];
