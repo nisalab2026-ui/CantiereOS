@@ -43,8 +43,8 @@ export function UserMenu({
   const applyTheme = (value: string) => {
     const t = value as ThemePreference;
     const root = document.documentElement;
-    root.classList.remove("light", "dark");
-    if (t !== "system") root.classList.add(t);
+    root.classList.remove("light", "dark", "system");
+    root.classList.add(t);
     start(async () => {
       await setTheme(t);
       router.refresh();

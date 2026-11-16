@@ -27,22 +27,27 @@ ridefiniti su `.dark`. Tailwind li espone come classi (`bg-background`, `text-mu
 
 ### Colori
 
-| Token                | Chiaro    | Scuro     | Uso                                              |
-| -------------------- | --------- | --------- | ------------------------------------------------ |
-| `background`         | `#F6F7F9` | `#0A0F1C` | sfondo dell'app                                  |
-| `surface` / `card`   | `#FFFFFF` | `#111827` | pannelli, card, tabelle                          |
-| `foreground`         | `#0B1530` | `#E7EAF0` | testo principale (navy)                          |
-| `muted-foreground`   | `#5A6478` | `#98A1B3` | testo secondario, etichette                      |
-| `border`             | `#E3E7EE` | `#232C3D` | bordi e divisori                                 |
-| `primary`            | `#2456E6` | `#5B86FF` | **unico colore d'azione**: bottoni primari, link |
-| `primary-foreground` | `#FFFFFF` | `#0A0F1C` | testo su `primary`                               |
-| `navy`               | `#0B1530` | `#0B1530` | sidebar, identità                                |
-| `accent`             | `#EEF2FB` | `#1A2336` | hover, elementi selezionati                      |
-| `success`            | `#0F7A4A` | `#3CCB87` | stati positivi (approvato, completato)           |
-| `warning`            | `#B45309` | `#F5B547` | attenzione (in scadenza, in verifica)            |
-| `danger`             | `#B42318` | `#F97066` | errori, azioni distruttive, scaduto              |
-| `info`               | `#1D4ED8` | `#7FA2FF` | informazioni neutre                              |
-| `ring`               | `#2456E6` | `#5B86FF` | anello di focus                                  |
+Stile principale **"Cantiere digitale"** (scelto il 16/11/2026): scuro come identità, nato dal marchio
+(blu elettrico e ciano su navy). Fondo navy con griglia da progetto appena visibile e due bagliori
+blu, superfici in vetro satinato (`backdrop-filter`), bordi sottili luminosi, bottone primario con
+sfumatura blu → ciano. Il tema chiaro resta disponibile ed è quello precedente.
+
+| Token                   | Cantiere digitale (predefinito)   | Chiaro    | Uso                                         |
+| ----------------------- | --------------------------------- | --------- | ------------------------------------------- |
+| `background` / `canvas` | `#050B1A` + griglia e bagliori    | `#F6F7F9` | sfondo dell'app                             |
+| `card`                  | navy 78% + sfocatura 16 px        | `#FFFFFF` | pannelli, card, tabelle                     |
+| `popover`               | `#0C1530` (pieno)                 | `#FFFFFF` | menu, finestre, ricerca                     |
+| `foreground`            | `#EAF0FF`                         | `#0B1530` | testo principale                            |
+| `muted-foreground`      | `#8E9CC0`                         | `#5A6478` | testo secondario, etichette                 |
+| `border`                | blu 16%                           | `#E3E7EE` | bordi e divisori                            |
+| `primary`               | `#4C97FF` (sfumatura → `#22C3FF`) | `#2456E6` | **unico colore d'azione**                   |
+| `primary-foreground`    | `#04101F`                         | `#FFFFFF` | testo su `primary`                          |
+| `cyan`                  | `#22C3FF`                         | `#0891B2` | luce del marchio (filo luminoso, sfumature) |
+| `navy`                  | navy 72% + sfocatura              | `#0B1530` | sidebar                                     |
+| `success`               | `#3DDC97`                         | `#0F7A4A` | stati positivi                              |
+| `warning`               | `#FFC04D`                         | `#B45309` | attenzione                                  |
+| `danger`                | `#FF7A6E`                         | `#B42318` | errori, azioni distruttive                  |
+| `info`                  | `#7FB0FF`                         | `#1D4ED8` | informazioni neutre                         |
 
 Ogni colore semantico ha una variante tenue (`bg-success/10`) per sfondi di badge e avvisi.
 Mai comunicare uno stato **solo** con il colore: c'è sempre un'etichetta o un'icona.
@@ -85,9 +90,12 @@ Mai comunicare uno stato **solo** con il colore: c'è sempre un'etichetta o un'i
 
 ## 3. Tema chiaro e scuro
 
-Tre preferenze: **Chiaro**, **Scuro**, **Sistema** (default). La scelta è salvata in un cookie
-(`cos_theme`), letta dal server al rendering (niente lampeggio) e applicata come classe `dark`
-su `<html>`. Il selettore è nel menu utente.
+Tre preferenze: **Scuro** ("Cantiere digitale", predefinito), **Chiaro**, **Sistema**. La scelta è
+salvata in un cookie (`cos_theme`), letta dal server al rendering (niente lampeggio) e applicata come
+classe `dark`, `light` o `system` su `<html>`. Il selettore è nel menu utente.
+
+Tipografia dello stile: titoli di pagina 28 px; etichette di sezione e dei KPI in maiuscolo
+spaziato (come il motto del marchio); valori dei KPI in Geist Mono.
 
 ## 4. Layout
 

@@ -74,6 +74,9 @@ test("tema scuro e menu compresso restano dopo il ricaricamento", async ({ page 
   await expect(page.locator("html")).toHaveClass(/\bdark\b/);
   await page.getByRole("button", { name: "Comprimi menu" }).click();
   await expect(page.getByRole("button", { name: "Espandi menu" })).toBeVisible();
+  await expect
+    .poll(async () => (await page.context().cookies()).find((c) => c.name === "cos_sidebar")?.value)
+    .toBe("collapsed");
 
   await page.reload();
   await expect(page.locator("html")).toHaveClass(/\bdark\b/);

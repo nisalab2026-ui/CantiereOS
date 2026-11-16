@@ -32,7 +32,7 @@ export async function setSidebarCollapsed(collapsed: boolean): Promise<void> {
 }
 
 export async function setTheme(theme: ThemePreference): Promise<void> {
-  const value: ThemePreference = theme === "light" || theme === "dark" ? theme : "system";
+  const value: ThemePreference = theme === "light" || theme === "system" ? theme : "dark";
   (await cookies()).set(THEME_COOKIE, value, {
     path: "/",
     maxAge: YEAR,

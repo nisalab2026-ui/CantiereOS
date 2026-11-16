@@ -2,10 +2,45 @@
 
 /*
  * Token del design system (docs/DESIGN_SYSTEM.md §2).
- * Tema: classe "light" o "dark" su <html> se scelto dall'utente; senza classe
- * segue il sistema operativo. I componenti usano SOLO questi token.
+ * Tema su <html>: "dark" (predefinito, "Cantiere digitale"), "light" o "system"
+ * (segue il sistema operativo). I componenti usano SOLO questi token.
  */
 :root {
+  /* "Cantiere digitale" (predefinito): navy profondo, vetro, luce blu del marchio */
+  --background: #050b1a;
+  --card: rgb(13 23 50 / 0.78);
+  --popover: #0c1530;
+  --foreground: #eaf0ff;
+  --muted-foreground: #8e9cc0;
+  --border: rgb(110 150 255 / 0.16);
+  --input: rgb(110 150 255 / 0.26);
+  --primary: #4c97ff;
+  --primary-foreground: #04101f;
+  --cyan: #22c3ff;
+  --navy: rgb(7 14 34 / 0.72);
+  --navy-foreground: #eaf0ff;
+  --navy-muted: #8e9cc0;
+  --navy-accent: rgb(76 151 255 / 0.14);
+  --accent: rgb(110 150 255 / 0.1);
+  --success: #3ddc97;
+  --warning: #ffc04d;
+  --danger: #ff7a6e;
+  --info: #7fb0ff;
+  --ring: #4c97ff;
+  --glass-blur: 16px;
+  --primary-gradient: linear-gradient(135deg, #4c97ff 0%, #22c3ff 100%);
+  --primary-glow: 0 0 0 1px rgb(76 151 255 / 0.45), 0 8px 24px -8px rgb(34 195 255 / 0.55);
+  --card-glow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 20px 40px -24px rgb(0 0 0 / 0.8);
+  --canvas:
+    radial-gradient(1200px 600px at 85% -10%, rgb(36 86 230 / 0.28), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgb(34 195 255 / 0.12), transparent 60%),
+    linear-gradient(rgb(110 150 255 / 0.045) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, rgb(110 150 255 / 0.045) 1px, transparent 1px) 0 0 / 40px 40px, #050b1a;
+  color-scheme: dark;
+}
+
+/* Tema chiaro: scelta esplicita, oppure "Sistema" con il sistema operativo in chiaro */
+.light {
   --background: #f6f7f9;
   --card: #ffffff;
   --foreground: #0b1530;
@@ -24,52 +59,44 @@
   --danger: #b42318;
   --info: #1d4ed8;
   --ring: #2456e6;
+  --popover: #ffffff;
+  --cyan: #0891b2;
+  --glass-blur: 0px;
+  --primary-gradient: none;
+  --primary-glow: none;
+  --card-glow: none;
+  --canvas: #f6f7f9;
   color-scheme: light;
 }
 
-.dark {
-  --background: #0a0f1c;
-  --card: #111827;
-  --foreground: #e7eaf0;
-  --muted-foreground: #98a1b3;
-  --border: #232c3d;
-  --input: #2f3a4f;
-  --primary: #5b86ff;
-  --primary-foreground: #0a0f1c;
-  --navy: #070b16;
-  --navy-foreground: #e7eaf0;
-  --navy-muted: #8b96b0;
-  --navy-accent: #141d33;
-  --accent: #1a2336;
-  --success: #3ccb87;
-  --warning: #f5b547;
-  --danger: #f97066;
-  --info: #7fa2ff;
-  --ring: #5b86ff;
-  color-scheme: dark;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --background: #0a0f1c;
-    --card: #111827;
-    --foreground: #e7eaf0;
-    --muted-foreground: #98a1b3;
-    --border: #232c3d;
-    --input: #2f3a4f;
-    --primary: #5b86ff;
-    --primary-foreground: #0a0f1c;
-    --navy: #070b16;
+@media (prefers-color-scheme: light) {
+  .system {
+    --background: #f6f7f9;
+    --card: #ffffff;
+    --foreground: #0b1530;
+    --muted-foreground: #5a6478;
+    --border: #e3e7ee;
+    --input: #d5dbe5;
+    --primary: #2456e6;
+    --primary-foreground: #ffffff;
+    --navy: #0b1530;
     --navy-foreground: #e7eaf0;
-    --navy-muted: #8b96b0;
-    --navy-accent: #141d33;
-    --accent: #1a2336;
-    --success: #3ccb87;
-    --warning: #f5b547;
-    --danger: #f97066;
-    --info: #7fa2ff;
-    --ring: #5b86ff;
-    color-scheme: dark;
+    --navy-muted: #9aa6c2;
+    --navy-accent: #18244a;
+    --accent: #eef2fb;
+    --success: #0f7a4a;
+    --warning: #b45309;
+    --danger: #b42318;
+    --info: #1d4ed8;
+    --ring: #2456e6;
+    --popover: #ffffff;
+    --cyan: #0891b2;
+    --glass-blur: 0px;
+    --primary-gradient: none;
+    --primary-glow: none;
+    --card-glow: none;
+    --canvas: #f6f7f9;
+    color-scheme: light;
   }
 }
 
@@ -99,6 +126,8 @@
   --color-danger: var(--danger);
   --color-info: var(--info);
   --color-ring: var(--ring);
+  --color-popover: var(--popover);
+  --color-cyan: var(--cyan);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --radius-sm: 6px;
@@ -107,7 +136,8 @@
 }
 
 body {
-  background: var(--background);
+  background: var(--canvas, var(--background));
+  background-attachment: fixed;
   color: var(--foreground);
   font-feature-settings: "cv11", "ss01";
 }
@@ -115,6 +145,24 @@ body {
 :focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
+}
+
+/* --- Superfici "Cantiere digitale" ---------------------------------------- */
+.bg-card {
+  backdrop-filter: blur(var(--glass-blur));
+}
+.bg-card.shadow-xs,
+.bg-card.shadow-sm {
+  box-shadow:
+    var(--card-glow),
+    0 1px 2px rgb(0 0 0 / 0.04);
+}
+.cos-primary {
+  background-image: var(--primary-gradient);
+  box-shadow: var(--primary-glow);
+}
+.cos-edge {
+  background: linear-gradient(90deg, transparent, var(--primary), var(--cyan), transparent);
 }
 
 /* --- Movimento (vedi docs/DESIGN_SYSTEM.md §2) ----------------------------- */

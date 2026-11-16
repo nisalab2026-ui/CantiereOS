@@ -46,7 +46,8 @@ export function SidebarNav({
                       title={collapsed ? i.label : undefined}
                       className={cn(
                         "flex h-9 items-center gap-2.5 rounded-md px-2 text-sm text-navy-muted transition-colors hover:bg-navy-accent hover:text-navy-foreground",
-                        active && "bg-navy-accent font-medium text-navy-foreground",
+                        active &&
+                          "bg-navy-accent font-medium text-navy-foreground shadow-[inset_2px_0_0_var(--primary)]",
                         collapsed && "justify-center px-0",
                       )}
                     >
@@ -88,7 +89,7 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "sticky top-0 hidden h-dvh shrink-0 flex-col bg-navy text-navy-foreground transition-[width] duration-200 lg:flex",
+        "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-white/5 bg-navy text-navy-foreground backdrop-blur-xl transition-[width] duration-200 lg:flex",
         collapsed ? "w-16" : "w-64",
       )}
     >
