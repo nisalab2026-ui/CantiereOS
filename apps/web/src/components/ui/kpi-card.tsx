@@ -25,25 +25,31 @@ export function KpiCard({
 }) {
   const body = (
     <>
+      <span aria-hidden className="cos-edge absolute inset-x-6 top-0 h-px opacity-70" />
       <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">{label}</span>
+        <span className="text-xs font-medium tracking-[0.1em] text-muted-foreground uppercase">
+          {label}
+        </span>
         <span className="cos-depth flex size-8 items-center justify-center rounded-md bg-primary/10 text-primary">
           <Icon className="size-4" aria-hidden />
         </span>
       </div>
       <p
-        className="cos-depth mt-2 text-2xl font-semibold tracking-tight tabular-nums"
+        className="cos-depth mt-2 font-mono text-3xl font-semibold tracking-tight tabular-nums"
         data-testid="kpi-value"
       >
         <CountUp value={value} />
         {suffix && (
-          <span className="ml-1 text-base font-normal text-muted-foreground">{suffix}</span>
+          <span className="ml-1.5 font-sans text-sm font-normal text-muted-foreground">
+            {suffix}
+          </span>
         )}
       </p>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </>
   );
-  const cls = "block h-full rounded-lg border border-border bg-card p-4 shadow-xs";
+  const cls =
+    "relative block h-full overflow-hidden rounded-lg border border-border bg-card p-4 shadow-xs";
   return (
     <div className="cos-enter" style={{ "--i": index } as React.CSSProperties}>
       <Tilt className="h-full rounded-lg">

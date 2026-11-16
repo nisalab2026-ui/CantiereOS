@@ -13,7 +13,7 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight" data-testid={testId}>
+        <h1 className="text-[28px] leading-tight font-semibold tracking-tight" data-testid={testId}>
           {title}
         </h1>
         {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}

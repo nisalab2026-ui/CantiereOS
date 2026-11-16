@@ -56,7 +56,7 @@ export function NotificationsButton({ initialUnread }: { initialUnread: number }
         <Popover.Content
           align="end"
           sideOffset={8}
-          className="z-50 w-80 rounded-lg border border-border bg-card shadow-lg"
+          className="z-50 w-80 rounded-lg border border-border bg-popover shadow-lg"
         >
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <p className="text-sm font-semibold">Notifiche</p>
