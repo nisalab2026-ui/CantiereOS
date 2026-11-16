@@ -71,11 +71,10 @@ export async function createTenant(db: Db, name: string, ownerId: string): Promi
   await db.query("begin");
   try {
     await db.query("set local role service_role");
-    const { rows } = await db.query<{ id: string }>("select app.create_tenant($1, $2, $3) as id", [
-      name,
-      uniq("t"),
-      ownerId,
-    ]);
+    const { rows } = await db.query<{ id: string }>(
+      "select app.create_tenant($1, $2, $3, 'test', 5, now() + interval '30 days') as id",
+      [name, uniq("t"), ownerId],
+    );
     await db.query("commit");
     return rows[0]!.id;
   } catch (error) {
@@ -84,23 +83,39 @@ export async function createTenant(db: Db, name: string, ownerId: string): Promi
   }
 }
 
+export async function roleId(db: Db, key: string, tenantId: string | null = null): Promise<string> {
+  const { rows } = await db.query<{ id: string }>(
+    "select id from public.roles where key = $1 and tenant_id is not distinct from $2",
+    [key, tenantId],
+  );
+  if (!rows[0]) throw new Error(`Ruolo non trovato: ${key}`);
+  return rows[0].id;
+}
+
 export async function addMember(
   db: Db,
   tenantId: string,
   userId: string,
-  role: string,
+  roleKey: string,
   status = "active",
 ): Promise<void> {
   await db.query(
-    "insert into public.tenant_memberships (tenant_id, user_id, role, status) values ($1, $2, $3, $4)",
-    [tenantId, userId, role, status],
+    "insert into public.memberships (tenant_id, user_id, role_id, status) values ($1, $2, $3, $4)",
+    [tenantId, userId, await roleId(db, roleKey), status],
   );
 }
 
-export async function createPartner(db: Db, tenantId: string, name: string): Promise<string> {
+/** Insert come superuser (solo per preparare i dati di test); restituisce l'id. */
+export async function insertRow(
+  db: Db,
+  table: string,
+  values: Record<string, unknown>,
+): Promise<string> {
+  const cols = Object.keys(values);
+  const params = cols.map((_, i) => `$${i + 1}`);
   const { rows } = await db.query<{ id: string }>(
-    "insert into public.business_partners (tenant_id, display_name) values ($1, $2) returning id",
-    [tenantId, name],
+    `insert into public.${table} (${cols.join(", ")}) values (${params.join(", ")}) returning id`,
+    Object.values(values),
   );
   return rows[0]!.id;
 }

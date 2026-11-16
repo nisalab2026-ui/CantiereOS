@@ -4,6 +4,12 @@ import type { Client } from "pg";
 
 export const MIGRATIONS_DIR = path.resolve(import.meta.dirname, "../../../supabase/migrations");
 
+/** Seed di sviluppo: dati dimostrativi, MAI applicati in produzione. */
+export const SEED_FILE = path.resolve(
+  import.meta.dirname,
+  "../../../supabase/seeds/development.sql",
+);
+
 const MIGRATION_FILE = /^\d{14}_[a-z0-9_]+\.sql$/;
 
 export interface MigrationFile {

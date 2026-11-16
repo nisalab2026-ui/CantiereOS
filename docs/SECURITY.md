@@ -38,7 +38,7 @@
 
 I test girano su un PostgreSQL reale impersonando gli utenti esattamente come Supabase
 (`set role authenticated` + claim JWT). Una verifica a campione: aggiungendo una policy
-permissiva (`using (true)`) su `business_partners`, 9 test falliscono → i test rilevano davvero
+permissiva (`using (true)`) su `customers`, 5 test falliscono → i test rilevano davvero
 una fuga di dati.
 
 ## 3. Autenticazione (fase 2)

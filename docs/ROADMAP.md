@@ -9,7 +9,16 @@
 - [x] Struttura repository (pnpm workspace, TypeScript strict, CI)
 - [x] Documentazione: prodotto, architettura, domini, database, sicurezza, roadmap
 - [x] Prima migrazione: tenancy, ruoli/permessi, audit, clienti/fornitori
-- [x] Test di isolamento tra aziende su PostgreSQL reale (47 test)
+- [x] Test di isolamento tra aziende su PostgreSQL reale
+
+## Fase 1b — Fondamenta del database ✅
+
+- [x] Core: tenants, tenant_settings, users, roles (sistema + personalizzati), permissions,
+      role_permissions, memberships, subscriptions, audit_log
+- [x] Anagrafiche: customers, suppliers, contacts, customer_sites
+- [x] Personale: employees, teams, team_members
+- [x] Seed di sviluppo separato e protetto
+- [x] 134 test (isolamento cross-tenant per ogni tabella, ruoli, audit, guardie, seed)
 
 **Uscita:** migrazione applicata da zero senza errori; test di isolamento verdi.
 
@@ -22,7 +31,7 @@
 - Onboarding: creazione azienda (via `app.create_tenant` lato server), invito utenti
 - Selettore azienda attiva (cookie firmato verificato)
 - `packages/core`: contesto richiesta, controllo permessi, transazione RLS
-- Modulo **Clienti e fornitori** completo (lista, filtri, scheda, contatti)
+- Modulo **Clienti e fornitori** completo (lista, filtri, scheda, contatti, sedi)
 - Pagina audit log
 - Test: unit (Vitest), E2E login → crea cliente → isolamento tra due aziende (Playwright)
 - Conferma ADR-006 (Kysely) e ADR-007 (BullMQ)
