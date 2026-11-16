@@ -1,6 +1,6 @@
 import { createRemoteJWKSet, errors as joseErrors, jwtVerify, type JWTVerifyGetKey } from "jose";
 import { z } from "zod";
-import { AuthError } from "./errors.js";
+import { AuthError } from "./errors";
 
 /**
  * Sessione verificata: l'UNICA fonte di identità per il server. Nasce solo da

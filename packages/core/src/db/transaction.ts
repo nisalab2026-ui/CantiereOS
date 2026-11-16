@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type pg from "pg";
-import { AuthError } from "../auth/errors.js";
-import { sessionClaims, type VerifiedSession } from "../auth/session.js";
+import { AuthError } from "../auth/errors";
+import { sessionClaims, type VerifiedSession } from "../auth/session";
 
 /** Interfaccia minima per eseguire query dentro una transazione. */
 export interface Tx {

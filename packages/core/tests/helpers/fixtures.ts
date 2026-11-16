@@ -1,6 +1,6 @@
 import pg from "pg";
 import { inject } from "vitest";
-import type { VerifiedSession } from "../../src/index.js";
+import type { VerifiedSession } from "../../src/index";
 
 /** Pool connesso come superuser del DB effimero (come il server con l'utente `postgres`). */
 export function createPool(): pg.Pool {

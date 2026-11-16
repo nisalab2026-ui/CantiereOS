@@ -5,6 +5,7 @@ import {
   createInvitation,
   hashInvitationToken,
   isPlatformAdmin,
+  isPlatformAdminAccount,
   listMyCompanies,
   registerCompany,
   requirePermission,
@@ -15,7 +16,7 @@ import {
   withServiceTransaction,
   withUserTransaction,
   type VerifiedSession,
-} from "../src/index.js";
+} from "../src/index";
 import {
   addMember,
   createPool,
@@ -23,7 +24,7 @@ import {
   createTenant,
   createUser,
   uniq,
-} from "./helpers/fixtures.js";
+} from "./helpers/fixtures";
 
 let pool: pg.Pool;
 type User = { id: string; email: string };
@@ -202,6 +203,8 @@ describe("Permessi e MFA lato server", () => {
     const sa = await createUser(pool, "superadmin");
     await pool.query("insert into public.platform_admins (user_id) values ($1)", [sa.id]);
     const s1 = await createSession(pool, sa, "aal1");
+    expect(await asUser(s1, (tx) => isPlatformAdmin(tx))).toBe(false);
+    expect(await asUser(s1, (tx) => isPlatformAdminAccount(tx))).toBe(true);
     await expect(asUser(s1, (tx) => requirePlatformAdmin(tx))).rejects.toMatchObject({
       code: "MFA_REQUIRED",
     });

@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { AuthError, pgCode } from "./errors.js";
-import type { UserTx } from "../db/transaction.js";
+import { AuthError, pgCode } from "./errors";
+import type { UserTx } from "../db/transaction";
 
 const registerCompanyInput = z.object({
   name: z.string().trim().min(2).max(200),

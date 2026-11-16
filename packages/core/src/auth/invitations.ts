@@ -1,8 +1,8 @@
 import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
-import { requirePermission, type TenantAccess } from "./access.js";
-import { AuthError, pgCode } from "./errors.js";
-import type { UserTx } from "../db/transaction.js";
+import { requirePermission, type TenantAccess } from "./access";
+import { AuthError, pgCode } from "./errors";
+import type { UserTx } from "../db/transaction";
 
 export const INVITATION_TTL_DAYS = 7;
 

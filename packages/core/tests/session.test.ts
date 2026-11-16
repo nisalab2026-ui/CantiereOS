@@ -3,7 +3,7 @@ import type { AddressInfo } from "node:net";
 import { randomBytes, randomUUID } from "node:crypto";
 import { exportJWK, generateKeyPair, SignJWT, type JWTPayload } from "jose";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createTokenVerifier, sessionClaims, type TokenVerifier } from "../src/index.js";
+import { createTokenVerifier, sessionClaims, type TokenVerifier } from "../src/index";
 
 /**
  * Verifica dei token di accesso: è ciò che impedisce a un client di

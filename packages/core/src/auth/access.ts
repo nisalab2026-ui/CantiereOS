@@ -1,5 +1,5 @@
-import { AuthError, pgCode } from "./errors.js";
-import type { UserTx } from "../db/transaction.js";
+import { AuthError, pgCode } from "./errors";
+import type { UserTx } from "../db/transaction";
 
 export interface CompanyMembership {
   tenantId: string;
@@ -115,12 +115,17 @@ export async function isPlatformAdmin(tx: UserTx): Promise<boolean> {
   return rows[0]?.ok === true;
 }
 
-export async function requirePlatformAdmin(tx: UserTx): Promise<void> {
-  if (await isPlatformAdmin(tx)) return;
+/** L'account è registrato come Super Admin (a prescindere dal livello MFA della sessione). */
+export async function isPlatformAdminAccount(tx: UserTx): Promise<boolean> {
   const { rowCount } = await tx.query(
     "select 1 from public.platform_admins where user_id = auth.uid()",
   );
-  if ((rowCount ?? 0) > 0) {
+  return (rowCount ?? 0) > 0;
+}
+
+export async function requirePlatformAdmin(tx: UserTx): Promise<void> {
+  if (await isPlatformAdmin(tx)) return;
+  if (await isPlatformAdminAccount(tx)) {
     throw new AuthError("MFA_REQUIRED", "il pannello SaaS richiede la verifica MFA");
   }
   throw new AuthError("FORBIDDEN", "riservato agli operatori della piattaforma");

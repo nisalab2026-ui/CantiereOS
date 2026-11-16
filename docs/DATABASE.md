@@ -23,12 +23,14 @@
 
 ## 2. Migrazioni e seed
 
-| File                                                  | Contenuto                                                                                                                          |
-| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `supabase/migrations/20261116190000_core_tenancy.sql` | schema `app`, tenants, tenant_settings, users, permissions, roles, role_permissions, memberships, subscriptions, audit_log, helper |
-| `supabase/migrations/20261116200000_master_data.sql`  | customers, suppliers, contacts, customer_sites                                                                                     |
-| `supabase/migrations/20261116200100_workforce.sql`    | employees, teams, team_members                                                                                                     |
-| `supabase/seeds/development.sql`                      | **solo sviluppo**: dati dimostrativi (non è una migrazione)                                                                        |
+| File                                                           | Contenuto                                                                                                                          |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `supabase/migrations/20261116190000_core_tenancy.sql`          | schema `app`, tenants, tenant_settings, users, permissions, roles, role_permissions, memberships, subscriptions, audit_log, helper |
+| `supabase/migrations/20261116200000_master_data.sql`           | customers, suppliers, contacts, customer_sites                                                                                     |
+| `supabase/migrations/20261116200100_workforce.sql`             | employees, teams, team_members                                                                                                     |
+| `supabase/migrations/20261116210000_auth_authorization.sql`    | ruoli richiesti, MFA nel DB (`requires_mfa`, `current_aal`), `platform_admins`, cliente esterno, `invitations`, azienda attiva     |
+| `supabase/migrations/20261116220000_sessions_registration.sql` | revoca immediata delle sessioni (`current_session_active`), registrazione azienda self-service                                     |
+| `supabase/seeds/development.sql`                               | **solo sviluppo**: dati dimostrativi (non è una migrazione)                                                                        |
 
 - Nome `YYYYMMDDHHMMSS_descrizione.sql` (formato Supabase CLI), applicate in ordine, ognuna in
   una transazione.
@@ -98,24 +100,26 @@ tenants ──1:1── tenant_settings
 
 ### Tabelle
 
-| Tabella            | Scopo                                     | Chiavi e vincoli principali                                                                   | Lettura (RLS)                             | Scrittura (RLS)                            |
-| ------------------ | ----------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------ |
-| `tenants`          | Aziende                                   | slug unico; `is_demo`; `status` gestito solo dal server                                       | membri attivi                             | `tenant.manage` (solo nome e dati fiscali) |
-| `tenant_settings`  | Impostazioni (1:1)                        | PK = `tenant_id`; creata da trigger con l'azienda                                             | membri attivi                             | `tenant.manage`                            |
-| `users`            | Utenti applicativi (1:1 `auth.users`)     | creata da trigger alla registrazione; email non modificabile dall'utente                      | se stessi e colleghi                      | solo se stessi                             |
-| `permissions`      | Catalogo `modulo.azione`                  | `key` unica                                                                                   | tutti gli autenticati                     | nessuno (solo migrazioni)                  |
-| `roles`            | Ruoli di sistema e personalizzati         | sistema: `tenant_id` NULL, chiave unica; personalizzati: chiave `custom_*` unica per azienda  | sistema + quelli della propria azienda    | `roles.manage` (solo personalizzati)       |
-| `role_permissions` | Permessi dei ruoli                        | `tenant_id` copiato dal ruolo; FK composta `(tenant_id, role_id)`; anti-escalation            | come `roles`                              | `roles.manage`, solo permessi posseduti    |
-| `memberships`      | Utente ↔ azienda + ruolo + stato          | `unique (tenant_id, user_id)`; ruolo di sistema o della stessa azienda (trigger)              | se stessi o `members.read`                | `members.manage` (regole sotto)            |
-| `subscriptions`    | Piano, posti, prova, riferimenti provider | max 1 non cancellato per azienda                                                              | `billing.read`                            | solo `service_role`                        |
-| `audit_log`        | Registro modifiche                        | append-only per tutti, anche `service_role`                                                   | `audit.read`                              | solo trigger                               |
-| `customers`        | Clienti                                   | codice e P.IVA unici per azienda (record attivi); indice trigram sul nome                     | `customers.read`                          | `customers.write` / `.delete`              |
-| `suppliers`        | Fornitori                                 | come clienti + categoria, IBAN                                                                | `suppliers.read`                          | `suppliers.write` / `.delete`              |
-| `contacts`         | Referenti                                 | esattamente uno tra `customer_id` e `supplier_id`; FK composte; un solo primario per titolare | permesso del titolare (cliente/fornitore) | idem                                       |
-| `customer_sites`   | Sedi d'intervento                         | FK composta al cliente (`restrict`); coordinate entrambe o nessuna; CAP italiano a 5 cifre    | `customers.read`                          | `customers.write` / `.delete`              |
-| `employees`        | Dipendenti (con o senza account)          | `(tenant_id, user_id)` → `memberships`: l'utente deve essere membro della stessa azienda      | `employees.read`                          | `employees.write` / `.delete`              |
-| `teams`            | Squadre                                   | nome unico per azienda; caposquadra con FK composta                                           | `teams.read`                              | `teams.write` / `.delete`                  |
-| `team_members`     | Composizione squadre                      | FK composte a squadra e dipendente; `unique (team_id, employee_id)`                           | `teams.read`                              | `teams.write`                              |
+| Tabella            | Scopo                                     | Chiavi e vincoli principali                                                                                                              | Lettura (RLS)                             | Scrittura (RLS)                                                                              |
+| ------------------ | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `tenants`          | Aziende                                   | slug unico; `is_demo`; `status` gestito solo dal server                                                                                  | membri attivi                             | `tenant.manage` (solo nome e dati fiscali)                                                   |
+| `tenant_settings`  | Impostazioni (1:1)                        | PK = `tenant_id`; creata da trigger con l'azienda                                                                                        | membri attivi                             | `tenant.manage`                                                                              |
+| `users`            | Utenti applicativi (1:1 `auth.users`)     | creata da trigger alla registrazione; email non modificabile dall'utente                                                                 | se stessi e colleghi                      | solo se stessi                                                                               |
+| `permissions`      | Catalogo `modulo.azione`                  | `key` unica                                                                                                                              | tutti gli autenticati                     | nessuno (solo migrazioni)                                                                    |
+| `roles`            | Ruoli di sistema e personalizzati         | sistema: `tenant_id` NULL, chiave unica; personalizzati: chiave `custom_*` unica per azienda                                             | sistema + quelli della propria azienda    | `roles.manage` (solo personalizzati)                                                         |
+| `role_permissions` | Permessi dei ruoli                        | `tenant_id` copiato dal ruolo; FK composta `(tenant_id, role_id)`; anti-escalation                                                       | come `roles`                              | `roles.manage`, solo permessi posseduti                                                      |
+| `memberships`      | Utente ↔ azienda + ruolo + stato          | `unique (tenant_id, user_id)`; ruolo di sistema o della stessa azienda (trigger); `customer_id` obbligatorio solo per il cliente esterno | se stessi o `members.read`                | nessun INSERT dagli utenti (solo `create_tenant`/inviti); update/delete con `members.manage` |
+| `invitations`      | Inviti via email                          | solo hash SHA-256 del token; scadenza ≤ 30 giorni; un invito in attesa per email e azienda                                               | `members.manage`                          | `members.manage` (insert, revoca)                                                            |
+| `platform_admins`  | Super Admin SaaS                          | PK `user_id`; nessun `tenant_id`                                                                                                         | solo la propria riga                      | solo `service_role`                                                                          |
+| `subscriptions`    | Piano, posti, prova, riferimenti provider | max 1 non cancellato per azienda                                                                                                         | `billing.read`                            | solo `service_role`                                                                          |
+| `audit_log`        | Registro modifiche                        | append-only per tutti, anche `service_role`                                                                                              | `audit.read`                              | solo trigger                                                                                 |
+| `customers`        | Clienti                                   | codice e P.IVA unici per azienda (record attivi); indice trigram sul nome                                                                | `customers.read`                          | `customers.write` / `.delete`                                                                |
+| `suppliers`        | Fornitori                                 | come clienti + categoria, IBAN                                                                                                           | `suppliers.read`                          | `suppliers.write` / `.delete`                                                                |
+| `contacts`         | Referenti                                 | esattamente uno tra `customer_id` e `supplier_id`; FK composte; un solo primario per titolare                                            | permesso del titolare (cliente/fornitore) | idem                                                                                         |
+| `customer_sites`   | Sedi d'intervento                         | FK composta al cliente (`restrict`); coordinate entrambe o nessuna; CAP italiano a 5 cifre                                               | `customers.read`                          | `customers.write` / `.delete`                                                                |
+| `employees`        | Dipendenti (con o senza account)          | `(tenant_id, user_id)` → `memberships`: l'utente deve essere membro della stessa azienda                                                 | `employees.read`                          | `employees.write` / `.delete`                                                                |
+| `teams`            | Squadre                                   | nome unico per azienda; caposquadra con FK composta                                                                                      | `teams.read`                              | `teams.write` / `.delete`                                                                    |
+| `team_members`     | Composizione squadre                      | FK composte a squadra e dipendente; `unique (team_id, employee_id)`                                                                      | `teams.read`                              | `teams.write`                                                                                |
 
 Dati HR sensibili (codice fiscale, IBAN, costo orario, documenti del dipendente) **non** sono in
 `employees`, che è leggibile anche dai tecnici: andranno in una tabella separata con permesso
@@ -133,42 +137,66 @@ employee_id)`, `audit_log (tenant_id, created_at desc)` e `(tenant_id, table_nam
 
 ### Ruoli di sistema e permessi
 
-| Permesso         | owner | admin | manager | office | technician | viewer |
-| ---------------- | :---: | :---: | :-----: | :----: | :--------: | :----: |
-| tenant.manage    |   ✓   |   ✓   |         |        |            |        |
-| billing.read     |   ✓   |   ✓   |         |        |            |        |
-| members.read     |   ✓   |   ✓   |    ✓    |   ✓    |            |        |
-| members.manage   |   ✓   |   ✓   |         |        |            |        |
-| roles.manage     |   ✓   |   ✓   |         |        |            |        |
-| audit.read       |   ✓   |   ✓   |         |        |            |        |
-| customers.read   |   ✓   |   ✓   |    ✓    |   ✓    |     ✓      |   ✓    |
-| customers.write  |   ✓   |   ✓   |    ✓    |   ✓    |            |        |
-| customers.delete |   ✓   |   ✓   |         |        |            |        |
-| suppliers.read   |   ✓   |   ✓   |    ✓    |   ✓    |            |   ✓    |
-| suppliers.write  |   ✓   |   ✓   |    ✓    |   ✓    |            |        |
-| suppliers.delete |   ✓   |   ✓   |         |        |            |        |
-| employees.read   |   ✓   |   ✓   |    ✓    |   ✓    |     ✓      |   ✓    |
-| employees.write  |   ✓   |   ✓   |    ✓    |        |            |        |
-| employees.delete |   ✓   |   ✓   |         |        |            |        |
-| teams.read       |   ✓   |   ✓   |    ✓    |   ✓    |     ✓      |   ✓    |
-| teams.write      |   ✓   |   ✓   |    ✓    |        |            |        |
-| teams.delete     |   ✓   |   ✓   |         |        |            |        |
+| Chiave               | Nome                   | Note                                                             |
+| -------------------- | ---------------------- | ---------------------------------------------------------------- |
+| `owner`              | Proprietario azienda   | unico che gestisce il ruolo owner; almeno uno attivo per azienda |
+| `admin`              | Amministratore         | come owner, tranne la gestione dei proprietari                   |
+| `operations_manager` | Responsabile operativo | pianificazione, squadre, anagrafiche, personale                  |
+| `site_manager`       | Responsabile cantiere  | gestione operativa di cantieri e squadre                         |
+| `back_office`        | Amministrazione        | anagrafiche e attività amministrative                            |
+| `technician`         | Tecnico                | lavoro sul campo, consultazione                                  |
+| `external_client`    | Cliente esterno        | solo portale; vede solo il proprio cliente (`customer_id`)       |
 
-Differenza owner/admin: solo un owner può assegnare, modificare o rimuovere il ruolo owner.
+Il **Super Admin SaaS** non è un ruolo aziendale: è una riga in `platform_admins` (gestita solo
+da `service_role`) e vale solo con sessione MFA (`aal2`). Vede metadati di aziende e abbonamenti,
+non i dati operativi.
+
+| Permesso            | owner | admin | operations_manager | site_manager | back_office | technician | external_client |
+| ------------------- | :---: | :---: | :----------------: | :----------: | :---------: | :--------: | :-------------: |
+| tenant.manage 🔐    |   ✓   |   ✓   |                    |              |             |            |                 |
+| billing.read 🔐     |   ✓   |   ✓   |                    |              |             |            |                 |
+| members.read        |   ✓   |   ✓   |         ✓          |      ✓       |      ✓      |            |                 |
+| members.manage 🔐   |   ✓   |   ✓   |                    |              |             |            |                 |
+| roles.manage 🔐     |   ✓   |   ✓   |                    |              |             |            |                 |
+| audit.read 🔐       |   ✓   |   ✓   |                    |              |             |            |                 |
+| customers.read      |   ✓   |   ✓   |         ✓          |      ✓       |      ✓      |     ✓      |                 |
+| customers.write     |   ✓   |   ✓   |         ✓          |              |      ✓      |            |                 |
+| customers.delete 🔐 |   ✓   |   ✓   |                    |              |             |            |                 |
+| suppliers.read      |   ✓   |   ✓   |         ✓          |      ✓       |      ✓      |            |                 |
+| suppliers.write     |   ✓   |   ✓   |         ✓          |              |      ✓      |            |                 |
+| suppliers.delete 🔐 |   ✓   |   ✓   |                    |              |             |            |                 |
+| employees.read      |   ✓   |   ✓   |         ✓          |      ✓       |      ✓      |     ✓      |                 |
+| employees.write     |   ✓   |   ✓   |         ✓          |              |             |            |                 |
+| employees.delete 🔐 |   ✓   |   ✓   |                    |              |             |            |                 |
+| teams.read          |   ✓   |   ✓   |         ✓          |      ✓       |      ✓      |     ✓      |                 |
+| teams.write         |   ✓   |   ✓   |         ✓          |      ✓       |             |            |                 |
+| teams.delete 🔐     |   ✓   |   ✓   |                    |              |             |            |                 |
+| portal.access       |       |       |                    |              |             |            |        ✓        |
+
+🔐 = `permissions.requires_mfa`: il permesso vale **solo con sessione `aal2`** (MFA verificata).
+Con una sessione a sola password `app.tenant_ids_with_permission` non lo restituisce, quindi le
+RLS lo negano anche se il ruolo lo prevede. Il cliente esterno vede in `customers` e
+`customer_sites` solo il proprio cliente (policy `*_portal_select`) e nessun collega.
+
 Le aziende possono creare **ruoli personalizzati** (`custom_*`) combinando i permessi del catalogo;
 chi li gestisce non può concedere permessi che non possiede.
 
 ### Funzioni (schema privato `app`)
 
-| Funzione                                                                                                                          | Uso                                         | Chi può eseguirla        |
-| --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------ |
-| `user_tenant_ids()`                                                                                                               | aziende in cui l'utente è membro attivo     | authenticated            |
-| `tenant_ids_with_permission(perm)`                                                                                                | aziende operative in cui l'utente ha `perm` | authenticated            |
-| `has_permission`, `is_owner_role`, `is_tenant_owner`, `shares_tenant_with`, `current_actor`                                       | controlli puntuali                          | authenticated            |
-| `create_tenant(name, slug, owner, plan, seats, trial_ends_at, is_demo)`                                                           | azienda + titolare + abbonamento            | **solo service_role**    |
-| `accept_invitation(tenant)`                                                                                                       | l'invitato attiva la propria membership     | authenticated            |
-| `attach_tenant_table_triggers`, `grant_tenant_table`, `create_tenant_policies`, `grant_system_permissions`                        | helper di migrazione                        | solo proprietario schema |
-| trigger (`audit_row_change`, `prevent_tenant_change`, `check_role_permission`, `check_membership_role`, `ensure_active_owner`, …) | invarianti                                  | solo trigger             |
+| Funzione                                                                                                                          | Uso                                                                                                         | Chi può eseguirla        |
+| --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `user_tenant_ids()`                                                                                                               | aziende in cui l'utente è membro attivo                                                                     | authenticated            |
+| `tenant_ids_with_permission(perm)`                                                                                                | aziende operative in cui l'utente ha `perm`                                                                 | authenticated            |
+| `has_permission`, `is_owner_role`, `is_tenant_owner`, `shares_tenant_with`, `current_actor`                                       | controlli puntuali                                                                                          | authenticated            |
+| `create_tenant(name, slug, owner, plan, seats, trial_ends_at, is_demo)`                                                           | azienda + titolare + abbonamento                                                                            | **solo service_role**    |
+| `current_aal()`, `my_permissions(tenant)`                                                                                         | livello MFA della sessione; permessi effettivi (`granted`, `requires_mfa`)                                  | authenticated            |
+| `is_platform_admin()`, `portal_customer_ids()`                                                                                    | Super Admin (solo aal2); clienti del portale                                                                | authenticated            |
+| `accept_invitation(token)`                                                                                                        | accetta un invito: hash del token, scadenza, email verificata coincidente, posti                            | authenticated            |
+| `set_active_tenant(tenant)`                                                                                                       | salva l'azienda attiva se l'utente ne è membro attivo                                                       | authenticated            |
+| `current_session_active()`                                                                                                        | la sessione del JWT (`session_id`) esiste ancora in `auth.sessions`                                         | authenticated            |
+| `register_company(name, slug)`                                                                                                    | registrazione self-service: titolare = `auth.uid()`, email confermata, prova 30 gg / 5 posti, max 3 aziende | authenticated            |
+| `attach_tenant_table_triggers`, `grant_tenant_table`, `create_tenant_policies`, `grant_system_permissions`                        | helper di migrazione                                                                                        | solo proprietario schema |
+| trigger (`audit_row_change`, `prevent_tenant_change`, `check_role_permission`, `check_membership_role`, `ensure_active_owner`, …) | invarianti                                                                                                  | solo trigger             |
 
 Tutte le funzioni `SECURITY DEFINER` hanno `search_path = ''`; nessuna è eseguibile da `PUBLIC` o
 `anon` (verificato dai test).
@@ -185,9 +213,10 @@ Tutte le funzioni `SECURITY DEFINER` hanno `search_path = ''`; nessuna è esegui
 5. **Immutabilità:** `tenant_id` non è nei privilegi di UPDATE e un trigger blocca il cambio
    anche per `service_role`.
 6. **FK composte:** impossibile collegare record di aziende diverse, anche con `service_role`.
-7. **Escalation:** nessuno modifica la propria membership; solo un owner gestisce il ruolo owner;
-   nuovi membri nascono `invited`; nessuno concede permessi che non ha; ogni azienda conserva
-   almeno un owner attivo (vincolo differito).
+7. **Escalation:** nessuno modifica la propria membership; solo un owner gestisce (e invita) il
+   ruolo owner; i membri entrano solo tramite invito accettato con l'email verificata a cui è
+   stato inviato; nessuno concede permessi che non ha; ogni azienda conserva almeno un owner
+   attivo (vincolo differito); i permessi amministrativi richiedono MFA (`aal2`).
 8. **Server only:** abbonamenti, stato azienda e creazione aziende passano solo da `service_role`.
 9. **Utenti in più aziende:** supportati; le RLS applicano i permessi di ciascuna azienda.
 10. **Azienda sospesa:** perde l'accesso ai dati operativi; i membri vedono ancora la riga
@@ -198,13 +227,19 @@ Tutte le funzioni `SECURITY DEFINER` hanno `search_path = ''`; nessuna è esegui
 `pnpm test:db` crea un database usa-e-getta, applica shim Supabase (solo test), migrazioni e seed
 (due volte), poi esegue:
 
-| File                        | Cosa verifica                                                                                                                                                                                                               |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tenant-isolation.test.ts`  | per **ogni** tabella aziendale: lettura, inserimento, modifica, cancellazione e spostamento verso un'altra azienda; 8 tentativi di FK cross-tenant; utenti esterni, anon, sospesi, invitati, aziende sospese, multi-azienda |
-| `roles-permissions.test.ts` | matrice ruolo × tabella, escalation, inviti, titolare unico, ruoli personalizzati e anti-escalation, abbonamenti, impostazioni, utenti                                                                                      |
-| `audit-log.test.ts`         | contenuto dell'audit, copertura di tutte le tabelle, visibilità, immutabilità anche per service_role                                                                                                                        |
-| `schema-guards.test.ts`     | RLS e policy ovunque, PK UUID, tenant_id + FK, FK composte, trigger, privilegi, funzioni sicure                                                                                                                             |
-| `seed.test.ts`              | solo aziende demo, idempotenza, email `.invalid`, isolamento, rifiuto con dati reali, nessun dato demo nelle migrazioni                                                                                                     |
+| File                         | Cosa verifica                                                                                                                                                                                                               |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tenant-isolation.test.ts`   | per **ogni** tabella aziendale: lettura, inserimento, modifica, cancellazione e spostamento verso un'altra azienda; 8 tentativi di FK cross-tenant; utenti esterni, anon, sospesi, invitati, aziende sospese, multi-azienda |
+| `roles-permissions.test.ts`  | matrice ruolo × tabella, escalation, inviti, titolare unico, ruoli personalizzati e anti-escalation, abbonamenti, impostazioni, utenti                                                                                      |
+| `audit-log.test.ts`          | contenuto dell'audit, copertura di tutte le tabelle, visibilità, immutabilità anche per service_role                                                                                                                        |
+| `schema-guards.test.ts`      | RLS e policy ovunque, PK UUID, tenant_id + FK, FK composte, trigger, privilegi, funzioni sicure                                                                                                                             |
+| `auth-authorization.test.ts` | ruoli richiesti, MFA aal1/aal2, Responsabile cantiere, Cliente esterno, Super Admin, inviti (token, scadenza, revoca, email, posti), azienda attiva, revoca immediata alla sospensione                                      |
+| `seed.test.ts`               | solo aziende demo, idempotenza, email `.invalid`, isolamento, rifiuto con dati reali, nessun dato demo nelle migrazioni                                                                                                     |
+
+Inoltre `pnpm test:core` (packages/core) esegue sullo stesso tipo di database i test del codice
+server: verifica JWT, sessione revocata, azienda attiva, permessi/MFA, inviti, registrazione
+azienda, transazioni di servizio. I test end-to-end con Supabase Auth reale sono in `e2e/`
+(vedi [SECURITY.md](SECURITY.md) §3).
 
 ## 6. Schema progettato per i moduli successivi (non ancora implementato)
 

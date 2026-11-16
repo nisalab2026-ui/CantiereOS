@@ -22,21 +22,27 @@
 
 **Uscita:** migrazione applicata da zero senza errori; test di isolamento verdi.
 
-## Fase 2 — Applicazione base e autenticazione
+## Fase 2a — Autenticazione e autorizzazione ✅ (in revisione)
 
-- Progetto Supabase (dev) e `supabase/config.toml`; `supabase db push` della migrazione 0001
-- Scaffold Next.js in `apps/web` (TypeScript strict, Tailwind, shadcn/ui, Geist, tema chiaro/scuro)
-- Design system: token colore navy/blu/grigi, tipografia, layout con sidebar, ⌘K
-- Login, registrazione, MFA, recupero password
-- Onboarding: creazione azienda (via `app.create_tenant` lato server), invito utenti
-- Selettore azienda attiva (cookie firmato verificato)
-- `packages/core`: contesto richiesta, controllo permessi, transazione RLS
-- Modulo **Clienti e fornitori** completo (lista, filtri, scheda, contatti, sedi)
-- Pagina audit log
-- Test: unit (Vitest), E2E login → crea cliente → isolamento tra due aziende (Playwright)
+- [x] Ruoli richiesti: Proprietario, Amministratore, Responsabile operativo, Responsabile
+      cantiere, Amministrazione, Tecnico, Cliente esterno; Super Admin SaaS (`platform_admins`)
+- [x] MFA nel database (`requires_mfa` + `aal2`) e obbligatoria nell'app per ruoli amministrativi
+- [x] Inviti con token hash, email verificata, scadenza, revoca, limite posti
+- [x] Azienda attiva verificata a ogni richiesta; utenti in più aziende
+- [x] Revoca immediata delle sessioni (`auth.sessions`), esci da tutti i dispositivi
+- [x] `packages/core`: verifica JWT, transazione RLS, permessi/MFA, inviti, registrazione
+- [x] `apps/web` (Next.js 16): accesso, registrazione azienda, recupero password, MFA, inviti,
+      membri, selettore azienda
+- [x] Stack Supabase Auth locale in Docker + test E2E Playwright con email reali (mailpit)
+- [ ] Template email italiani, SMTP e progetto Supabase di produzione (serve un account)
+- [ ] Rate limiting applicativo (Redis), CSP con nonce, codici di recupero MFA
+
+## Fase 2b — Interfaccia e primo modulo
+
+- Design system completo (`docs/DESIGN_SYSTEM.md`), sidebar, header, ricerca, notifiche, tema
+- Dashboard per ruolo; tabelle, filtri, modali e moduli riutilizzabili
+- Modulo **Clienti e fornitori** (lista, filtri, scheda, contatti, sedi), pagina audit log
 - Conferma ADR-006 (Kysely) e ADR-007 (BullMQ)
-
-**Uscita:** due aziende reali di test in ambiente dev, nessun accesso incrociato via UI né API.
 
 ## Fase 3 — Operatività di campo
 
