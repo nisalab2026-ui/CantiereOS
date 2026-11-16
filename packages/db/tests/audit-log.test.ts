@@ -48,6 +48,7 @@ describe("Audit log", () => {
         "customer_sites",
         "customers",
         "employees",
+        "invitations",
         "memberships",
         "role_permissions",
         "roles",

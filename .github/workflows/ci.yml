@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   db:
-    name: Migrazioni e test di isolamento
+    name: Migrazioni, isolamento e autorizzazione
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -36,3 +36,23 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test:db
+      - run: pnpm test:core
+
+  e2e-auth:
+    name: E2E autenticazione (Supabase Auth reale)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @cantiereos/e2e exec playwright install --with-deps chromium
+      - run: scripts/e2e-auth.sh
+      - if: failure()
+        run: |
+          cat /tmp/cantiereos-web.log || true
+          docker compose --env-file .env.local-auth --profile auth logs gotrue --tail 100 || true

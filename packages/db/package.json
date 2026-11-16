@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Migrazioni PostgreSQL, tooling e test di isolamento multi-tenant",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",

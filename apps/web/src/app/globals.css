@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+/* Token di base (il design system completo arriva con la fase UI: docs/DESIGN_SYSTEM.md). */
+@theme {
+  --color-canvas: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-ink: #0f172a;
+  --color-muted: #5b6475;
+  --color-line: #e3e6eb;
+  --color-brand: #1e3a8a;
+  --color-brand-ink: #ffffff;
+  --color-danger: #b42318;
+  --color-success: #067647;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-canvas: #0b0f17;
+    --color-surface: #121826;
+    --color-ink: #e6e9ef;
+    --color-muted: #98a2b3;
+    --color-line: #263042;
+    --color-brand: #8fb0ff;
+    --color-brand-ink: #0b1020;
+    --color-danger: #f97066;
+    --color-success: #47cd89;
+  }
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}

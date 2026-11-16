@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from "node:crypto";
 import { addMember, createTenant, createUser, insertRow, uniq, type Db } from "./db.js";
 
 /** Un set completo di dati aziendali per un tenant (almeno una riga per tabella). */
@@ -58,7 +59,19 @@ async function seedTenantData(db: Db, tenantId: string, linkedUserId: string) {
      select $1, id from public.permissions where key = 'customers.read' returning id`,
     [customRole],
   );
+  const invitation = await insertRow(db, "invitations", {
+    tenant_id: tenantId,
+    email: `${uniq("invitato")}@test.invalid`,
+    role_id: (
+      await db.query<{ id: string }>(
+        "select id from public.roles where tenant_id is null and key = 'technician'",
+      )
+    ).rows[0]!.id,
+    token_hash: createHash("sha256").update(randomBytes(32)).digest("hex"),
+    expires_at: new Date(Date.now() + 86_400_000),
+  });
   return {
+    invitation,
     customer,
     supplier,
     customerContact,
@@ -91,7 +104,7 @@ export async function seedTwoTenants(db: Db) {
     ivanInvitedA: await createUser(db, "ivan"),
     daveOwnerB: await createUser(db, "dave"),
     tomTechB: await createUser(db, "tom"),
-    eveMulti: await createUser(db, "eve"), // viewer in A, office in B
+    eveMulti: await createUser(db, "eve"), // site_manager in A, back_office in B
     outsider: await createUser(db, "outsider"),
   };
 
@@ -99,15 +112,15 @@ export async function seedTwoTenants(db: Db) {
   const tenantB = await createTenant(db, "Impianti Beta Test", users.daveOwnerB);
 
   await addMember(db, tenantA, users.graceAdminA, "admin");
-  await addMember(db, tenantA, users.martaManagerA, "manager");
-  await addMember(db, tenantA, users.carolOfficeA, "office");
+  await addMember(db, tenantA, users.martaManagerA, "operations_manager");
+  await addMember(db, tenantA, users.carolOfficeA, "back_office");
   await addMember(db, tenantA, users.bobTechA, "technician");
-  await addMember(db, tenantA, users.victorViewerA, "viewer");
-  await addMember(db, tenantA, users.frankSuspendedA, "office", "suspended");
+  await addMember(db, tenantA, users.victorViewerA, "site_manager");
+  await addMember(db, tenantA, users.frankSuspendedA, "back_office", "suspended");
   await addMember(db, tenantA, users.ivanInvitedA, "technician", "invited");
-  await addMember(db, tenantA, users.eveMulti, "viewer");
+  await addMember(db, tenantA, users.eveMulti, "site_manager");
   await addMember(db, tenantB, users.tomTechB, "technician");
-  await addMember(db, tenantB, users.eveMulti, "office");
+  await addMember(db, tenantB, users.eveMulti, "back_office");
 
   const a = await seedTenantData(db, tenantA, users.bobTechA);
   const b = await seedTenantData(db, tenantB, users.tomTechB);

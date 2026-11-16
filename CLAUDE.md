@@ -39,9 +39,16 @@ identificatori e commit tecnici: **inglese** (glossario in `docs/DOMAINS.md`).
 pnpm install                 # dipendenze
 pnpm typecheck               # TypeScript strict su tutti i pacchetti
 pnpm test:db                 # migrazioni + test di isolamento (richiede TEST_DATABASE_URL)
+pnpm test:core               # sessione, permessi, MFA, inviti lato server (richiede TEST_DATABASE_URL)
+pnpm e2e:auth                # stack Supabase Auth reale in Docker + build app + test Playwright
 pnpm format                  # prettier
 docker compose --profile test up -d postgres-test   # PostgreSQL usa-e-getta su :54329
 ```
+
+Sviluppo dell'app in locale: `node scripts/local-auth-env.mjs` (segreti casuali in file ignorati
+da git), `docker compose --env-file .env.local-auth --profile auth up -d auth-db gotrue
+auth-gateway mailpit`, `node scripts/local-auth-migrate.mjs`, poi `pnpm --filter @cantiereos/web dev`.
+Le email (conferme, recupero password, inviti) si leggono su http://127.0.0.1:8025 (mailpit).
 
 `TEST_DATABASE_URL` punta a un server PostgreSQL di sviluppo/CI (es.
 `postgresql://postgres@127.0.0.1:54329/postgres`). I test creano un database con nome casuale
@@ -52,7 +59,19 @@ docker compose --profile test up -d postgres-test   # PostgreSQL usa-e-getta su 
 - `supabase/migrations/` — schema (fonte di verità)
 - `supabase/seeds/development.sql` — dati DEMO solo per sviluppo (mai in produzione, mai nelle migrazioni)
 - `packages/db/` — runner migrazioni per i test, shim Supabase **solo test**, test RLS
-- `apps/web/`, `apps/worker/`, `packages/core/` — dalla fase 2 (vedi `docs/ROADMAP.md`)
+- `packages/core/` — sessione verificata, autorizzazione, transazioni RLS, casi d'uso (server)
+- `apps/web/` — Next.js 16 (App Router, `src/proxy.ts` al posto del middleware)
+- `e2e/` — test Playwright contro Supabase Auth reale; `infra/local-auth/`, `scripts/` — stack locale
+- `apps/worker/` — fase successiva (vedi `docs/ROADMAP.md`)
+
+## Regole per autenticazione e autorizzazione
+
+- Identità solo da `getVerifiedSession()` / `requireSession()` (JWT verificato con `jose`);
+  mai `getSession().user` o dati del form.
+- Dati aziendali solo dentro `asCurrentUser(...)` (RLS attiva); azienda attiva da
+  `getAppContext()` / `resolveActiveTenant()`; controllo con `requirePermission()` prima di agire.
+- Nuovi permessi amministrativi o distruttivi: `requires_mfa = true`.
+- `withServiceTransaction` solo per worker/piattaforma, con attore dichiarato.
 
 ## Come aggiungere una tabella di dominio
 

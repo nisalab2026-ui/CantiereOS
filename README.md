@@ -32,17 +32,31 @@ docker compose --profile test up -d postgres-test
 export TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:54329/postgres
 pnpm typecheck
 pnpm test:db
+pnpm test:core
 ```
 
 I test applicano tutte le migrazioni a un database temporaneo e verificano che nessuna azienda
-possa leggere, modificare o collegare dati di un'altra.
+possa leggere, modificare o collegare dati di un'altra, e che sessione, permessi e MFA siano
+verificati lato server.
+
+## Avvio dell'app in locale (Supabase Auth reale in Docker)
+
+```bash
+node scripts/local-auth-env.mjs        # segreti casuali in .env.local-auth e apps/web/.env.local
+docker compose --env-file .env.local-auth --profile auth up -d auth-db gotrue auth-gateway mailpit
+node scripts/local-auth-migrate.mjs    # migrazioni sul database locale
+pnpm --filter @cantiereos/web dev      # http://localhost:3000 — email su http://127.0.0.1:8025
+pnpm e2e:auth                          # oppure: tutto in automatico + test end-to-end
+```
 
 ## Struttura
 
 ```
-apps/web          Next.js (fase 2)
-apps/worker       processi asincroni (fase 2+)
+apps/web          Next.js 16: autenticazione e area applicativa
+apps/worker       processi asincroni (fase successiva)
+packages/core     sessione verificata, autorizzazione, transazioni RLS
 packages/db       tooling migrazioni e test di isolamento
+e2e               test end-to-end Playwright (Supabase Auth reale)
 supabase/         migrazioni SQL versionate
 docs/             documentazione
 ```

@@ -65,11 +65,14 @@ Vitest 4.1.12, pg 8.23.1, PostgreSQL 16.
 ```
 cantiere-os/
 ├── apps/
-│   ├── web/              # Next.js (fase 2)
+│   ├── web/              # Next.js 16: autenticazione e area applicativa
 │   └── worker/           # processi asincroni (fase 2+)
 ├── packages/
 │   ├── db/               # tooling migrazioni + test RLS/isolamento (attivo)
-│   └── core/             # moduli di dominio condivisi web/worker (fase 2)
+│   └── core/             # sessione verificata, autorizzazione, transazioni RLS, casi d'uso
+├── e2e/                  # test end-to-end Playwright (stack Supabase Auth reale)
+├── infra/local-auth/     # init DB e gateway per Supabase Auth in Docker (solo sviluppo/test)
+├── scripts/              # generazione segreti locali, migrazioni locali, avvio E2E
 ├── supabase/
 │   └── migrations/       # migrazioni SQL versionate (fonte di verità dello schema)
 ├── docs/                 # specifiche e architettura
@@ -80,10 +83,14 @@ cantiere-os/
 
 ## 4. Flusso di una richiesta (lettura/scrittura)
 
-1. Il middleware Next.js rinnova la sessione Supabase (cookie httpOnly, `SameSite=Lax`).
-2. Il server legge l'utente **dal token verificato**, mai da parametri del client.
-3. L'**azienda attiva** è salvata in un cookie firmato; a ogni richiesta il server verifica che
-   l'utente sia membro attivo di quell'azienda. Un valore non valido viene ignorato.
+1. Il proxy Next.js (`src/proxy.ts`, ex middleware) rinnova la sessione Supabase (cookie
+   httpOnly, `SameSite=Lax`).
+2. Il server legge l'utente **dal token verificato** con `jose` (firma, emittente, audience,
+   scadenza), mai da parametri del client.
+3. L'**azienda attiva** è salvata nel database (`users.last_active_tenant_id`, modificabile solo
+   con `app.set_active_tenant`); a ogni richiesta il server verifica che l'utente ne sia ancora
+   membro attivo, altrimenti usa la prima azienda accessibile. Prima di ogni transazione si
+   verifica anche che la sessione non sia stata revocata (`app.current_session_active()`).
 4. Il caso d'uso (`packages/core`) controlla il permesso (`customers.write`, …) e apre una
    transazione con:
    ```sql

@@ -17,7 +17,7 @@ afterAll(async () => {
 });
 
 /** Tabelle globali senza tenant_id. */
-const GLOBAL_TABLES = new Set(["tenants", "users", "permissions"]);
+const GLOBAL_TABLES = new Set(["tenants", "users", "permissions", "platform_admins"]);
 /** tenant_id nullable: righe globali ammesse (eventi piattaforma, ruoli di sistema). */
 const TENANT_NULLABLE = new Set(["audit_log", "roles", "role_permissions"]);
 /** Tabelle che non subiscono il trigger di audit / immutabilità. */
@@ -26,6 +26,7 @@ const NO_AUDIT = new Set(["audit_log"]);
 const FK_EXCEPTIONS = new Set([
   "role_permissions_role_fk", // affiancata da role_permissions_tenant_role_fk
   "memberships_role_id_fkey", // ruoli di sistema condivisi; verificata da trigger
+  "invitations_role_id_fkey", // idem
 ]);
 
 async function publicTables(): Promise<{ name: string; rls: boolean }[]> {

@@ -28,5 +28,89 @@ services:
       - /var/lib/postgresql/data
     profiles: ["test"]
 
+  # ---------------------------------------------------------------------------
+  # Supabase Auth locale (profilo "auth"): PostgreSQL + GoTrue + mailpit + gateway.
+  # Segreti generati da `node scripts/local-auth-env.mjs` in .env.local-auth
+  # (ignorato da git). Avvio: docker compose --env-file .env.local-auth --profile auth up -d
+  # ---------------------------------------------------------------------------
+  auth-db:
+    image: postgres:16
+    profiles: ["auth"]
+    environment:
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:?eseguire scripts/local-auth-env.mjs}
+      AUTH_ADMIN_DB_PASSWORD: ${AUTH_ADMIN_DB_PASSWORD:?eseguire scripts/local-auth-env.mjs}
+    ports:
+      - "127.0.0.1:54330:5432"
+    volumes:
+      - ./infra/local-auth/init-db.sh:/docker-entrypoint-initdb.d/00-init.sh:ro
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  gotrue:
+    image: supabase/gotrue:v2.180.0
+    profiles: ["auth"]
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      PORT: "9999"
+      API_EXTERNAL_URL: ${AUTH_PUBLIC_URL:?}/auth/v1
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${AUTH_ADMIN_DB_PASSWORD}@auth-db:5432/postgres?search_path=auth
+      GOTRUE_SITE_URL: ${APP_URL:?}
+      GOTRUE_URI_ALLOW_LIST: ${APP_URL}/**
+      GOTRUE_JWT_SECRET: ${AUTH_JWT_SECRET:?}
+      GOTRUE_JWT_ISSUER: ${AUTH_PUBLIC_URL}/auth/v1
+      GOTRUE_JWT_EXP: "3600"
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      # Ruolo nei JWT degli utenti (Supabase lo imposta così; avviso di deprecazione innocuo).
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "false"
+      GOTRUE_MAILER_SECURE_EMAIL_CHANGE_ENABLED: "true"
+      GOTRUE_MAILER_URLPATHS_CONFIRMATION: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_INVITE: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_RECOVERY: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: /auth/v1/verify
+      GOTRUE_PASSWORD_MIN_LENGTH: "10"
+      GOTRUE_SECURITY_REFRESH_TOKEN_ROTATION_ENABLED: "true"
+      GOTRUE_MFA_TOTP_ENROLL_ENABLED: "true"
+      GOTRUE_MFA_TOTP_VERIFY_ENABLED: "true"
+      GOTRUE_MFA_MAX_ENROLLED_FACTORS: "10"
+      GOTRUE_SMTP_HOST: mailpit
+      GOTRUE_SMTP_PORT: "1025"
+      GOTRUE_SMTP_ADMIN_EMAIL: no-reply@cantiereos.invalid
+      GOTRUE_SMTP_SENDER_NAME: CantiereOS (sviluppo)
+      GOTRUE_RATE_LIMIT_EMAIL_SENT: "1000"
+      GOTRUE_RATE_LIMIT_VERIFY: "1000"
+      GOTRUE_RATE_LIMIT_TOKEN_REFRESH: "1000"
+      GOTRUE_RATE_LIMIT_OTP: "1000"
+      GOTRUE_LOG_LEVEL: warn
+
+  auth-gateway:
+    image: nginx:1.27-alpine
+    profiles: ["auth"]
+    depends_on: [gotrue]
+    ports:
+      - "127.0.0.1:54321:80"
+    volumes:
+      - ./infra/local-auth/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+  # Cattura TUTTE le email in locale (nessun invio reale). UI: http://127.0.0.1:8025
+  mailpit:
+    image: axllent/mailpit:v1.27
+    profiles: ["auth"]
+    ports:
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
+
 volumes:
   redis-data:

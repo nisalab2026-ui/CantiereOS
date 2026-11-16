@@ -41,25 +41,66 @@ I test girano su un PostgreSQL reale impersonando gli utenti esattamente come Su
 permissiva (`using (true)`) su `customers`, 5 test falliscono → i test rilevano davvero
 una fuga di dati.
 
-## 3. Autenticazione (fase 2)
+## 3. Autenticazione (implementata)
 
-- Supabase Auth con cookie httpOnly, `Secure`, `SameSite=Lax` tramite `@supabase/ssr`.
-- Verifica del token lato server a ogni richiesta (`getUser()`, non solo decodifica locale).
-- MFA (TOTP) obbligatoria per owner, admin e operatori di piattaforma; raccomandata per tutti.
-- Password: lunghezza minima 12, controllo password compromesse (funzione di Supabase Auth).
-- Rate limiting su login, reset password, inviti (Redis).
-- Sessioni: revoca alla sospensione della membership; logout remoto da pannello admin.
+**Fornitore:** Supabase Auth (GoTrue). Il browser non parla mai con Supabase né col database:
+login, registrazione, MFA e logout passano da Server Actions e route handler di `apps/web`.
 
-## 4. Autorizzazione nel server (fase 2)
+| Flusso                | Come funziona                                                                                                                                                                                                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Registrazione azienda | `signUp` con conferma email obbligatoria (PKCE) → `/benvenuto` → `app.register_company`: titolare = `auth.uid()`, email confermata, prova 30 giorni / 5 posti, max 3 aziende per utente                                                                                                     |
+| Login                 | password; messaggio d'errore unico (niente enumerazione degli account); redirect solo verso percorsi interni                                                                                                                                                                                |
+| Recupero password     | link via email (stessa risposta anche per indirizzi inesistenti) → nuova password → **chiusura delle altre sessioni**                                                                                                                                                                       |
+| Inviti dipendenti     | token casuale di 256 bit, nel DB solo l'hash SHA-256; scadenza 7 giorni (max 30); il link sposta il token in un cookie httpOnly e lo toglie dall'URL; accettazione solo con l'**email verificata** a cui è stato inviato; limite posti del piano                                            |
+| Più aziende           | un utente può essere membro di più aziende; l'azienda attiva è salvata nel DB (`users.last_active_tenant_id`) e **riverificata a ogni richiesta**; un id inviato dal browser è solo una richiesta                                                                                           |
+| MFA (TOTP)            | **obbligatoria** per Proprietario, Amministratore e Super Admin: senza fattore si va a configurarla, con fattore ma sessione `aal1` si va alla verifica. Nel DB i permessi 🔐 valgono solo con `aal2`                                                                                       |
+| Sessioni              | cookie **httpOnly**, `SameSite=Lax`, `Secure` in produzione; rinnovo del token nel proxy Next.js; "Esci da tutti i dispositivi" (`signOut global`)                                                                                                                                          |
+| Revoca immediata      | a ogni transazione `app.current_session_active()` verifica che la sessione del JWT (`session_id`) esista ancora in `auth.sessions`: logout ovunque e cambio password valgono **subito**, non alla scadenza del JWT; la sospensione di una membership toglie l'accesso alla query successiva |
 
-- Ogni Server Action / route handler passa da un caso d'uso in `packages/core` che:
-  1. ricava utente e azienda attiva dalla sessione verificata;
-  2. verifica il permesso (`modulo.azione`) — la stessa matrice usata dalle RLS;
-  3. valida l'input con schema (Zod) e lunghezze massime;
-  4. esegue nella transazione con ruolo `authenticated` (RLS attiva).
-- Le Server Actions sono endpoint pubblici: nessuna si fida di parametri nascosti nel form.
-- Protezione CSRF: verifica `Origin` sulle mutazioni (nativa in Next.js per Server Actions) e
-  sulle route handler.
+**Verifica del token** (`packages/core/src/auth/session.ts`): firma (HS256 con il JWT secret, oppure
+ES256/RS256 tramite JWKS), emittente, audience `authenticated`, scadenza, `role = authenticated`,
+`session_id` e `sub` UUID, niente sessioni anonime. Algoritmi fissati: `alg: none` e confusione
+HS/RS vengono rifiutati. Al database arrivano solo i claim ricostruiti dalla sessione verificata.
+
+**Configurazione:** solo variabili d'ambiente lato server (`.env.example`), nessuna con prefisso
+`NEXT_PUBLIC_`. Le email applicative (inviti) partono via SMTP se `SMTP_URL` è configurata;
+altrimenti l'interfaccia lo dice e mostra il link da consegnare a mano (nessun invio simulato).
+Le email di autenticazione le invia Supabase Auth con il proprio SMTP.
+
+**Da completare prima della produzione** (non ancora fatto):
+
+- template email di Supabase Auth in italiano e SMTP di produzione;
+- password: minimo 10 caratteri impostato; attivare il controllo password compromesse e la
+  lunghezza minima 12 nella configurazione del progetto Supabase;
+- rate limiting applicativo (Redis) su inviti e accettazione inviti; per login/recupero valgono i
+  limiti di Supabase Auth;
+- Content-Security-Policy con nonce (gli altri header di sicurezza sono già attivi);
+- codici di recupero / secondo fattore di riserva per la MFA e procedura di reset assistito;
+- testo dell'informativa privacy fornito dal titolare del trattamento.
+
+**Test** (eseguiti davvero, vedi PR):
+
+- `pnpm test:db` — RLS, MFA nel database, inviti, ruoli, cliente esterno, Super Admin.
+- `pnpm test:core` — JWT validi/manomessi/scaduti/`alg none`/altro emittente/altra chiave/JWKS,
+  sessioni revocate, azienda attiva, permessi e MFA, inviti, registrazione.
+- `pnpm test:e2e` — Playwright su stack reale (Next.js + Supabase Auth + PostgreSQL + mailpit):
+  registrazione con conferma email, MFA obbligatoria, login errato, invito via email e
+  accettazione, invito usato da un'altra email, cookie con JWT manomesso (utente, ruolo, aal),
+  cambio azienda con id forgiato, esci da tutti i dispositivi, recupero password, redirect aperti.
+  Avvio dello stack: `scripts/e2e-auth.sh`.
+
+## 4. Autorizzazione nel server (implementata)
+
+- Ogni Server Action / route handler ricava utente e azienda attiva **solo** dalla sessione
+  verificata e dal database (`getAppContext`, `resolveActiveTenant`), mai da campi del form.
+- `requirePermission(access, "modulo.azione")` distingue "permesso mancante" da "serve la MFA";
+  il database applica comunque la stessa matrice con RLS (difesa in profondità).
+- Input validati con Zod e lunghezze massime.
+- Le query girano in `withUserTransaction`: `set local role authenticated` + claim + `request_id`.
+- `withServiceTransaction` (bypass RLS) è riservata a worker e operazioni di piattaforma e
+  dichiara l'attore per l'audit.
+- CSRF: verifica dell'origine nativa delle Server Actions; le route POST (`/esci`) si basano su
+  cookie `SameSite=Lax`.
 
 ## 5. Audit log (implementato)
 

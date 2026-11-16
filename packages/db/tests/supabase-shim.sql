@@ -28,6 +28,16 @@ grant usage on schema public to anon, authenticated, service_role;
 create table if not exists auth.users (
   id         uuid primary key default gen_random_uuid(),
   email      text unique,
+  email_confirmed_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+-- Sottoinsieme di auth.sessions di Supabase Auth (colonne usate da CantiereOS).
+create table if not exists auth.sessions (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users (id) on delete cascade,
+  aal        text,
+  not_after  timestamptz,
   created_at timestamptz not null default now()
 );
 

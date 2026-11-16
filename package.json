@@ -12,7 +12,10 @@
     "test": "pnpm -r test",
     "test:db": "pnpm --filter @cantiereos/db test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:core": "pnpm --filter @cantiereos/core test",
+    "test:e2e": "pnpm --filter @cantiereos/e2e test",
+    "e2e:auth": "scripts/e2e-auth.sh"
   },
   "devDependencies": {
     "prettier": "3.10.1",
