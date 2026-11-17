@@ -7,6 +7,7 @@ test("l'editor aggiunge, duplica, annulla e salva con Ctrl S", async ({ page }) 
   await page.goto("/app/moduli/modelli");
   await page
     .getByTestId("library-entry")
+    .filter({ hasText: "Ispezione linea vita" })
     .getByRole("button", { name: "Usa questo modello" })
     .click();
   await page.getByRole("dialog").getByRole("button", { name: "Crea la copia" }).click();

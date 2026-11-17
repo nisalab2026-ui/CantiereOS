@@ -78,6 +78,8 @@
       CSV, ricerca e scheda cliente (ADR-013)
 - [x] Stile "liquid" (vetro, sfondo vivo, movimenti leggeri, rispetto di "riduci movimento") e
       sezione **Guida** con ricerca, voci per ogni parte dell'app filtrate per ruolo
+- [x] Campo **Foto** nei moduli (dal telefono, ridotte nel browser, verificate dal server) e
+      modello pronto «Rapportino giornaliero»
 - [ ] Conferma ADR-006 (Kysely) e ADR-007 (BullMQ)
 
 ## Fase 3 — Operatività di campo

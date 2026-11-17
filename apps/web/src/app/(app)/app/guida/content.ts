@@ -284,6 +284,14 @@ export const GUIDE: GuideTopic[] = [
         ],
       },
       {
+        q: "Come mando il rapportino con le foto dal cantiere?",
+        a: [
+          "In «Moduli» → «Modelli» usa il modello pronto «Rapportino giornaliero» e pubblicalo una volta. Poi dal telefono: «Compila un modulo», scegli il rapportino e il cliente, scrivi chi c'era e cosa è stato fatto.",
+          "Nel campo «Foto» tocca «Scatta o scegli»: puoi scattare o prendere dalla galleria. Le foto si riducono da sole prima dell'invio; attendi la fine del caricamento, poi salva. Una foto si toglie con la X finché il modulo non è chiuso.",
+          "Nei tuoi modelli puoi aggiungere un campo «Foto» dalla tavolozza dell'editor e scegliere quante foto al massimo.",
+        ],
+      },
+      {
         q: "Cosa cambia quando chiudo un modulo?",
         a: [
           "L'app controlla che i campi obbligatori ci siano. Una volta chiuso, il modulo non si può più modificare: resta com'è, con data e autore della chiusura. Può riaprirlo solo chi gestisce i moduli.",

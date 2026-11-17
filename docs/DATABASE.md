@@ -246,6 +246,30 @@ dell'implementazione, su richiesta del titolare (17/11/2026), partendo dal modul
   servizio OCR/IA, oggi **non configurato**: non viene simulato. Il PDF originale si può caricare
   nell'archivio documenti come riferimento.
 
+#### Aggiunta: campo "Foto" (migrazione `20261117190000_form_photos`)
+
+Decisione presa il 17/11/2026 per i rapportini dal cantiere (richiesta del titolare: "dal
+cantiere possono mandare un report facilmente?").
+
+- **Dove stanno le foto.** Non dentro il JSON del modulo (diventerebbe enorme), ma come file nel
+  bucket **privato** `FORMS_BUCKET` (predefinito `form-files`), separato dall'archivio documenti.
+  Il valore del campo è l'elenco degli id delle foto (massimo 20 per campo, configurabile).
+- **`form_submission_files`.** Una scheda per foto: modulo (FK composta), campo, nome originale,
+  tipo, dimensione, stato `pending` → `ready`/`rejected`, autore e data. La chiave nello storage
+  è una colonna **generata** (`{tenant}/{modulo}/{foto}`), mai scelta dal browser.
+- **Due passi come l'archivio.** Il server crea la scheda e restituisce un URL firmato per un
+  solo file; il browser riduce la foto (lato lungo 1600 px, JPEG) e la carica; il server
+  controlla dimensione (≤ 10 MB) e tipo reale dai primi byte (solo JPEG, PNG, WebP), poi la
+  porta a `ready` oppure la rifiuta e cancella il file.
+- **Modulo chiuso = foto bloccate.** Il trigger `app.form_file_guard` rifiuta nuove foto, verifiche
+  e rimozioni se il modulo non è in compilazione; una foto verificata non cambia più; niente
+  eliminazione fisica (solo `deleted_at`). Al salvataggio il server accetta solo id di foto
+  `ready` dello stesso modulo e dello stesso campo.
+- **Visibilità.** Le foto seguono la visibilità del modulo (RLS); si vedono solo tramite URL
+  firmati di un'ora.
+- **Modello pronto «Rapportino giornaliero».** Cantiere e data automatici, persone e ore,
+  lavori, materiali, mezzi, imprevisti, foto (fino a 10), firma del caposquadra e del cliente.
+
 ### Pagamenti attesi e comunicazioni (migrazione `20261117170000_payments_communications`)
 
 **ADR-012 — Scadenziario dei pagamenti e registro delle comunicazioni.** Decisione presa prima

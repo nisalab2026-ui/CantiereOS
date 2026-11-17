@@ -7,6 +7,7 @@ import {
   FORM_CATEGORY_LABELS,
   FORM_FIELD_TYPE_LABELS,
   FORM_FIELD_TYPES,
+  MAX_PHOTOS,
   parseFormDefinition,
   type FormAutoSource,
   type FormDefinition,
@@ -21,6 +22,7 @@ import {
   ArrowDown,
   ArrowUp,
   CalendarDays,
+  Camera,
   ChevronDown,
   ClipboardList,
   Copy,
@@ -117,6 +119,7 @@ const TYPE_ICONS: Record<FormFieldType, LucideIcon> = {
   checklist: ClipboardList,
   signature: PenLine,
   auto: Sparkles,
+  photo: Camera,
 };
 
 const TYPE_HINTS: Record<FormFieldType, string> = {
@@ -129,6 +132,7 @@ const TYPE_HINTS: Record<FormFieldType, string> = {
   checklist: "Righe da verificare con esito e nota",
   signature: "Firma con il dito o il mouse",
   auto: "Cliente, sede, azienda, data…",
+  photo: "Scatta o carica foto dal telefono",
 };
 
 type Drag =
@@ -953,6 +957,28 @@ function FieldEditor({
                 </Labeled>
               ))}
             </div>
+          )}
+          {f.type === "photo" && (
+            <Labeled id={`${p}-max`} label="Numero massimo di foto">
+              <Input
+                id={`${p}-max`}
+                type="number"
+                min={1}
+                max={MAX_PHOTOS}
+                value={f.maxPhotos ?? ""}
+                placeholder={String(MAX_PHOTOS)}
+                onChange={(e) => {
+                  const n = Math.trunc(Number(e.target.value));
+                  onChange({
+                    ...f,
+                    maxPhotos:
+                      e.target.value === "" || !Number.isFinite(n)
+                        ? undefined
+                        : Math.min(MAX_PHOTOS, Math.max(1, n)),
+                  });
+                }}
+              />
+            </Labeled>
           )}
           {f.type === "choice" && (
             <div className="sm:col-span-2">

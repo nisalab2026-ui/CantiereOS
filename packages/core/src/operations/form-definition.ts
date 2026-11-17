@@ -24,6 +24,9 @@ export const FORM_CATEGORY_LABELS: Record<FormCategory, string> = {
   other: "Altro",
 };
 
+/** Foto per campo: abbastanza per un intervento, non un archivio. */
+export const MAX_PHOTOS = 20;
+
 export const FORM_FIELD_TYPES = [
   "text",
   "textarea",
@@ -33,6 +36,7 @@ export const FORM_FIELD_TYPES = [
   "choice",
   "checklist",
   "signature",
+  "photo",
   "auto",
 ] as const;
 export type FormFieldType = (typeof FORM_FIELD_TYPES)[number];
@@ -45,6 +49,7 @@ export const FORM_FIELD_TYPE_LABELS: Record<FormFieldType, string> = {
   choice: "Scelta",
   checklist: "Tabella di controlli",
   signature: "Firma",
+  photo: "Foto",
   auto: "Dato automatico",
 };
 
@@ -122,6 +127,11 @@ export const formFieldSchema = z.discriminatedUnion("type", [
     withNote: z.boolean().optional(),
   }),
   z.object({ ...base, type: z.literal("signature") }),
+  z.object({
+    ...base,
+    type: z.literal("photo"),
+    maxPhotos: z.number().int().min(1).max(MAX_PHOTOS).optional(),
+  }),
   z.object({ ...base, type: z.literal("auto"), source: z.enum(FORM_AUTO_SOURCES) }),
 ]);
 export type FormField = z.infer<typeof formFieldSchema>;
@@ -240,6 +250,7 @@ export type FormValue =
 export type FormValues = Record<string, FormValue>;
 
 const MAX_TEXT = 4000;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const MAX_NOTE = 500;
 const MAX_SIGNATURE = 200_000; // caratteri del data URL (~150 KB)
 const SIGNATURE_PREFIX = "data:image/png;base64,";
@@ -343,6 +354,19 @@ export function validateFormData(
         else if (any) data[f.id] = { rows: out };
         break;
       }
+      case "photo": {
+        // id delle foto caricate; che esistano e siano verificate lo controlla il server
+        if (v === undefined || v === null) break;
+        const max = f.maxPhotos ?? MAX_PHOTOS;
+        if (!Array.isArray(v) || v.some((x) => typeof x !== "string" || !UUID.test(x))) {
+          err("Foto non valide");
+          break;
+        }
+        const ids = [...new Set(v as string[])];
+        if (ids.length > max) err(`Massimo ${max} foto`);
+        else if (ids.length) data[f.id] = ids;
+        break;
+      }
       case "signature": {
         if (v === undefined || v === null) break;
         const o = v as Partial<SignatureValue>;
@@ -413,6 +437,8 @@ export function formValueText(f: FormField, v: FormValue | undefined): string {
     }
     case "choice":
       return Array.isArray(v) ? v.join(", ") : String(v);
+    case "photo":
+      return Array.isArray(v) && v.length ? `${v.length} foto` : "";
     default:
       return String(v);
   }

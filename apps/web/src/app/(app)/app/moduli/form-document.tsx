@@ -17,12 +17,15 @@ export function FormDocument({
   values,
   header,
   blank = false,
+  photos = {},
 }: {
   definition: FormDefinition;
   values: FormValues;
   header?: React.ReactNode;
   /** Campi vuoti disegnati come sul modulo cartaceo (caselle, righe, spazio per la firma). */
   blank?: boolean;
+  /** URL firmati delle foto del modulo, per id. */
+  photos?: Record<string, { url: string; name: string }>;
 }) {
   return (
     <article className="form-document space-y-5" data-testid="form-document">
@@ -43,13 +46,16 @@ export function FormDocument({
                 key={f.id}
                 className={cn(
                   "min-w-0",
-                  (f.type === "checklist" || f.type === "textarea" || f.type === "signature") &&
+                  (f.type === "checklist" ||
+                    f.type === "textarea" ||
+                    f.type === "signature" ||
+                    f.type === "photo") &&
                     "sm:col-span-2 print:col-span-2",
                 )}
               >
                 <dt className="text-xs text-muted-foreground print:text-neutral-600">{f.label}</dt>
                 <dd className="mt-0.5 text-sm">
-                  <Value field={f} value={values[f.id]} blank={blank} />
+                  <Value field={f} value={values[f.id]} blank={blank} photos={photos} />
                 </dd>
               </div>
             ))}
@@ -66,12 +72,19 @@ function Value({
   field,
   value,
   blank,
+  photos,
 }: {
   field: FormField;
   value: FormValues[string] | undefined;
   blank: boolean;
+  photos: Record<string, { url: string; name: string }>;
 }) {
-  if (value === undefined || value === null || value === "")
+  if (
+    value === undefined ||
+    value === null ||
+    value === "" ||
+    (Array.isArray(value) && value.length === 0)
+  )
     return blank ? <BlankValue field={field} /> : <Empty />;
   switch (field.type) {
     case "date":
@@ -132,6 +145,37 @@ function Value({
             })}
           </tbody>
         </table>
+      );
+    }
+    case "photo": {
+      const ids = value as string[];
+      return (
+        <ul className="mt-1 grid grid-cols-3 gap-2 sm:grid-cols-4 print:grid-cols-3">
+          {ids.map((id, i) => {
+            const p = photos[id];
+            return (
+              <li
+                key={id}
+                className="aspect-[4/3] overflow-hidden rounded-md border border-border break-inside-avoid"
+              >
+                {p ? (
+                  <a href={p.url} target="_blank" rel="noreferrer">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- URL firmato a breve durata */}
+                    <img
+                      src={p.url}
+                      alt={`Foto ${i + 1} di ${field.label}`}
+                      className="size-full object-cover"
+                    />
+                  </a>
+                ) : (
+                  <span className="flex size-full items-center justify-center text-xs text-muted-foreground">
+                    Foto {i + 1} non disponibile
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       );
     }
     case "signature": {
@@ -204,6 +248,12 @@ function BlankValue({ field }: { field: FormField }) {
             ))}
           </tbody>
         </table>
+      );
+    case "photo":
+      return (
+        <span className="mt-1 flex h-24 items-center justify-center rounded-sm border border-dashed border-neutral-400 text-xs text-neutral-500">
+          Spazio per le foto
+        </span>
       );
     case "signature":
       return <span className="mt-2 block h-14 w-60 max-w-full border-b border-neutral-500" />;
