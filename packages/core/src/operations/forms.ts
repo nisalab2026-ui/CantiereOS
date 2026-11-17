@@ -620,3 +620,31 @@ export async function listCustomerFormSubmissions(
 ): Promise<Page<FormSubmissionRow>> {
   return listFormSubmissions(tx, access, { customerId, pageSize: limit });
 }
+
+export interface FormCustomerOption {
+  id: string;
+  name: string;
+  sites: { id: string; name: string; address: string }[];
+}
+
+/** Clienti attivi con le loro sedi, per collegare un modulo (con i permessi dell'utente). */
+export async function listFormCustomerOptions(
+  tx: UserTx,
+  access: TenantAccess,
+): Promise<FormCustomerOption[]> {
+  requirePermission(access, "forms.write");
+  if (!access.permissions.has("customers.read")) return [];
+  const { rows } = await tx.query<FormCustomerOption>(
+    `select c.id, c.display_name as name,
+            coalesce((select json_agg(json_build_object('id', s.id, 'name', s.name,
+                        'address', concat_ws(', ', s.address_line, s.city)) order by lower(s.name))
+                        from public.customer_sites s
+                       where s.tenant_id = c.tenant_id and s.customer_id = c.id
+                         and s.deleted_at is null and s.is_active), '[]'::json) as sites
+       from public.customers c
+      where c.tenant_id = $1 and c.deleted_at is null and c.is_active
+      order by lower(c.display_name) limit 500`,
+    [access.tenantId],
+  );
+  return rows;
+}

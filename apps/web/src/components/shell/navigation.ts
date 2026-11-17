@@ -1,4 +1,5 @@
 import {
+  ClipboardCheck,
   Building2,
   CalendarClock,
   CalendarDays,
@@ -68,6 +69,13 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Comunicazioni",
     icon: MessagesSquare,
     permission: "communications.read",
+    group: "lavoro",
+  },
+  {
+    href: "/app/moduli",
+    label: "Moduli",
+    icon: ClipboardCheck,
+    permission: "forms.read",
     group: "lavoro",
   },
   {
