@@ -360,7 +360,12 @@ export async function markPaymentPaid(
   requirePermission(access, "payments.write");
   if (!isUuid(id)) throw new ValidationError({ form: "Pagamento non trovato" });
   const d = parseInput(markPaidInput, input);
-  if (d.paidOn > new Date().toISOString().slice(0, 10)) {
+  // "Oggi" nel fuso dell'azienda (Italia), come il campo della pagina: in UTC, tra mezzanotte e
+  // l'una (le due d'estate) la data di oggi risultava "nel futuro".
+  const todayInRome = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome" }).format(
+    new Date(),
+  );
+  if (d.paidOn > todayInRome) {
     throw new ValidationError({ paidOn: "La data non può essere nel futuro" });
   }
   const { rowCount } = await tx.query(
