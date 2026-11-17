@@ -27,6 +27,9 @@ const schema = z
       .string()
       .regex(/^[a-z0-9][a-z0-9-]{2,62}$/)
       .optional(),
+    /** Geocodifica: vuota = Nominatim pubblico, "off" = disattivata. */
+    GEOCODING_URL: z.union([z.url(), z.literal("off")]).optional(),
+    GEOCODING_CONTACT_EMAIL: z.email().optional(),
   })
   .refine((e) => Boolean(e.SUPABASE_JWT_SECRET) !== Boolean(e.SUPABASE_JWKS_URL), {
     message: "Imposta esattamente una tra SUPABASE_JWT_SECRET e SUPABASE_JWKS_URL",

@@ -50,6 +50,11 @@ export const TABLE_LABELS: Record<string, { one: string; section: string; href?:
   work_report_files: { one: "Foto del rapportino", section: "Rapportini", href: "/app/rapportini" },
 };
 
+export const LOCATION_SOURCE_NAMES: Record<string, string> = {
+  geocoded: "Trovata dall'indirizzo",
+  manual: "Messa a mano",
+};
+
 export const WORK_REPORT_STATUS_NAMES: Record<string, string> = {
   draft: "Bozza",
   submitted: "Inviato",
@@ -231,6 +236,9 @@ export const FIELD_LABELS: Record<string, Record<string, FieldSpec>> = {
     billing_province: { label: "Provincia" },
     billing_country_code: { label: "Nazione" },
     payment_terms_days: { label: "Giorni di pagamento" },
+    latitude: { label: "Latitudine" },
+    longitude: { label: "Longitudine" },
+    location_source: { label: "Posizione", kind: "enum", values: LOCATION_SOURCE_NAMES },
   },
   suppliers: {
     ...common,
@@ -284,6 +292,9 @@ export const FIELD_LABELS: Record<string, Record<string, FieldSpec>> = {
     city: { label: "Città" },
     province: { label: "Provincia" },
     access_notes: { label: "Note di accesso" },
+    latitude: { label: "Latitudine" },
+    longitude: { label: "Longitudine" },
+    location_source: { label: "Posizione", kind: "enum", values: LOCATION_SOURCE_NAMES },
   },
   memberships: { status: { label: "Stato" }, role_id: { label: "Ruolo", kind: "ref" } },
   invitations: {
@@ -345,6 +356,9 @@ export const FIELD_LABELS: Record<string, Record<string, FieldSpec>> = {
     province: { label: "Provincia" },
     start_date: { label: "Apertura", kind: "date" },
     end_date: { label: "Chiusura prevista", kind: "date" },
+    latitude: { label: "Latitudine" },
+    longitude: { label: "Longitudine" },
+    location_source: { label: "Posizione", kind: "enum", values: LOCATION_SOURCE_NAMES },
     access_notes: { label: "Accesso" },
     safety_notes: { label: "Sicurezza" },
     deleted_at: { label: "Tolto il", kind: "datetime" },

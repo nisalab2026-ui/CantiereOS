@@ -205,6 +205,30 @@ chi li gestisce non può concedere permessi che non possiede.
 Tutte le funzioni `SECURITY DEFINER` hanno `search_path = ''`; nessuna è eseguibile da `PUBLIC` o
 `anon` (verificato dai test).
 
+### Mappa di clienti, sedi e cantieri (migrazione `20261117223000_map_locations`)
+
+**ADR-016 — Posizioni sulle righe, mappa OpenStreetMap senza chiavi.** Richiesta del titolare del
+17/11/2026: mappa interattiva nei Clienti e nella Panoramica.
+
+- **Dove stanno le coordinate.** Nessuna tabella nuova: `latitude`, `longitude`,
+  `location_source` (`geocoded` = trovata dall'indirizzo, `manual` = puntina messa a mano) e
+  `located_at` su `customers` (indirizzo di fatturazione), `customer_sites` (aveva già le coordinate)
+  e `project_sites` (solo cantieri con indirizzo proprio: quelli su una sede del cliente usano la
+  posizione della sede, lo impone un vincolo). RLS, audit e trigger restano quelli delle tabelle;
+  scrivere una posizione richiede `customers.write` (clienti e sedi) o `projects.write` (cantieri).
+- **Coerenza.** Coordinate entrambe presenti o entrambe assenti, sempre con la fonte. Se cambia
+  l'indirizzo, il trigger `app.reset_location_on_address_change` azzera la posizione (a meno che lo
+  stesso aggiornamento ne porti una nuova): nessuna puntina resta sul vecchio indirizzo.
+- **Geocodifica.** Dal server, con OpenStreetMap Nominatim (gratuito, senza chiave) nel rispetto
+  delle sue regole: una richiesta al secondo per processo, User-Agent dell'applicazione, ricerca
+  solo su richiesta dell'utente (al massimo 20 per clic), risultato salvato sulla riga, limite di 120
+  ricerche l'ora per azienda (`app.rate_limits`, bucket `geocode_tenant`). Nessun dato personale
+  oltre all'indirizzo esce dal server. `GEOCODING_URL=off` la disattiva; `GEOCODING_URL` può puntare
+  a un'istanza propria o a un fornitore compatibile.
+- **Sfondo della mappa.** Tile di OpenStreetMap caricate dal browser (unica origine esterna
+  aggiunta alla CSP, solo `img-src`), con attribuzione. Per molti utenti va usato un fornitore di
+  tile o un server proprio (`MAP_TILE_URL`, `MAP_TILE_ATTRIBUTION`).
+
 ### Rapportini (migrazione `20261117210000_work_reports`)
 
 **ADR-015 — Rapportini di lavoro legati alla commessa.** Decisione presa prima

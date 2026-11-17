@@ -18,6 +18,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Timeline } from "@/components/history/timeline";
 import { Badge } from "@/components/ui/badge";
+import { ButtonLink } from "@/components/ui/button";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { DetailList } from "@/components/ui/detail-list";
@@ -184,6 +185,9 @@ export default async function CustomerPage({
         }
         actions={
           <div className="flex flex-wrap justify-end gap-2">
+            <ButtonLink href={`/app/clienti/mappa?cliente=${c.id}`} variant="secondary">
+              <MapPin aria-hidden /> Mappa
+            </ButtonLink>
             {options && canWriteDeadlines && (
               <DeadlineDialog
                 mode="create"

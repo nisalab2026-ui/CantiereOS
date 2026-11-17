@@ -23,6 +23,8 @@ export * from "./operations/form-library";
 export * from "./operations/forms";
 export * from "./operations/form-photos";
 export * from "./directory/records";
+export * from "./directory/map";
+export * from "./directory/geocoding";
 export * from "./exports/csv";
 export * from "./exports/exports";
 export * from "./documents/storage";

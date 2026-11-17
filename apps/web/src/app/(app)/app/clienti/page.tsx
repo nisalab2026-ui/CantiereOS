@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { FilterBar } from "@/components/ui/filter-bar";
 import { PageHeader } from "@/components/ui/page-header";
+import { TabsNav } from "@/components/ui/tabs-nav";
 import { EmptyState, ForbiddenState } from "@/components/ui/states";
 import { asCurrentUser, getAppContext } from "@/lib/auth";
 import { parseListParams, type SearchParams } from "@/lib/list-params";
@@ -118,6 +119,14 @@ export default async function CustomersPage({
             {canWrite && <NewCustomerDialog />}
           </>
         }
+      />
+      <TabsNav
+        label="Viste dei clienti"
+        active="elenco"
+        tabs={[
+          { key: "elenco", label: "Elenco", href: PATH, count: page.total },
+          { key: "mappa", label: "Mappa", href: `${PATH}/mappa` },
+        ]}
       />
       {creato === "1" && id && <Notice>Cliente creato.</Notice>}
       <Card className="mt-4 overflow-hidden">

@@ -5,10 +5,12 @@ import {
   getPaymentSummary,
   getTaskSummary,
   listActivity,
+  listMapPoints,
   listTasks,
   type DashboardData,
   type DeadlineSummary,
   type HistoryEvent,
+  type MapData,
   type PaymentSummary,
   type TaskRow,
   type TaskSummary,
@@ -30,6 +32,8 @@ import { Notice } from "@/components/ui";
 import { Badge, DemoBadge } from "@/components/ui/badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { KpiCard } from "@/components/ui/kpi-card";
+import { PlacesMap } from "@/components/map/places-map";
+import { mapTiles } from "@/lib/map-config";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/states";
 import { asCurrentUser, getAppContext } from "@/lib/auth";
@@ -57,33 +61,39 @@ export default async function DashboardPage({
     return sp[key!] === value;
   })?.[1];
   const { company, access } = await getAppContext();
-  const { data, deadlines, docs, activity, tasks, payments } = await asCurrentUser(async (tx) => {
-    const d = await getDashboard(tx, access);
-    return {
-      data: d,
-      deadlines: d.kind === "portal" ? null : await getDeadlineSummary(tx, access),
-      docs:
-        d.kind !== "portal" && access.permissions.has("documents.read")
-          ? await getDocumentExpirySummary(tx, access)
-          : null,
-      activity:
-        d.kind === "admin" && access.permissions.has("audit.read")
-          ? (await listActivity(tx, access, { limit: 8 })).events
-          : null,
-      payments:
-        (d.kind === "admin" || d.kind === "manager") && access.permissions.has("payments.read")
-          ? await getPaymentSummary(tx, access)
-          : null,
-      tasks:
-        d.kind !== "portal" && access.permissions.has("tasks.read")
-          ? {
-              summary: await getTaskSummary(tx, access),
-              mine: (await listTasks(tx, access, { assignee: "me", state: "open", pageSize: 5 }))
-                .rows,
-            }
-          : null,
-    };
-  });
+  const { data, deadlines, docs, activity, tasks, payments, map } = await asCurrentUser(
+    async (tx) => {
+      const d = await getDashboard(tx, access);
+      return {
+        data: d,
+        deadlines: d.kind === "portal" ? null : await getDeadlineSummary(tx, access),
+        docs:
+          d.kind !== "portal" && access.permissions.has("documents.read")
+            ? await getDocumentExpirySummary(tx, access)
+            : null,
+        activity:
+          d.kind === "admin" && access.permissions.has("audit.read")
+            ? (await listActivity(tx, access, { limit: 8 })).events
+            : null,
+        map:
+          d.kind !== "portal" && access.permissions.has("customers.read")
+            ? await listMapPoints(tx, access)
+            : null,
+        payments:
+          (d.kind === "admin" || d.kind === "manager") && access.permissions.has("payments.read")
+            ? await getPaymentSummary(tx, access)
+            : null,
+        tasks:
+          d.kind !== "portal" && access.permissions.has("tasks.read")
+            ? {
+                summary: await getTaskSummary(tx, access),
+                mine: (await listTasks(tx, access, { assignee: "me", state: "open", pageSize: 5 }))
+                  .rows,
+              }
+            : null,
+      };
+    },
+  );
 
   return (
     <div className="space-y-6" data-testid={`dashboard-${data.kind}`}>
@@ -113,6 +123,7 @@ export default async function DashboardPage({
         deadlines={deadlines}
         docs={docs}
         activity={activity}
+        map={map && <MapOverview m={map} />}
         tasks={
           <>
             {tasks && <MyTasks {...tasks} />}
@@ -130,7 +141,9 @@ function DashboardBody({
   docs,
   activity,
   tasks,
+  map,
 }: {
+  map: React.ReactNode;
   data: DashboardData;
   deadlines: DeadlineSummary | null;
   docs: { expired: number; expiring: number } | null;
@@ -198,8 +211,13 @@ function DashboardBody({
               Periodo di prova fino al {formatDate(data.trialEndsAt)}.
             </p>
           )}
-          {activity !== null && (
+          {map && (
             <div className="cos-enter" style={{ "--i": 5 } as React.CSSProperties}>
+              {map}
+            </div>
+          )}
+          {activity !== null && (
+            <div className="cos-enter" style={{ "--i": 6 } as React.CSSProperties}>
               <RecentChanges events={activity} />
             </div>
           )}
@@ -233,8 +251,13 @@ function DashboardBody({
               <KpiCard index={2} label="Sedi dei clienti" value={data.sites} icon={Building2} />
             )}
           </div>
-          {data.teams !== null && (
+          {map && (
             <div className="cos-enter" style={{ "--i": 3 } as React.CSSProperties}>
+              {map}
+            </div>
+          )}
+          {data.teams !== null && (
+            <div className="cos-enter" style={{ "--i": 4 } as React.CSSProperties}>
               <Teams teams={data.teams} title="Squadre" />
             </div>
           )}
@@ -267,6 +290,7 @@ function DashboardBody({
               </p>
             </CardBody>
           </Card>
+          {map}
           {data.teams !== null && <Teams teams={data.teams} title="Le tue squadre" />}
           {priority}
         </>
@@ -292,6 +316,34 @@ function DashboardBody({
         </Card>
       );
   }
+}
+
+function MapOverview({ m }: { m: MapData }) {
+  const placed = m.points.filter((p) => p.lat !== null);
+  const n = (kind: string) => placed.filter((p) => p.kind === kind).length;
+  const count = (k: string, one: string, many: string) => `${n(k)} ${n(k) === 1 ? one : many}`;
+  const parts = [
+    count("customer", "cliente", "clienti"),
+    count("customer_site", "sede", "sedi"),
+    ...(m.canSeeSites ? [count("project_site", "cantiere", "cantieri")] : []),
+  ];
+  return (
+    <Card className="overflow-hidden" data-testid="dashboard-map">
+      <CardHeader
+        title="Mappa"
+        description={`${parts.join(" · ")} sulla mappa${m.missing ? ` · ${m.missing} senza posizione` : ""}`}
+        actions={
+          <Link
+            href="/app/clienti/mappa"
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            Apri la mappa
+          </Link>
+        }
+      />
+      <PlacesMap points={placed} tiles={mapTiles()} variant="compact" />
+    </Card>
+  );
 }
 
 function Teams({ teams, title }: { teams: TeamSummary[]; title: string }) {
