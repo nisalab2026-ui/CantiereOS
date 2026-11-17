@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Briefcase,
   Building2,
   CalendarClock,
   ClipboardCheck,
@@ -37,6 +38,7 @@ const ICONS: Record<GuideIcon, LucideIcon> = {
   deadlines: CalendarClock,
   documents: FolderOpen,
   payments: Wallet,
+  projects: Briefcase,
   communications: MessagesSquare,
   forms: ClipboardCheck,
   customers: Building2,

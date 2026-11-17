@@ -1,4 +1,5 @@
 import {
+  Briefcase,
   ClipboardCheck,
   Building2,
   CalendarClock,
@@ -30,6 +31,13 @@ export interface NavItem {
 /** Solo voci con una pagina reale dietro (niente voci "in arrivo"). */
 export const NAV_ITEMS: NavItem[] = [
   { href: "/app", label: "Panoramica", icon: LayoutDashboard, group: "lavoro" },
+  {
+    href: "/app/commesse",
+    label: "Commesse",
+    icon: Briefcase,
+    permission: "projects.read",
+    group: "lavoro",
+  },
   {
     href: "/app/attivita",
     label: "Attività",

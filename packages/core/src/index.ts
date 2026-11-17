@@ -27,3 +27,4 @@ export * from "./exports/csv";
 export * from "./exports/exports";
 export * from "./documents/storage";
 export * from "./documents/documents";
+export * from "./operations/projects";
