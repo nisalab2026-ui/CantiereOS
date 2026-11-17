@@ -98,11 +98,37 @@ services:
   auth-gateway:
     image: nginx:1.27-alpine
     profiles: ["auth"]
-    depends_on: [gotrue]
+    depends_on: [gotrue, storage]
     ports:
       - "127.0.0.1:54321:80"
     volumes:
       - ./infra/local-auth/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+  # Supabase Storage locale (archivio documentale): file su disco temporaneo del
+  # container, bucket privati, URL firmati. Esposto dal gateway su /storage/v1.
+  storage:
+    image: supabase/storage-api:v1.28.0
+    profiles: ["auth"]
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    environment:
+      ANON_KEY: ${SUPABASE_ANON_KEY:?}
+      SERVICE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:?}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
+      PGRST_JWT_SECRET: ${AUTH_JWT_SECRET}
+      DATABASE_URL: postgres://supabase_storage_admin:${AUTH_ADMIN_DB_PASSWORD}@auth-db:5432/postgres
+      DB_INSTALL_ROLES: "false"
+      FILE_SIZE_LIMIT: "52428800"
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: stub
+      REGION: local
+      GLOBAL_S3_BUCKET: stub
+      ENABLE_IMAGE_TRANSFORMATION: "false"
+      SERVER_PORT: "5000"
+    tmpfs:
+      - /var/lib/storage
 
   # Cattura TUTTE le email in locale (nessun invio reale). UI: http://127.0.0.1:8025
   mailpit:

@@ -21,8 +21,11 @@ const MESSAGES: Record<AuthErrorCode, string> = {
 /** Messaggio per l'utente. Gli errori inattesi non espongono dettagli interni. */
 export function userMessage(error: unknown): string {
   if (error instanceof AuthError) return MESSAGES[error.code];
-  return "Si è verificato un errore imprevisto. Riprova tra qualche istante.";
+  return UNEXPECTED_ERROR;
 }
+
+export const UNEXPECTED_ERROR =
+  "Si è verificato un errore imprevisto. Riprova tra qualche istante.";
 
 /** Stato restituito dalle Server Actions dei moduli. */
 export interface FormState {

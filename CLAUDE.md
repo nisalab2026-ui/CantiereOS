@@ -47,7 +47,9 @@ docker compose --profile test up -d postgres-test   # PostgreSQL usa-e-getta su 
 
 Sviluppo dell'app in locale: `node scripts/local-auth-env.mjs` (segreti casuali in file ignorati
 da git), `docker compose --env-file .env.local-auth --profile auth up -d auth-db gotrue
-auth-gateway mailpit`, `node scripts/local-auth-migrate.mjs`, poi `pnpm --filter @cantiereos/web dev`.
+storage auth-gateway mailpit`, `node scripts/local-auth-migrate.mjs`, poi `pnpm --filter @cantiereos/web dev`.
+Lo storage dei documenti (Supabase Storage, file in memoria) è su http://127.0.0.1:54321/storage/v1;
+il gateway locale risponde ai preflight CORS come la piattaforma.
 Le email (conferme, recupero password, inviti) si leggono su http://127.0.0.1:8025 (mailpit).
 Dati DEMO in locale: `psql "$DATABASE_URL" -f supabase/seeds/development.sql`, poi
 `node scripts/local-demo-login.mjs` (password casuale per gli utenti `@demo.cantiereos.invalid`, solo stack locale).

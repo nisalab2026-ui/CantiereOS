@@ -16,6 +16,12 @@ const schema = z
     DATABASE_URL: z.string().startsWith("postgres"),
     SMTP_URL: z.string().startsWith("smtp").optional(),
     MAIL_FROM: z.string().min(3).optional(),
+    /** Solo server: serve allo storage dei documenti. Senza, l'archivio è "non configurato". */
+    SUPABASE_SERVICE_ROLE_KEY: z.string().min(20).optional(),
+    DOCUMENTS_BUCKET: z
+      .string()
+      .regex(/^[a-z0-9][a-z0-9-]{2,62}$/)
+      .optional(),
   })
   .refine((e) => Boolean(e.SUPABASE_JWT_SECRET) !== Boolean(e.SUPABASE_JWKS_URL), {
     message: "Imposta esattamente una tra SUPABASE_JWT_SECRET e SUPABASE_JWKS_URL",

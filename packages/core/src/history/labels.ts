@@ -22,6 +22,23 @@ export const TABLE_LABELS: Record<string, { one: string; section: string; href?:
   subscriptions: { one: "Abbonamento", section: "Abbonamento" },
   notifications: { one: "Notifica", section: "Notifiche" },
   data_exports: { one: "Esportazione", section: "Esportazioni" },
+  documents: { one: "Documento", section: "Documenti", href: "/app/documenti" },
+  document_versions: { one: "File", section: "Documenti", href: "/app/documenti" },
+  document_downloads: { one: "Documento", section: "Documenti", href: "/app/documenti" },
+  document_folders: { one: "Cartella", section: "Documenti", href: "/app/documenti" },
+};
+
+export const DOCUMENT_CATEGORY_NAMES: Record<string, string> = {
+  contract: "Contratto",
+  certificate: "Certificato",
+  invoice: "Fattura o ricevuta",
+  report: "Verbale o rapporto",
+  photo: "Foto",
+  identity: "Documento d'identità",
+  safety: "Sicurezza",
+  permit: "Permesso o autorizzazione",
+  manual: "Manuale o scheda tecnica",
+  other: "Altro",
 };
 
 /** Sezioni esportabili e loro nome nella UI. */
@@ -32,9 +49,10 @@ export const EXPORT_SECTION_LABELS: Record<string, string> = {
   teams: "Squadre",
   deadlines: "Scadenze",
   audit: "Registro attività",
+  documents: "Documenti",
 };
 
-type FieldKind = "text" | "date" | "datetime" | "bool" | "enum" | "ref" | "filters";
+type FieldKind = "text" | "date" | "datetime" | "bool" | "enum" | "ref" | "filters" | "bytes";
 
 interface FieldSpec {
   label: string;
@@ -162,6 +180,39 @@ export const FIELD_LABELS: Record<string, Record<string, FieldSpec>> = {
     accepted_at: { label: "Accettato il", kind: "datetime" },
   },
   tenants: { name: { label: "Nome" }, status: { label: "Stato" } },
+  documents: {
+    title: { label: "Titolo" },
+    category: { label: "Categoria", kind: "enum", values: DOCUMENT_CATEGORY_NAMES },
+    description: { label: "Descrizione" },
+    is_confidential: { label: "Riservato", kind: "bool" },
+    folder_id: { label: "Cartella", kind: "ref" },
+    customer_id: { label: "Cliente", kind: "ref" },
+    supplier_id: { label: "Fornitore", kind: "ref" },
+    employee_id: { label: "Dipendente", kind: "ref" },
+    team_id: { label: "Squadra", kind: "ref" },
+    expires_on: { label: "Scadenza", kind: "date" },
+    deleted_at: { label: "Eliminato il", kind: "datetime" },
+  },
+  document_versions: {
+    original_name: { label: "File" },
+    version_no: { label: "Versione" },
+    size_bytes: { label: "Dimensione", kind: "bytes" },
+    notes: { label: "Note" },
+    reject_reason: { label: "Motivo del rifiuto" },
+  },
+  document_downloads: {
+    document_id: { label: "Documento", kind: "ref" },
+    disposition: {
+      label: "Modalità",
+      kind: "enum",
+      values: { download: "Download", preview: "Anteprima" },
+    },
+  },
+  document_folders: {
+    name: { label: "Nome" },
+    parent_id: { label: "Cartella superiore", kind: "ref" },
+    deleted_at: { label: "Eliminata il", kind: "datetime" },
+  },
   data_exports: {
     section: { label: "Sezione", kind: "enum", values: EXPORT_SECTION_LABELS },
     format: { label: "Formato", kind: "enum", values: { csv: "CSV" } },
@@ -228,6 +279,13 @@ export function formatFieldValue(table: string, field: string, value: unknown): 
     }
     case "enum":
       return spec.values?.[String(value)] ?? String(value);
+    case "bytes": {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return String(value);
+      return n < 1024 * 1024
+        ? `${Math.max(1, Math.round(n / 1024))} KB`
+        : `${(n / 1024 / 1024).toFixed(1).replace(".", ",")} MB`;
+    }
     case "filters": {
       if (typeof value !== "object") return String(value);
       const parts = Object.entries(value as Record<string, unknown>)
@@ -270,6 +328,12 @@ export function recordTitle(table: string, data: Record<string, unknown> | null)
       return pick("title");
     case "invitations":
       return pick("email");
+    case "documents":
+      return pick("title");
+    case "document_versions":
+      return pick("original_name");
+    case "document_folders":
+      return pick("name");
     case "data_exports": {
       const label = EXPORT_SECTION_LABELS[String(data.section)] ?? String(data.section ?? "");
       if (data.row_count == null) return label;

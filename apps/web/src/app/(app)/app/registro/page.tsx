@@ -25,6 +25,7 @@ const SECTIONS = [
   "invitations",
   "roles",
   "tenant_settings",
+  "documents",
   "data_exports",
 ];
 const VERBS = {

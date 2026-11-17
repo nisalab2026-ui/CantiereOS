@@ -67,6 +67,24 @@ try {
     }
   }
   console.log(count ? `Migrazioni applicate: ${count}.` : "Nessuna migrazione nuova.");
+
+  // Supabase Storage locale: lo schema "storage" lo crea il container storage-api.
+  // Sulla piattaforma service_role può già usarlo; qui lo concediamo come lì.
+  const { rows: storage } = await client.query(
+    "select 1 from pg_namespace where nspname = 'storage'",
+  );
+  if (storage.length) {
+    await client.query(`
+      grant usage on schema storage to service_role;
+      grant all on all tables in schema storage to service_role;
+      grant all on all sequences in schema storage to service_role;
+      grant execute on all functions in schema storage to service_role;`);
+    console.log("Storage locale: permessi di service_role verificati.");
+  } else {
+    console.log(
+      "Storage locale non ancora inizializzato: rilancia dopo l'avvio del container storage.",
+    );
+  }
 } finally {
   await client.end();
 }

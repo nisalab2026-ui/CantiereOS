@@ -22,7 +22,11 @@ export type HistoryVerb =
   | "completed"
   | "reopened"
   | "cancelled"
-  | "exported";
+  | "exported"
+  | "uploaded"
+  | "rejected"
+  | "downloaded"
+  | "previewed";
 
 export interface FieldChange {
   field: string;
@@ -80,12 +84,33 @@ const REF_TARGETS: Record<string, { sql: string }> = {
     sql: "select id, coalesce(full_name, email) as name from public.users where $1::uuid is not null and id = any($2)",
   },
   role_id: { sql: "select id, name from public.roles where $1::uuid is not null and id = any($2)" },
+  document_id: {
+    sql: "select id, title as name from public.documents where tenant_id = $1 and id = any($2)",
+  },
+  folder_id: {
+    sql: "select id, name from public.document_folders where tenant_id = $1 and id = any($2)",
+  },
+  parent_id: {
+    sql: "select id, name from public.document_folders where tenant_id = $1 and id = any($2)",
+  },
 };
 
-const HREF_TABLES = new Set(["customers", "employees", "deadlines"]);
+const HREF_TABLES = new Set(["customers", "employees", "deadlines", "documents"]);
+/** Tabelle il cui link punta al documento padre (document_id) invece che al record. */
+const DOC_CHILD_TABLES = new Set(["document_versions", "document_downloads"]);
+
+/** La creazione di una versione "in attesa" è un dettaglio tecnico: conta il caricamento verificato. */
+const isVisibleEvent = (r: AuditRow) =>
+  !(r.table_name === "document_versions" && r.action === "INSERT");
 
 function verbOf(row: AuditRow): HistoryVerb {
   if (row.table_name === "data_exports") return "exported";
+  if (row.table_name === "document_downloads") {
+    return row.new_data?.disposition === "preview" ? "previewed" : "downloaded";
+  }
+  if (row.table_name === "document_versions" && row.action === "UPDATE") {
+    return row.new_data?.status === "rejected" ? "rejected" : "uploaded";
+  }
   if (row.action === "INSERT") return "created";
   if (row.action === "DELETE") return "deleted";
   const changed = new Set(row.changed_fields ?? []);
@@ -136,7 +161,7 @@ async function buildEvents(
     return formatFieldValue(table, field, value);
   };
 
-  return rows.map((r) => {
+  return rows.filter(isVisibleEvent).map((r) => {
     const table = r.table_name ?? "";
     const verb = verbOf(r);
     const changes: FieldChange[] = [];
@@ -162,9 +187,13 @@ async function buildEvents(
       table,
       tableLabel: meta?.one ?? table,
       recordId: r.record_id,
-      recordTitle: recordTitle(table, r.new_data ?? r.old_data),
-      href:
-        meta?.href && r.record_id && HREF_TABLES.has(table) && verb !== "deleted"
+      recordTitle:
+        table === "document_downloads"
+          ? (names.get(`document_id:${String(r.new_data?.document_id ?? "")}`) ?? null)
+          : recordTitle(table, r.new_data ?? r.old_data),
+      href: DOC_CHILD_TABLES.has(table)
+        ? `/app/documenti/${String((r.new_data ?? r.old_data)?.document_id ?? "")}`
+        : meta?.href && r.record_id && HREF_TABLES.has(table) && verb !== "deleted"
           ? `${meta.href}/${r.record_id}`
           : (meta?.href ?? null),
       changes,
@@ -178,6 +207,7 @@ export const HISTORY_TABLES = [
   "employees",
   "teams",
   "deadlines",
+  "documents",
 ] as const;
 export type HistoryTable = (typeof HISTORY_TABLES)[number];
 
@@ -218,6 +248,10 @@ export interface ActivityPage {
 }
 
 const ACTIVITY_HIDDEN_TABLES = ["notifications"];
+// nel registro, la sezione Documenti include cartelle, versioni e download
+const TABLE_GROUPS: Record<string, string[]> = {
+  documents: ["documents", "document_versions", "document_downloads", "document_folders"],
+};
 const ACTION_BY_VERB = { created: "INSERT", updated: "UPDATE", deleted: "DELETE" } as const;
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -234,10 +268,14 @@ export async function listActivity(
   requirePermission(access, "audit.read");
   const limit = Math.min(Math.max(f.limit ?? 50, 1), opts.maxLimit ?? 200);
   const params: unknown[] = [access.tenantId, ACTIVITY_HIDDEN_TABLES];
-  const where = ["a.tenant_id = $1", "not (a.table_name = any($2))"];
+  const where = [
+    "a.tenant_id = $1",
+    "not (a.table_name = any($2))",
+    "not (a.table_name = 'document_versions' and a.action = 'INSERT')",
+  ];
   if (f.table && TABLE_LABELS[f.table]) {
-    params.push(f.table);
-    where.push(`a.table_name = $${params.length}`);
+    params.push(TABLE_GROUPS[f.table] ?? [f.table]);
+    where.push(`a.table_name = any($${params.length})`);
   }
   if (f.actorId && z.uuid().safeParse(f.actorId).success) {
     params.push(f.actorId);
