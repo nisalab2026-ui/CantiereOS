@@ -205,6 +205,42 @@ chi li gestisce non può concedere permessi che non possiede.
 Tutte le funzioni `SECURITY DEFINER` hanno `search_path = ''`; nessuna è eseguibile da `PUBLIC` o
 `anon` (verificato dai test).
 
+### Rapportini (migrazione `20261117210000_work_reports`)
+
+**ADR-015 — Rapportini di lavoro legati alla commessa.** Decisione presa prima
+dell'implementazione, sul piano approvato dal titolare il 17/11/2026 («la soluzione più completa»).
+
+- **Perché un modulo dedicato e non un modello di «Moduli».** Ore, materiali e mezzi devono
+  diventare costi della commessa: servono righe tipizzate (persona, ore, quantità) che il database
+  può sommare, non valori liberi dentro un JSON. Il modello «Rapportino giornaliero» resta per chi
+  vuole qualcosa di più semplice.
+- **Rapportino (`work_reports`).** Numero automatico `AAAA-NNNN` per azienda, commessa
+  (obbligatoria, non conclusa né annullata), cantiere della stessa commessa (facoltativo), data,
+  lavori eseguiti, note, firma del cliente (immagine PNG con nome e ora, scritte dal database).
+- **Righe.** `work_report_labor`: persona del personale, inizio, fine e pausa oppure ore totali (se
+  ci sono inizio e fine le ore le calcola il database). `work_report_items`: materiali, mezzi e
+  altre voci con quantità e unità. `work_report_files`: foto, con lo stesso flusso verificato dei
+  moduli (bucket `FORMS_BUCKET`, chiave `{azienda}/{rapportino}/{foto}`, come le foto dei moduli).
+- **Stati.** bozza → inviato → approvato (→ fatturato, con i documenti commerciali). Chi ha
+  `work_reports.approve` può rimandare in bozza un rapportino inviato (con il motivo) o riaprirne uno
+  approvato. Le righe e le foto si cambiano solo in bozza; un rapportino fatturato non cambia più.
+  Chi non approva modifica e invia solo i propri rapportini. Date e autori dei passaggi li scrive il
+  database.
+- **Costi riservati.** Il costo orario per persona (`employee_cost_rates`, con data di inizio
+  validità) e i prezzi delle voci (`work_report_item_costs`) stanno in tabelle separate visibili solo
+  con `projects.finance`, come gli importi della commessa. Il costo di un rapportino usa la tariffa
+  valida alla sua data. **Solo i rapportini approvati** entrano in ore e costi della commessa.
+- **Permessi per grado.** `work_reports.read` a tutti i ruoli interni, ma da solo (tecnico) mostra
+  soltanto i rapportini creati da sé e quelli in cui si compare tra le ore
+  (`app.work_report_visible`, usata dalle policy e da `app.record_history`);
+  `work_reports_all.read` (tutti i rapportini) a titolare, amministratore, responsabile operativo,
+  capocantiere, ufficio e sola consultazione. `work_reports.write` (compilare) a titolare,
+  amministratore, responsabile operativo, capocantiere e tecnico: l'ufficio vede ma non compila.
+  `work_reports.approve` a titolare, amministratore, responsabile operativo e capocantiere;
+  `work_reports.delete` (MFA) a titolare e amministratore. Eliminazione solo logica.
+- **Non ancora.** Precompilazione dalle timbrature (con le presenze), listino articoli e magazzino,
+  fattura dal rapportino (con i documenti commerciali), invio del PDF via email (SMTP non configurato).
+
 ### Commesse e cantieri (migrazione `20261117200000_projects`)
 
 **ADR-014 — La commessa al centro.** Decisione presa prima dell'implementazione (piano del

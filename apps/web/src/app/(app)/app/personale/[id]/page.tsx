@@ -7,7 +7,9 @@ import {
   listDocuments,
   listFolders,
   listSubjectOptions,
+  listEmployeeCostRates,
 } from "@cantiereos/core";
+import { CostRates } from "./cost-rates";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Timeline } from "@/components/history/timeline";
@@ -71,12 +73,15 @@ export default async function EmployeePage({
   const canWriteTasks = access.permissions.has("tasks.write");
   const canComms = access.permissions.has("communications.read");
   const canWriteComms = access.permissions.has("communications.write");
+  const canFinance = access.permissions.has("projects.finance");
 
   const data = await asCurrentUser(async (tx) => {
     const e = await getEmployee(tx, access, id);
     if (!e) return null;
     return {
       e,
+      rates:
+        canFinance && tab === "panoramica" ? await listEmployeeCostRates(tx, access, id) : null,
       open: canDeadlines
         ? await listDeadlines(tx, access, { employeeId: id, state: "open", pageSize: 100 })
         : null,
@@ -117,7 +122,7 @@ export default async function EmployeePage({
     };
   });
   if (!data) notFound();
-  const { e, open, all, openTasks, comms, history, options, docs, docOptions } = data;
+  const { e, rates, open, all, openTasks, comms, history, options, docs, docOptions } = data;
   const name = `${e.firstName} ${e.lastName}`;
   const base = `/app/personale/${id}`;
   const overdue = open?.rows.filter((r) => r.state === "overdue").length ?? 0;
@@ -303,6 +308,17 @@ export default async function EmployeePage({
                     rows={comms.rows}
                     emptyText="Nessuna comunicazione registrata con questa persona."
                   />
+                </CardBody>
+              </Card>
+            )}
+            {rates && (
+              <Card>
+                <CardHeader
+                  title="Costo orario"
+                  description="Costo aziendale per ora, usato per i costi reali delle commesse. Lo vedete solo tu e l'amministrazione."
+                />
+                <CardBody>
+                  <CostRates employeeId={e.id} rates={rates} />
                 </CardBody>
               </Card>
             )}

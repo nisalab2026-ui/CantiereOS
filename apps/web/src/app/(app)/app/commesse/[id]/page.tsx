@@ -1,6 +1,9 @@
 import {
   getProject,
+  getProjectWorkSummary,
   getRecordHistory,
+  listWorkReports,
+  loadWorkReportOptions,
   listFormCustomerOptions,
   listFormSubmissions,
   listFormTemplates,
@@ -34,6 +37,8 @@ import { ProjectStatusBadge, SiteStatusBadge } from "../project-bits";
 import { ProjectDialog } from "../project-form";
 import { FormMiniList } from "../../moduli/form-mini-list";
 import { NewSubmissionDialog } from "../../moduli/new-submission";
+import { NewReportDialog } from "../../rapportini/new-report";
+import { formatHours, formatReportDate, ReportStatusBadge } from "../../rapportini/report-bits";
 
 export const metadata: Metadata = { title: "Commessa" };
 
@@ -57,6 +62,8 @@ export default async function ProjectPage({
   const canDelete = access.permissions.has("projects.delete");
   const canReadForms = access.permissions.has("forms.read");
   const canWriteForms = access.permissions.has("forms.write");
+  const canReports = access.permissions.has("work_reports.read");
+  const canWriteReports = access.permissions.has("work_reports.write");
 
   const data = await asCurrentUser(async (tx) => {
     const p = await getProject(tx, access, id);
@@ -64,6 +71,14 @@ export default async function ProjectPage({
     return {
       p,
       history: await getRecordHistory(tx, access, "projects", id),
+      work: canReports ? await getProjectWorkSummary(tx, access, id) : null,
+      reports: canReports
+        ? await listWorkReports(tx, access, { projectId: id, status: "all", pageSize: 5 })
+        : null,
+      reportOptions:
+        canWriteReports && p.status !== "completed" && p.status !== "cancelled"
+          ? await loadWorkReportOptions(tx, access)
+          : null,
       options: canWrite ? await loadProjectFormOptions(tx, access) : null,
       forms: canReadForms
         ? await listFormSubmissions(tx, access, { projectId: id, pageSize: 10 })
@@ -80,9 +95,12 @@ export default async function ProjectPage({
     };
   });
   if (!data) notFound();
-  const { p, history, options, forms, formOptions } = data;
+  const { p, history, options, forms, formOptions, work, reports, reportOptions } = data;
   const customerSites = options?.customers.find((c) => c.id === p.customer.id)?.sites ?? [];
   const f = p.financials;
+  const realCost = work?.costs ? work.costs.laborCents + work.costs.itemsCents : null;
+  const realMargin =
+    realCost !== null && f?.contractCents != null ? f.contractCents - realCost : null;
   const margin =
     f && f.contractCents !== null && f.budgetCostCents !== null
       ? f.contractCents - f.budgetCostCents
@@ -284,10 +302,101 @@ export default async function ProjectPage({
             </CardBody>
           </Card>
 
+          {work && reports && (
+            <Card>
+              <CardHeader
+                title="Rapportini"
+                description="Ore e costi reali: contano solo i rapportini approvati."
+                {...(reportOptions
+                  ? {
+                      actions: (
+                        <NewReportDialog
+                          projects={reportOptions.projects}
+                          defaultProjectId={p.id}
+                          variant="secondary"
+                        />
+                      ),
+                    }
+                  : {})}
+              />
+              <CardBody className="space-y-4">
+                <div
+                  className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+                  data-testid="project-work"
+                >
+                  <StatTile label="Ore approvate" value={formatHours(work.hoursApproved)} />
+                  <StatTile
+                    label="Ore da approvare"
+                    value={formatHours(work.hoursPending)}
+                    hint={`${work.reports.draft} bozze · ${work.reports.submitted} inviati`}
+                  />
+                  {realCost !== null && <MoneyTile label="Costo reale" cents={realCost} />}
+                  {work.costs && (
+                    <MoneyTile
+                      label="Margine reale"
+                      cents={realMargin}
+                      hint={
+                        realMargin === null
+                          ? "Manca l'importo del contratto"
+                          : `${((realMargin / f!.contractCents!) * 100).toLocaleString("it-IT", { maximumFractionDigits: 1 })}% del contratto`
+                      }
+                      tone={realMargin !== null && realMargin < 0 ? "danger" : undefined}
+                    />
+                  )}
+                </div>
+                {work.costs && (work.costs.missingRates > 0 || work.costs.missingPrices > 0) && (
+                  <p className="text-xs text-warning">
+                    Costo incompleto:
+                    {work.costs.missingRates > 0 &&
+                      ` ${work.costs.missingRates} ${work.costs.missingRates === 1 ? "persona" : "persone"} senza costo orario`}
+                    {work.costs.missingRates > 0 && work.costs.missingPrices > 0 && ","}
+                    {work.costs.missingPrices > 0 &&
+                      ` ${work.costs.missingPrices} ${work.costs.missingPrices === 1 ? "voce" : "voci"} senza prezzo`}
+                    .
+                  </p>
+                )}
+                {reports.rows.length > 0 ? (
+                  <ul className="divide-y divide-border text-sm">
+                    {reports.rows.map((r) => (
+                      <li key={r.id} className="flex items-center justify-between gap-3 py-2">
+                        <Link href={`/app/rapportini/${r.id}`} className="min-w-0 hover:underline">
+                          <span className="mr-2 font-mono text-xs text-muted-foreground">
+                            {r.number}
+                          </span>
+                          {formatReportDate(r.reportDate)}
+                          <span className="block text-xs text-muted-foreground">
+                            {r.authorName ?? "—"}
+                            {r.siteName && ` · ${r.siteName}`}
+                          </span>
+                        </Link>
+                        <span className="flex shrink-0 items-center gap-2">
+                          <span className="tabular-nums">{formatHours(r.hours)}</span>
+                          <ReportStatusBadge status={r.status} />
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Nessun rapportino per questa commessa.
+                  </p>
+                )}
+                {reports.total > reports.rows.length && (
+                  <Link
+                    href={`/app/rapportini?status=all&q=${encodeURIComponent(p.code)}`}
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
+                    Vedi tutti i {reports.total} rapportini
+                  </Link>
+                )}
+              </CardBody>
+            </Card>
+          )}
+
           {forms && (
             <Card>
               <CardHeader
-                title="Moduli e rapportini"
+                title="Moduli"
                 {...(forms.total > forms.rows.length
                   ? { description: `Gli ultimi ${forms.rows.length} di ${forms.total}.` }
                   : {})}
@@ -309,7 +418,7 @@ export default async function ProjectPage({
               <CardBody>
                 <FormMiniList
                   rows={forms.rows}
-                  emptyText="Nessun modulo collegato. Rapportini, verbali e checklist compilati per questa commessa compariranno qui."
+                  emptyText="Nessun modulo collegato. Verbali, checklist e dichiarazioni compilati per questa commessa compariranno qui."
                 />
               </CardBody>
             </Card>
@@ -358,6 +467,16 @@ export default async function ProjectPage({
           </CardBody>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function StatTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="rounded-md border border-border bg-card px-3 py-2.5">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-lg font-semibold tabular-nums">{value}</p>
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }

@@ -20,6 +20,7 @@ export interface GuideTopic {
 }
 
 export type GuideIcon =
+  | "reports"
   | "start"
   | "search"
   | "dashboard"
@@ -149,6 +150,46 @@ export const GUIDE: GuideTopic[] = [
         q: "Cosa c'è nel riepilogo?",
         a: [
           "Il margine previsto (contratto meno costo previsto) e il conteggio di attività, moduli e documenti collegati alla commessa che puoi vedere. Ogni modifica a commessa, cantieri e importi resta nella cronologia con autore e valori prima e dopo.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "rapportini",
+    title: "Rapportini",
+    summary: "La giornata di lavoro su una commessa: ore, materiali, foto e firma del cliente.",
+    icon: "reports",
+    href: "/app/rapportini",
+    permission: "work_reports.read",
+    entries: [
+      {
+        q: "Lavoro in cantiere: come faccio il rapportino?",
+        a: [
+          "1. Apri CantiereOS dal telefono: in Panoramica tocca «Compila il rapportino di oggi». 2. Scegli la commessa (e il cantiere): il giorno è già oggi. 3. La tua riga di ore è già proposta (07:30–16:30 con un'ora di pausa): correggi gli orari e aggiungi i compagni con «Persona». 4. Scrivi i lavori eseguiti, aggiungi materiali e mezzi, scatta le foto e fai firmare il cliente. 5. Tocca «Salva e invia». Da quel momento il rapportino non si modifica più, a meno che il responsabile non te lo restituisca con una nota.",
+        ],
+      },
+      {
+        q: "Chi può fare cosa con i rapportini?",
+        a: [
+          "Tecnico in cantiere: compila e invia i propri rapportini e vede solo i suoi e quelli in cui compare tra le ore. Capocantiere e responsabile operativo: compilano, vedono tutti i rapportini, li approvano o li restituiscono con una nota. Ufficio: vede tutti i rapportini, le ore e i costi, ma non li compila. Titolare e amministratori: possono tutto, compresa l'eliminazione. Costi e prezzi li vedono solo titolare, amministratori e ufficio. I limiti li applica il database, non solo la pagina.",
+        ],
+      },
+      {
+        q: "Cosa succede quando lo invio?",
+        a: [
+          "Il rapportino passa a «Inviato» e non si modifica più. Il responsabile lo approva oppure lo restituisce con una nota su cosa sistemare: in quel caso torna bozza e la nota compare in alto. Finché nessuno l'ha approvato puoi anche ritirarlo.",
+        ],
+      },
+      {
+        q: "Come entrano le ore nei costi della commessa?",
+        a: [
+          "Contano solo i rapportini approvati. Il costo della manodopera è ore × costo orario della persona valido in quel giorno (si indica nella scheda del personale); il costo dei materiali è quantità × prezzo unitario. Costi e prezzi li vedono solo titolare, amministratori e ufficio, e il controllo è fatto dal database.",
+        ],
+      },
+      {
+        q: "Posso dare il rapportino al cliente?",
+        a: [
+          "Sì: «Stampa / PDF» apre la versione A4 con lavori, ore, materiali, foto e firma, senza costi né note interne. Dal browser scegli «Salva come PDF» per inviarlo.",
         ],
       },
     ],
