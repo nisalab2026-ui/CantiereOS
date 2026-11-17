@@ -1,6 +1,7 @@
 import {
   Briefcase,
   ClipboardCheck,
+  ClipboardList,
   Building2,
   CalendarClock,
   CalendarDays,
@@ -36,6 +37,13 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Commesse",
     icon: Briefcase,
     permission: "projects.read",
+    group: "lavoro",
+  },
+  {
+    href: "/app/rapportini",
+    label: "Rapportini",
+    icon: ClipboardList,
+    permission: "work_reports.read",
     group: "lavoro",
   },
   {

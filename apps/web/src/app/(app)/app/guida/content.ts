@@ -20,6 +20,7 @@ export interface GuideTopic {
 }
 
 export type GuideIcon =
+  | "reports"
   | "start"
   | "search"
   | "dashboard"
@@ -149,6 +150,40 @@ export const GUIDE: GuideTopic[] = [
         q: "Cosa c'è nel riepilogo?",
         a: [
           "Il margine previsto (contratto meno costo previsto) e il conteggio di attività, moduli e documenti collegati alla commessa che puoi vedere. Ogni modifica a commessa, cantieri e importi resta nella cronologia con autore e valori prima e dopo.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "rapportini",
+    title: "Rapportini",
+    summary: "La giornata di lavoro su una commessa: ore, materiali, foto e firma del cliente.",
+    icon: "reports",
+    href: "/app/rapportini",
+    permission: "work_reports.read",
+    entries: [
+      {
+        q: "Come compilo un rapportino dal cantiere?",
+        a: [
+          "Da Rapportini tocca «Nuovo rapportino», scegli la commessa, il cantiere e il giorno. Poi aggiungi chi ha lavorato con inizio, fine e pausa (le ore si calcolano da sole) oppure con le ore totali, i materiali e i mezzi usati, scatta le foto e fai firmare il cliente sul telefono. Ricordati di toccare «Salva».",
+        ],
+      },
+      {
+        q: "Cosa succede quando lo invio?",
+        a: [
+          "Il rapportino passa a «Inviato» e non si modifica più. Il responsabile lo approva oppure lo restituisce con una nota su cosa sistemare: in quel caso torna bozza e la nota compare in alto. Finché nessuno l'ha approvato puoi anche ritirarlo.",
+        ],
+      },
+      {
+        q: "Come entrano le ore nei costi della commessa?",
+        a: [
+          "Contano solo i rapportini approvati. Il costo della manodopera è ore × costo orario della persona valido in quel giorno (si indica nella scheda del personale); il costo dei materiali è quantità × prezzo unitario. Costi e prezzi li vedono solo titolare, amministratori e ufficio, e il controllo è fatto dal database.",
+        ],
+      },
+      {
+        q: "Posso dare il rapportino al cliente?",
+        a: [
+          "Sì: «Stampa / PDF» apre la versione A4 con lavori, ore, materiali, foto e firma, senza costi né note interne. Dal browser scegli «Salva come PDF» per inviarlo.",
         ],
       },
     ],

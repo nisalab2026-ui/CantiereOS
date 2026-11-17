@@ -28,3 +28,4 @@ export * from "./exports/exports";
 export * from "./documents/storage";
 export * from "./documents/documents";
 export * from "./operations/projects";
+export * from "./operations/work-reports";

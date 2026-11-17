@@ -40,6 +40,27 @@ export const TABLE_LABELS: Record<string, { one: string; section: string; href?:
   projects: { one: "Commessa", section: "Commesse", href: "/app/commesse" },
   project_sites: { one: "Cantiere", section: "Commesse", href: "/app/commesse" },
   project_financials: { one: "Importi della commessa", section: "Commesse", href: "/app/commesse" },
+  work_reports: { one: "Rapportino", section: "Rapportini", href: "/app/rapportini" },
+  work_report_labor: { one: "Ore del rapportino", section: "Rapportini", href: "/app/rapportini" },
+  work_report_items: {
+    one: "Materiale del rapportino",
+    section: "Rapportini",
+    href: "/app/rapportini",
+  },
+  work_report_files: { one: "Foto del rapportino", section: "Rapportini", href: "/app/rapportini" },
+};
+
+export const WORK_REPORT_STATUS_NAMES: Record<string, string> = {
+  draft: "Bozza",
+  submitted: "Inviato",
+  approved: "Approvato",
+  invoiced: "Fatturato",
+};
+
+export const WORK_ITEM_KIND_NAMES: Record<string, string> = {
+  material: "Materiale",
+  equipment: "Mezzo o attrezzatura",
+  other: "Altro",
 };
 
 export const PROJECT_STATUS_NAMES: Record<string, string> = {
@@ -333,6 +354,38 @@ export const FIELD_LABELS: Record<string, Record<string, FieldSpec>> = {
     budget_cost_cents: { label: "Costo previsto", kind: "cents" },
     notes: { label: "Note sugli importi" },
   },
+  work_reports: {
+    number: { label: "Numero" },
+    project_id: { label: "Commessa", kind: "ref" },
+    project_site_id: { label: "Cantiere", kind: "ref" },
+    report_date: { label: "Data", kind: "date" },
+    status: { label: "Stato", kind: "enum", values: WORK_REPORT_STATUS_NAMES },
+    work_description: { label: "Lavori eseguiti" },
+    notes: { label: "Note" },
+    customer_signer_name: { label: "Firmato da" },
+    customer_signed_at: { label: "Firmato il", kind: "datetime" },
+    returned_reason: { label: "Motivo della restituzione" },
+    invoiced_at: { label: "Fatturato il", kind: "datetime" },
+    deleted_at: { label: "Eliminato il", kind: "datetime" },
+  },
+  work_report_labor: {
+    employee_id: { label: "Persona", kind: "ref" },
+    start_time: { label: "Inizio" },
+    end_time: { label: "Fine" },
+    break_minutes: { label: "Pausa (minuti)" },
+    hours: { label: "Ore" },
+    notes: { label: "Note" },
+  },
+  work_report_items: {
+    kind: { label: "Tipo", kind: "enum", values: WORK_ITEM_KIND_NAMES },
+    description: { label: "Descrizione" },
+    quantity: { label: "Quantità" },
+    unit: { label: "Unità" },
+    notes: { label: "Note" },
+  },
+  work_report_files: {
+    original_name: { label: "Nome del file" },
+  },
   communications: {
     channel: { label: "Canale", kind: "enum", values: COMMUNICATION_CHANNEL_NAMES },
     direction: {
@@ -568,6 +621,13 @@ export function recordTitle(table: string, data: Record<string, unknown> | null)
       return pick("name");
     case "project_financials":
       return "Importi";
+    case "work_reports":
+      return pick("number");
+    case "work_report_labor":
+      return pick("hours");
+    case "work_report_items":
+    case "work_report_files":
+      return pick("description", "original_name");
     case "comments": {
       const body = typeof data.body === "string" ? data.body : "";
       return body.length > 60 ? `${body.slice(0, 57)}…` : body || null;
