@@ -726,6 +726,62 @@ html[data-js] [data-shown] .trade-chip {
   border-color: color-mix(in oklab, var(--primary) 35%, transparent);
 }
 
+/* --- Illustrazioni dei mestieri (components/site/trade-scenes.tsx) ---------------------------------
+ * --t è l'ingresso della scena (0 → 1 nella prima metà del passaggio); --vp continua a muovere gru,
+ * ingranaggi, lancette e cartellini per tutta la sezione. Acqua, gocce e segnaposto si muovono da soli. */
+.trade-scene {
+  --t: clamp(0, calc((var(--vp, 1) - 0.08) * 2.4), 1);
+  box-shadow: 0 30px 70px -40px var(--site-shadow);
+}
+html[data-engine] .trade-section .trade-scene {
+  transform: perspective(1000px) rotateX(calc((1 - var(--t)) * 16deg))
+    scale(calc(0.92 + var(--t) * 0.08));
+  transform-origin: 50% 100%;
+}
+.trade-flow {
+  stroke-dasharray: 4 10;
+  animation: trade-flow 1.4s linear infinite;
+}
+@keyframes trade-flow {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+.trade-drop {
+  animation: trade-drop 1.8s cubic-bezier(0.5, 0, 0.9, 0.5) infinite;
+}
+@keyframes trade-drop {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(70px);
+    opacity: 0;
+  }
+}
+.trade-pin {
+  animation: trade-pin 2.4s ease-in-out infinite;
+}
+@keyframes trade-pin {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+.trade-tile .trade-scene {
+  transition: transform 0.6s var(--ease-out-expo);
+}
+.trade-tile:hover .trade-scene {
+  transform: scale(1.03);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wa-fab,
   .wa-wave,
@@ -745,5 +801,13 @@ html[data-js] [data-shown] .trade-chip {
   html[data-js] .trade-chip {
     opacity: 1;
     transform: none;
+  }
+  .trade-flow,
+  .trade-drop,
+  .trade-pin {
+    animation: none;
+  }
+  .trade-drop {
+    opacity: 0;
   }
 }
