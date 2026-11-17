@@ -23,6 +23,7 @@ export function FilterBar({
   values = {},
   placeholder = "Cerca…",
   dateRange,
+  keep = {},
 }: {
   pathname: string;
   q: string;
@@ -31,7 +32,11 @@ export function FilterBar({
   placeholder?: string;
   /** Intervallo di date (parametri from/to nell'URL). */
   dateRange?: { label: string; from?: string | undefined; to?: string | undefined };
+  /** Parametri da mantenere (es. la cartella aperta) quando si filtra o si azzera. */
+  keep?: Record<string, string | undefined>;
 }) {
+  const kept = Object.entries(keep).filter((e): e is [string, string] => Boolean(e[1]));
+  const resetHref = kept.length ? `${pathname}?${new URLSearchParams(kept).toString()}` : pathname;
   const form = useRef<HTMLFormElement>(null);
   const active =
     q !== "" || Object.values(values).some(Boolean) || Boolean(dateRange?.from || dateRange?.to);
@@ -43,6 +48,9 @@ export function FilterBar({
       role="search"
       className="flex flex-wrap items-center gap-2 px-4 py-3"
     >
+      {kept.map(([k, v]) => (
+        <input key={k} type="hidden" name={k} value={v} />
+      ))}
       <div className="relative min-w-56 flex-1 sm:max-w-sm">
         <Search
           className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
@@ -100,7 +108,7 @@ export function FilterBar({
       )}
       {active && (
         <Link
-          href={pathname}
+          href={resetHref}
           className="inline-flex h-9 items-center gap-1 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <X className="size-4" aria-hidden /> Azzera

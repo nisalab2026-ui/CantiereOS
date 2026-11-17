@@ -48,6 +48,8 @@ const files = {
     `SUPABASE_JWT_ISSUER=${issuer}`,
     `SUPABASE_JWT_SECRET=${jwtSecret}`,
     `DATABASE_URL=postgresql://postgres:${dbPassword}@127.0.0.1:54330/postgres`,
+    `SUPABASE_SERVICE_ROLE_KEY=${serviceKey}`,
+    "DOCUMENTS_BUCKET=documents",
     "SMTP_URL=smtp://127.0.0.1:1025",
     'MAIL_FROM="CantiereOS (sviluppo) <no-reply@cantiereos.invalid>"',
     "",

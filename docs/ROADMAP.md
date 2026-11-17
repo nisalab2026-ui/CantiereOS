@@ -58,6 +58,10 @@
 - [x] AUDIT.md con priorità e piano di lavoro
 - [x] Esportazione CSV (compatibile Excel) di clienti, fornitori, personale, squadre, scadenze e
       registro, con i filtri della pagina e registrazione nello storico
+- [x] Archivio documentale: cartelle, caricamento multiplo con trascinamento, verifica del tipo
+      reale, versioni immutabili, anteprima, download tracciato, scadenza con promemoria nello
+      scadenziario, collegamento a clienti/personale/fornitori/squadre, documenti riservati,
+      ricerca ed esportazione CSV (storage privato Supabase, URL firmati)
 - [ ] Conferma ADR-006 (Kysely) e ADR-007 (BullMQ)
 
 ## Fase 3 — Operatività di campo
@@ -79,7 +83,8 @@
 
 ## Fase 5 — Documenti, OCR e AI
 
-- Archivio documentale: import massivo, versioni, scadenze, collegamenti, ricerca full-text
+- Archivio documentale: base fatta in fase 2 (versioni, scadenze, collegamenti, caricamento
+  multiplo); restano ricerca nel contenuto dei file, import da archivio zip, antivirus
 - OCR (provider da scegliere) e classificazione
 - Ricerca intelligente, estrazione dati da fatture fornitori, report automatici, anomalie
 

@@ -22,6 +22,9 @@ const FILTER_KEYS = [
   "sezione",
   "operazione",
   "utente",
+  "folder",
+  "category",
+  "expiry",
 ] as const;
 
 export async function POST(request: NextRequest) {

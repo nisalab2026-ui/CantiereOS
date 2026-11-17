@@ -6,11 +6,12 @@ import {
   Building2,
   CalendarClock,
   CornerDownLeft,
+  FileText,
   HardHat,
+  type LucideIcon,
   Search,
   Truck,
   UsersRound,
-  type LucideIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -25,6 +26,7 @@ const KIND: Record<SearchKind, { label: string; icon: LucideIcon; href: (id: str
     employee: { label: "Personale", icon: HardHat, href: (id) => `/app/personale/${id}` },
     team: { label: "Squadre", icon: UsersRound, href: (id) => `/app/squadre?id=${id}` },
     deadline: { label: "Scadenze", icon: CalendarClock, href: (id) => `/app/scadenze/${id}` },
+    document: { label: "Documenti", icon: FileText, href: (id) => `/app/documenti/${id}` },
   };
 
 /**

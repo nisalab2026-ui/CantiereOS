@@ -16,6 +16,11 @@ import {
 } from "../history/labels";
 import { DEADLINE_STATE_LABELS, listDeadlines, type DeadlineQuery } from "../operations/deadlines";
 import { toCsv, type CsvColumn } from "./csv";
+import {
+  DOCUMENT_CATEGORY_LABELS,
+  listDocuments,
+  type DocumentQuery,
+} from "../documents/documents";
 
 /**
  * Esportazioni CSV delle liste e del registro attività. Stessi filtri e
@@ -30,6 +35,7 @@ export const EXPORT_SECTIONS = [
   "teams",
   "deadlines",
   "audit",
+  "documents",
 ] as const;
 export type ExportSection = (typeof EXPORT_SECTIONS)[number];
 
@@ -43,6 +49,7 @@ export const EXPORT_PERMISSION: Record<ExportSection, string> = {
   teams: "teams.read",
   deadlines: "deadlines.read",
   audit: "audit.read",
+  documents: "documents.read",
 };
 
 const FILE_PREFIX: Record<ExportSection, string> = {
@@ -52,6 +59,7 @@ const FILE_PREFIX: Record<ExportSection, string> = {
   teams: "squadre",
   deadlines: "scadenze",
   audit: "registro-attivita",
+  documents: "documenti",
 };
 
 export interface ExportResult {
@@ -201,6 +209,35 @@ export async function exportSection(
         { header: "Riferimento", value: (x) => x.referenceCode },
         { header: "Responsabile", value: (x) => x.responsibleName },
         { header: "Ricorrenza (mesi)", value: (x) => x.recurrenceMonths },
+      ];
+      csv = toCsv(cols, r.rows);
+      [rows, total, filters] = [r.rows.length, r.total, q as Record<string, unknown>];
+      break;
+    }
+    case "documents": {
+      const q = compact({
+        q: str(params.q),
+        folder: str(params.folder, 40),
+        category: str(params.category, 30),
+        expiry: str(params.expiry, 20),
+        sort: str(params.sort, 20),
+        dir: dir(params.dir),
+      }) as DocumentQuery;
+      const r = await listDocuments(tx, access, { ...q, ...page }, opts);
+      const cols: CsvColumn<(typeof r.rows)[number]>[] = [
+        { header: "Titolo", value: (x) => x.title },
+        { header: "Categoria", value: (x) => DOCUMENT_CATEGORY_LABELS[x.category] },
+        { header: "Cartella", value: (x) => x.folderName },
+        { header: "Collegato a", value: (x) => x.subject?.name ?? null },
+        { header: "Scadenza", value: (x) => itDate(x.expiresOn) },
+        { header: "File", value: (x) => x.fileName },
+        {
+          header: "Dimensione (KB)",
+          value: (x) => (x.sizeBytes ? Math.ceil(x.sizeBytes / 1024) : null),
+        },
+        { header: "Versioni", value: (x) => x.versions },
+        { header: "Riservato", value: (x) => x.isConfidential },
+        { header: "Ultima modifica", value: (x) => x.updatedAt },
       ];
       csv = toCsv(cols, r.rows);
       [rows, total, filters] = [r.rows.length, r.total, q as Record<string, unknown>];

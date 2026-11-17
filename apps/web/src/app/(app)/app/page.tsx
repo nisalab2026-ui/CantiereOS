@@ -1,6 +1,7 @@
 import {
   getDashboard,
   getDeadlineSummary,
+  getDocumentExpirySummary,
   listActivity,
   type DashboardData,
   type DeadlineSummary,
@@ -47,11 +48,15 @@ export default async function DashboardPage({
     return sp[key!] === value;
   })?.[1];
   const { company, access } = await getAppContext();
-  const { data, deadlines, activity } = await asCurrentUser(async (tx) => {
+  const { data, deadlines, docs, activity } = await asCurrentUser(async (tx) => {
     const d = await getDashboard(tx, access);
     return {
       data: d,
       deadlines: d.kind === "portal" ? null : await getDeadlineSummary(tx, access),
+      docs:
+        d.kind !== "portal" && access.permissions.has("documents.read")
+          ? await getDocumentExpirySummary(tx, access)
+          : null,
       activity:
         d.kind === "admin" && access.permissions.has("audit.read")
           ? (await listActivity(tx, access, { limit: 8 })).events
@@ -82,7 +87,7 @@ export default async function DashboardPage({
           Azienda dimostrativa: tutti i dati che vedi vengono dal seed di sviluppo e non sono reali.
         </p>
       )}
-      <DashboardBody data={data} deadlines={deadlines} activity={activity} />
+      <DashboardBody data={data} deadlines={deadlines} docs={docs} activity={activity} />
     </div>
   );
 }
@@ -90,13 +95,15 @@ export default async function DashboardPage({
 function DashboardBody({
   data,
   deadlines,
+  docs,
   activity,
 }: {
   data: DashboardData;
   deadlines: DeadlineSummary | null;
+  docs: { expired: number; expiring: number } | null;
   activity: HistoryEvent[] | null;
 }) {
-  const priority = deadlines ? <PrioritySection s={deadlines} /> : null;
+  const priority = deadlines ? <PrioritySection s={deadlines} docs={docs} /> : null;
   switch (data.kind) {
     case "admin":
       return (

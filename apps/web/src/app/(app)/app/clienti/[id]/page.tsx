@@ -1,4 +1,11 @@
-import { getCustomer, getRecordHistory, listDeadlines } from "@cantiereos/core";
+import {
+  getCustomer,
+  getRecordHistory,
+  listDeadlines,
+  listDocuments,
+  listFolders,
+  listSubjectOptions,
+} from "@cantiereos/core";
 import { Mail, MapPin, Phone } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -14,6 +21,10 @@ import { asCurrentUser, getAppContext } from "@/lib/auth";
 import { loadDeadlineOptions } from "@/lib/deadline-options";
 import { formatDateTime } from "@/lib/format";
 import { sectionGate } from "@/lib/permissions";
+import { fileStorage } from "@/lib/storage";
+import { DocumentMiniList } from "../../documenti/document-mini-list";
+import { folderOptions } from "../../documenti/shared";
+import { UploadDialog } from "../../documenti/upload-dialog";
 import { DeadlineDialog } from "../../scadenze/deadline-form";
 import { DeadlineMiniList } from "../../scadenze/deadline-mini-list";
 import { CustomerActiveButton, EditCustomerDialog } from "./customer-edit";
@@ -21,7 +32,7 @@ import { CustomerActiveButton, EditCustomerDialog } from "./customer-edit";
 export const metadata: Metadata = { title: "Cliente" };
 
 const PARTY_TYPES = { company: "Azienda", individual: "Privato", public_entity: "Ente pubblico" };
-const TABS = ["panoramica", "scadenze", "storico"] as const;
+const TABS = ["panoramica", "scadenze", "documenti", "storico"] as const;
 type Tab = (typeof TABS)[number];
 
 export default async function CustomerPage({
@@ -41,6 +52,8 @@ export default async function CustomerPage({
   if (gate !== "ok") return <ForbiddenState needsMfa={gate === "mfa"} />;
   const canWrite = access.permissions.has("customers.write");
   const canDeadlines = access.permissions.has("deadlines.read");
+  const canDocuments = access.permissions.has("documents.read");
+  const canUpload = access.permissions.has("documents.write");
   const canWriteDeadlines = access.permissions.has("deadlines.write");
 
   const data = await asCurrentUser(async (tx) => {
@@ -61,12 +74,23 @@ export default async function CustomerPage({
               pageSize: 100,
             })
           : null,
+      docs:
+        canDocuments && tab === "documenti"
+          ? await listDocuments(tx, access, { customerId: id, pageSize: 100 })
+          : null,
+      docOptions:
+        canUpload && tab === "documenti"
+          ? {
+              folders: await listFolders(tx, access),
+              subjects: await listSubjectOptions(tx, access),
+            }
+          : null,
       history: tab === "storico" ? await getRecordHistory(tx, access, "customers", id) : null,
       options: canWriteDeadlines ? await loadDeadlineOptions(tx, access) : null,
     };
   });
   if (!data) notFound();
-  const { c, openDeadlines, allDeadlines, history, options } = data;
+  const { c, openDeadlines, allDeadlines, history, options, docs, docOptions } = data;
   const base = `/app/clienti/${id}`;
   const overdue = openDeadlines?.rows.filter((r) => r.state === "overdue").length ?? 0;
   const address = [
@@ -147,6 +171,9 @@ export default async function CustomerPage({
                   count: openDeadlines?.total ?? 0,
                 },
               ]
+            : []),
+          ...(canDocuments
+            ? [{ key: "documenti", label: "Documenti", href: `${base}?tab=documenti` }]
             : []),
           { key: "storico", label: "Storico", href: `${base}?tab=storico` },
         ]}
@@ -265,6 +292,33 @@ export default async function CustomerPage({
               rows={allDeadlines.rows}
               emptyText="Nessuna scadenza registrata per questo cliente."
             />
+          </CardBody>
+        </Card>
+      )}
+
+      {tab === "documenti" && docs && (
+        <Card>
+          <CardHeader
+            title="Documenti collegati"
+            description="Contratti, certificati, verbali e foto collegati a questa scheda."
+            actions={
+              docOptions ? (
+                <UploadDialog
+                  folders={folderOptions(docOptions.folders)}
+                  subjects={docOptions.subjects}
+                  defaults={{ subject: `customer:${c.id}` }}
+                  lockSubject
+                  lockedSubjectName={c.displayName}
+                  canConfidential={access.permissions.has("documents.confidential")}
+                  canDeadline={access.permissions.has("deadlines.write")}
+                  storageReady={fileStorage() !== null}
+                  triggerLabel="Carica documento"
+                />
+              ) : undefined
+            }
+          />
+          <CardBody>
+            <DocumentMiniList rows={docs.rows} emptyText="Nessun documento collegato." />
           </CardBody>
         </Card>
       )}

@@ -1,4 +1,11 @@
-import { getEmployee, getRecordHistory, listDeadlines } from "@cantiereos/core";
+import {
+  getEmployee,
+  getRecordHistory,
+  listDeadlines,
+  listDocuments,
+  listFolders,
+  listSubjectOptions,
+} from "@cantiereos/core";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Timeline } from "@/components/history/timeline";
@@ -14,6 +21,10 @@ import { asCurrentUser, getAppContext } from "@/lib/auth";
 import { loadDeadlineOptions } from "@/lib/deadline-options";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { sectionGate } from "@/lib/permissions";
+import { fileStorage } from "@/lib/storage";
+import { DocumentMiniList } from "../../documenti/document-mini-list";
+import { folderOptions } from "../../documenti/shared";
+import { UploadDialog } from "../../documenti/upload-dialog";
 import { DeadlineDialog } from "../../scadenze/deadline-form";
 import { DeadlineMiniList } from "../../scadenze/deadline-mini-list";
 import { EmployeeActiveButton, EmployeeDialog } from "../employee-form";
@@ -26,7 +37,7 @@ const EMPLOYMENT = {
   temporary: "Temporaneo",
   intern: "Tirocinante",
 };
-const TABS = ["panoramica", "scadenze", "storico"] as const;
+const TABS = ["panoramica", "scadenze", "documenti", "storico"] as const;
 type Tab = (typeof TABS)[number];
 
 export default async function EmployeePage({
@@ -46,6 +57,8 @@ export default async function EmployeePage({
   if (gate !== "ok") return <ForbiddenState needsMfa={gate === "mfa"} />;
   const canWrite = access.permissions.has("employees.write");
   const canDeadlines = access.permissions.has("deadlines.read");
+  const canDocuments = access.permissions.has("documents.read");
+  const canUpload = access.permissions.has("documents.write");
 
   const data = await asCurrentUser(async (tx) => {
     const e = await getEmployee(tx, access, id);
@@ -65,6 +78,17 @@ export default async function EmployeePage({
               pageSize: 100,
             })
           : null,
+      docs:
+        canDocuments && tab === "documenti"
+          ? await listDocuments(tx, access, { employeeId: id, pageSize: 100 })
+          : null,
+      docOptions:
+        canUpload && tab === "documenti"
+          ? {
+              folders: await listFolders(tx, access),
+              subjects: await listSubjectOptions(tx, access),
+            }
+          : null,
       history: tab === "storico" ? await getRecordHistory(tx, access, "employees", id) : null,
       options: access.permissions.has("deadlines.write")
         ? await loadDeadlineOptions(tx, access)
@@ -72,7 +96,7 @@ export default async function EmployeePage({
     };
   });
   if (!data) notFound();
-  const { e, open, all, history, options } = data;
+  const { e, open, all, history, options, docs, docOptions } = data;
   const name = `${e.firstName} ${e.lastName}`;
   const base = `/app/personale/${id}`;
   const overdue = open?.rows.filter((r) => r.state === "overdue").length ?? 0;
@@ -143,6 +167,9 @@ export default async function EmployeePage({
                   count: open?.total ?? 0,
                 },
               ]
+            : []),
+          ...(canDocuments
+            ? [{ key: "documenti", label: "Documenti", href: `${base}?tab=documenti` }]
             : []),
           { key: "storico", label: "Storico", href: `${base}?tab=storico` },
         ]}
@@ -220,6 +247,33 @@ export default async function EmployeePage({
               rows={all.rows}
               emptyText="Nessuna scadenza registrata per questa persona."
             />
+          </CardBody>
+        </Card>
+      )}
+
+      {tab === "documenti" && docs && (
+        <Card>
+          <CardHeader
+            title="Documenti collegati"
+            description="Contratti, certificati, verbali e foto collegati a questa scheda."
+            actions={
+              docOptions ? (
+                <UploadDialog
+                  folders={folderOptions(docOptions.folders)}
+                  subjects={docOptions.subjects}
+                  defaults={{ subject: `employee:${e.id}` }}
+                  lockSubject
+                  lockedSubjectName={name}
+                  canConfidential={access.permissions.has("documents.confidential")}
+                  canDeadline={access.permissions.has("deadlines.write")}
+                  storageReady={fileStorage() !== null}
+                  triggerLabel="Carica documento"
+                />
+              ) : undefined
+            }
+          />
+          <CardBody>
+            <DocumentMiniList rows={docs.rows} emptyText="Nessun documento collegato." />
           </CardBody>
         </Card>
       )}

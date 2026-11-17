@@ -157,7 +157,7 @@ manutenzioni, documenti, pagamenti, comunicazioni, attività) non esistono ancor
 | D     | Scadenziario unico (certificazioni, manutenzioni, controlli, pagamenti, documenti) con stati, responsabili, ricorrenza | ✅ (PR #5)                                                  |
 | E     | Notifiche scadenze senza duplicati + dashboard "Priorità"                                                              | ✅ (PR #5); job pianificato da fare                         |
 | F     | Esportazione CSV con registrazione nello storico                                                                       | ✅ (PR #6)                                                  |
-| G     | Archivio documentale con storage privato e versioni                                                                    | da fare                                                     |
+| G     | Archivio documentale con storage privato e versioni                                                                    | ✅ (PR #7); OCR e antivirus non configurati                 |
 | H     | Catena di hash sull'audit log, rate limiting, CSP, codici MFA                                                          | da fare                                                     |
 | I     | Calendario, attività, commenti, pagamenti, comunicazioni                                                               | da fare                                                     |
 | J     | Versione dimostrativa online (Supabase + Vercel, dati DEMO separati)                                                   | in attesa di account                                        |

@@ -120,8 +120,9 @@ Le email di autenticazione le invia Supabase Auth con il proprio SMTP.
   dello schema.
 - Le esportazioni sono registrate in `data_exports` (append-only), che passa dal trigger di audit:
   nel registro compaiono come "ha esportato" con sezione, filtri e numero di righe.
-- Eventi applicativi non legati a righe (login, download documenti, impersonazione) da
-  aggiungere in fase 2 con `action` dedicate (es. `auth.login`, `file.download`).
+- Download e anteprime dei documenti sono registrati in `document_downloads` (append-only,
+  inserimento solo per versioni pronte e visibili): nello storico compaiono come "ha scaricato" /
+  "ha visualizzato". Login e impersonazione restano da aggiungere con `action` dedicate.
 
 ### Esportazioni CSV
 
@@ -143,15 +144,27 @@ Le email di autenticazione le invia Supabase Auth con il proprio SMTP.
   mai sovrascritta in silenzio.
 - Chi ha completato una scadenza e quando lo stabilisce un trigger, non il browser.
 
-## 6. File (progettato)
+## 6. File (archivio documentale)
 
-- Chiavi `tenants/{tenant_id}/…`; bucket privato; nessun URL pubblico permanente.
-- URL firmati di upload/download con scadenza breve (≤ 5 minuti), generati solo dopo il controllo
-  del permesso sul record collegato.
-- Verifica tipo MIME reale (magic bytes), limite di dimensione per piano, scansione antivirus
-  prima della disponibilità.
-- Test previsti: un utente di A non ottiene URL per file di B; una chiave costruita a mano con
-  un altro `tenant_id` viene rifiutata; file non scansionati non scaricabili.
+- Bucket privato (Supabase Storage), nessun URL pubblico permanente. La chiave del file è una
+  colonna **generata** dal database (`{tenant_id}/{document_id}/{version_id}`): né il browser né
+  il server applicativo la scelgono, quindi non si può puntare al file di un'altra azienda.
+- La chiave `SUPABASE_SERVICE_ROLE_KEY` resta solo sul server; il browser riceve soltanto un URL
+  firmato di caricamento per una singola chiave, generato dopo il controllo del permesso
+  (`documents.write`) e della visibilità del documento (RLS).
+- Una versione nasce `pending` e non è scaricabile. Diventa `ready` solo dopo che il server ha
+  verificato dimensione (≤ 25 MB), estensione ammessa e tipo reale dai primi byte (magic bytes:
+  eseguibili, HTML e SVG travestiti vengono rifiutati e il file eliminato). Lo stato lo può
+  cambiare solo il trigger di guardia (`pending → ready|rejected`); le versioni non si cancellano.
+- Download e anteprima: `GET /app/documenti/file/{versione}` solo dalla stessa origine, permesso
+  ricontrollato con RLS, download registrato, poi redirect a un URL firmato valido 5 minuti.
+- Documenti riservati: visibili solo con `documents.confidential` (MFA), anche nello storico e
+  nella ricerca. Eliminazione: `documents.delete` (MFA), logica; file e versioni restano.
+- **Non ancora attivi** (dichiarati "non configurati" nell'interfaccia): scansione antivirus e
+  OCR. Quando saranno collegati, una versione resterà `pending` fino all'esito della scansione.
+- Test: `packages/db/tests/documents.test.ts` (isolamento tra aziende, chiavi, stati, riservati,
+  download), `packages/core/tests/documents.test.ts`, `e2e/tests/documents.spec.ts` contro lo
+  storage reale in locale.
 
 ## 7. Worker e service_role
 

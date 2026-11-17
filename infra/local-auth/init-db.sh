@@ -13,10 +13,15 @@ create role anon nologin noinherit;
 create role authenticated nologin noinherit;
 create role service_role nologin noinherit bypassrls;
 create role supabase_auth_admin login noinherit createrole password :'auth_pw';
+-- Supabase Storage (archivio documentale): crea e gestisce lo schema "storage".
+create role supabase_storage_admin login noinherit createrole password :'auth_pw';
+grant anon, authenticated, service_role to supabase_storage_admin;
 
 create schema auth authorization supabase_auth_admin;
 create schema extensions;
 grant usage on schema auth, extensions, public to anon, authenticated, service_role;
 grant create on database postgres to supabase_auth_admin;
+grant create on database postgres to supabase_storage_admin;
+alter role supabase_storage_admin set search_path = storage;
 alter role supabase_auth_admin set search_path = auth;
 SQL

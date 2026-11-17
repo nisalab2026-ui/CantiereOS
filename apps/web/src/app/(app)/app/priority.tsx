@@ -1,5 +1,12 @@
 import type { DeadlineSummary, HistoryEvent } from "@cantiereos/core";
-import { AlertTriangle, CalendarClock, CheckCircle2, UserRound, UserX } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarClock,
+  CheckCircle2,
+  FileWarning,
+  UserRound,
+  UserX,
+} from "lucide-react";
 import Link from "next/link";
 import { LabeledBars, MonthBars } from "@/components/charts/bar-charts";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
@@ -19,8 +26,15 @@ const KIND_LABELS: Record<string, string> = {
 };
 
 /** "Richiede attenzione": ogni numero porta alla lista già filtrata. */
-export function PrioritySection({ s }: { s: DeadlineSummary }) {
-  const tiles = [
+export function PrioritySection({
+  s,
+  docs,
+}: {
+  s: DeadlineSummary;
+  /** Documenti scaduti / in scadenza (solo per chi vede l'archivio). */
+  docs?: { expired: number; expiring: number } | null;
+}) {
+  const base = [
     {
       key: "overdue",
       label: "In ritardo",
@@ -62,6 +76,25 @@ export function PrioritySection({ s }: { s: DeadlineSummary }) {
       tone: "neutral",
     },
   ] as const;
+  const tiles = [
+    ...base,
+    ...(docs
+      ? [
+          {
+            key: "documents",
+            label:
+              docs.expiring > 0
+                ? `Documenti scaduti (+${docs.expiring} in scadenza)`
+                : "Documenti scaduti",
+            value: docs.expired,
+            href:
+              docs.expired > 0 ? "/app/documenti?expiry=expired" : "/app/documenti?expiry=expiring",
+            icon: FileWarning,
+            tone: docs.expired > 0 ? "danger" : docs.expiring > 0 ? "warning" : "neutral",
+          } as const,
+        ]
+      : []),
+  ];
 
   return (
     <section aria-labelledby="priority-title" className="space-y-4" data-testid="priority">
@@ -71,7 +104,12 @@ export function PrioritySection({ s }: { s: DeadlineSummary }) {
       >
         Richiede attenzione
       </h2>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+      <div
+        className={cn(
+          "grid grid-cols-2 gap-3 md:grid-cols-3",
+          docs ? "xl:grid-cols-6" : "xl:grid-cols-5",
+        )}
+      >
         {tiles.map((t, i) => {
           const Icon = t.icon;
           return (

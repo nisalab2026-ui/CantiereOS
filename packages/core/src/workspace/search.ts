@@ -1,7 +1,7 @@
 import { hasPermission, type TenantAccess } from "../auth/access";
 import type { UserTx } from "../db/transaction";
 
-export type SearchKind = "customer" | "supplier" | "employee" | "team" | "deadline";
+export type SearchKind = "customer" | "supplier" | "employee" | "team" | "deadline" | "document";
 
 export interface SearchResult {
   kind: SearchKind;
@@ -87,6 +87,19 @@ export async function globalSearch(
         where tenant_id = $1 and deleted_at is null
           and lower(concat_ws(' ', title, reference_code)) like $2
         order by (status = 'open') desc, due_date limit $3`,
+      [t, pattern, limit],
+    );
+    results.push(...rows);
+  }
+  if (hasPermission(access, "documents.read")) {
+    // RLS nasconde i riservati a chi non ha il permesso dedicato
+    const { rows } = await tx.query<SearchResult>(
+      `select 'document' as kind, d.id, d.title, v.original_name as subtitle
+         from public.documents d
+         left join public.document_versions v on v.tenant_id = d.tenant_id and v.id = d.current_version_id
+        where d.tenant_id = $1 and d.deleted_at is null
+          and (lower(d.title) like $2 or lower(coalesce(v.original_name, '')) like $2)
+        order by d.updated_at desc limit $3`,
       [t, pattern, limit],
     );
     results.push(...rows);

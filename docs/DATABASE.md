@@ -205,6 +205,43 @@ chi li gestisce non può concedere permessi che non possiede.
 Tutte le funzioni `SECURITY DEFINER` hanno `search_path = ''`; nessuna è eseguibile da `PUBLIC` o
 `anon` (verificato dai test).
 
+### Archivio documentale (migrazione `20261117120000_documents`)
+
+**ADR-009 — Archivio documentale su storage privato con versioni immutabili.** Decisione presa
+prima dell'implementazione (richiesta di Nicholas: cartelle, collegamenti, ricerca, anteprima,
+versioni, scadenze, esportazione, caricamento multiplo).
+
+- **Tabelle.** `document_folders` (albero con `parent_id`, FK composta), `documents` (titolo,
+  categoria, cartella, collegamento a **un** soggetto tra cliente/fornitore/dipendente/squadra con
+  FK composte come in ADR-008, scadenza `expires_on`, scadenza collegata `deadline_id`, versione
+  corrente) e `document_versions` (una riga per file caricato). Il vecchio progetto prevedeva
+  anche `files` e `document_links` generici: rinviati. Un solo soggetto con FK esplicite dà
+  integrità e RLS semplici; `files` tornerà quando servirà ad altri moduli (foto dei rapportini).
+- **Storage.** Supabase Storage, bucket **privato** `documents` (nome da `DOCUMENTS_BUCKET`).
+  L'app parla con lo storage solo dal server, con la chiave `service_role` (variabile d'ambiente
+  solo server, mai nel browser). In locale lo stesso servizio gira nel profilo Docker `auth`.
+  Senza configurazione, l'archivio mostra "Archiviazione file non configurata" e non simula
+  nulla. Interfaccia `FileStorage` in `packages/core`, così il provider è sostituibile (S3).
+- **Chiave del file** `{tenant_id}/{document_id}/{version_id}`: colonna **generata** dal database,
+  mai scelta dal browser. Un utente non può puntare al file di un'altra azienda.
+- **Caricamento diretto e firmato.** Il server controlla il permesso, crea la versione in stato
+  `pending` e restituisce un URL di caricamento firmato per quella sola chiave; il browser invia
+  il file direttamente allo storage (niente limite di dimensione delle funzioni serverless). Poi il
+  server **verifica** l'oggetto: dimensione (massimo 25 MB), tipo reale dai primi byte (magic
+  bytes), tipo ammesso. Se non va bene il file viene cancellato e la versione è `rejected`; solo una
+  versione `ready` diventa la versione corrente. La scansione antivirus resta da aggiungere nel
+  worker (oggi non c'è un provider: non viene simulata).
+- **Versioni immutabili.** Una versione pronta non si modifica né si cancella; una nuova versione
+  ne prende il posto come corrente e le precedenti restano scaricabili.
+- **Download e anteprima** con URL firmati di 5 minuti, generati dopo il controllo RLS. Ogni
+  download è registrato in `document_downloads` (append-only) e quindi nel registro attività.
+- **Scadenze.** Un documento con `expires_on` può creare una scadenza di tipo "Documento" collegata
+  allo stesso soggetto: avvisi e dashboard sono quelli dello scadenziario (nessun secondo sistema).
+- **Eliminazione** logica (`deleted_at`) con permesso `documents.delete` (MFA). I file restano
+  nello storage fino alla pulizia programmata, che sarà un job del worker documentato.
+- **OCR** non configurato: l'interfaccia lo dice. Quando ci sarà un provider, i dati estratti
+  saranno solo proposti e andranno confermati.
+
 ### Registro delle esportazioni (migrazione `20261117110000_data_exports`)
 
 - `data_exports`: sezione, formato, filtri (jsonb, max 4 KB), righe, autore (dal trigger
@@ -322,7 +359,8 @@ Tutte le tabelle seguiranno §1 e il modello di §2.
 
 ### Documenti e AI
 
-- `documents`, `document_versions`, `document_links`, `document_deadlines`
+- ~~`documents`, `document_versions`~~ implementati (ADR-009); `document_links` multipli e
+  `files` generico rinviati
 - `ai_jobs`, `document_extractions`, `embeddings` (pgvector, sempre con tenant_id e RLS)
 
 ## 7. Prestazioni e crescita

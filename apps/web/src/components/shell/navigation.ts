@@ -1,6 +1,7 @@
 import {
   Building2,
   CalendarClock,
+  FolderOpen,
   History,
   HardHat,
   LayoutDashboard,
@@ -28,6 +29,13 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Scadenze",
     icon: CalendarClock,
     permission: "deadlines.read",
+    group: "lavoro",
+  },
+  {
+    href: "/app/documenti",
+    label: "Documenti",
+    icon: FolderOpen,
+    permission: "documents.read",
     group: "lavoro",
   },
   {

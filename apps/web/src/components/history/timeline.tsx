@@ -5,6 +5,9 @@ import {
   CheckCircle2,
   CircleSlash,
   Download,
+  Eye,
+  FileUp,
+  FileX,
   History,
   Pencil,
   Plus,
@@ -27,7 +30,20 @@ const VERBS: Record<HistoryVerb, { label: string; icon: LucideIcon; tone: string
   reopened: { label: "ha riaperto", icon: RotateCcw, tone: "text-info bg-info/12" },
   cancelled: { label: "ha annullato", icon: CircleSlash, tone: "text-muted-foreground bg-accent" },
   exported: { label: "ha esportato", icon: Download, tone: "text-primary bg-primary/12" },
+  uploaded: { label: "ha caricato", icon: FileUp, tone: "text-success bg-success/12" },
+  rejected: { label: "file rifiutato:", icon: FileX, tone: "text-danger bg-danger/12" },
+  downloaded: { label: "ha scaricato", icon: Download, tone: "text-info bg-info/12" },
+  previewed: { label: "ha aperto", icon: Eye, tone: "text-muted-foreground bg-accent" },
 };
+
+/** Verbi che si leggono già col nome dell'elemento ("ha scaricato Contratto 2026"). */
+const NO_TABLE_LABEL = new Set<HistoryVerb>([
+  "exported",
+  "downloaded",
+  "previewed",
+  "uploaded",
+  "rejected",
+]);
 
 const dayFmt = new Intl.DateTimeFormat("it-IT", {
   weekday: "long",
@@ -92,10 +108,10 @@ export function Timeline({
                   <p className="text-sm">
                     <span className="font-medium">{e.actorName ?? "Sistema"}</span>{" "}
                     <span className="text-muted-foreground">{v.label}</span>{" "}
-                    {e.verb !== "exported" && (
+                    {!NO_TABLE_LABEL.has(e.verb) && (
                       <span className="text-muted-foreground lowercase">{e.tableLabel}</span>
                     )}
-                    {(record || e.verb === "exported") && e.recordTitle && (
+                    {(record || NO_TABLE_LABEL.has(e.verb)) && e.recordTitle && (
                       <>
                         {" "}
                         {e.href && e.verb !== "deleted" ? (
@@ -115,9 +131,8 @@ export function Timeline({
                       {timeFmt.format(new Date(e.at))}
                     </time>
                   </p>
-                  {e.verb !== "created" && e.verb !== "exported" && e.changes.length > 0 && (
-                    <ChangeList event={e} />
-                  )}
+                  {!["created", "exported", "downloaded", "previewed"].includes(e.verb) &&
+                    e.changes.length > 0 && <ChangeList event={e} />}
                   {e.verb === "exported" && (
                     <p className="mt-1 text-xs text-muted-foreground">
                       Filtri: {e.changes.find((c) => c.field === "filters")?.after ?? "nessuno"}
