@@ -205,6 +205,31 @@ chi li gestisce non può concedere permessi che non possiede.
 Tutte le funzioni `SECURITY DEFINER` hanno `search_path = ''`; nessuna è eseguibile da `PUBLIC` o
 `anon` (verificato dai test).
 
+### Attività e commenti (migrazione `20261117160000_tasks_comments`)
+
+**ADR-011 — Attività assegnabili e commenti interni su qualsiasi elemento.** Decisione presa prima
+dell'implementazione (passo I del piano in `AUDIT.md`).
+
+- **`tasks`.** Titolo, descrizione, stato (`todo`, `in_progress`, `done`, `cancelled`), priorità
+  (`low`, `normal`, `high`, `urgent`), assegnatario (membro dell'azienda, FK composta verso
+  `memberships`), data di scadenza opzionale e collegamento ad **al massimo un** soggetto
+  (cliente, fornitore, dipendente, squadra) come in ADR-008. "In ritardo" si ricava dalla data,
+  non si salva. Chi completa e quando lo stabilisce un trigger, come per le scadenze.
+- **Chi può cosa.** `tasks.read`, `tasks.write`, `tasks.delete` (MFA). Chi ha solo `tasks.read`
+  (es. il tecnico) può aggiornare **solo le attività assegnate a sé** e solo stato e note di
+  completamento: lo impone un trigger, non l'interfaccia. All'assegnazione il database crea una
+  notifica per l'assegnatario (senza duplicati, `dedupe_key`).
+- **`comments`.** Un commento punta a `(subject_table, subject_id)` con `subject_table` in una
+  whitelist (clienti, fornitori, personale, squadre, scadenze, documenti, attività). Non esiste
+  una FK generica: la policy usa `app.comment_subject_visible`, che interroga la tabella del
+  soggetto **con i permessi di chi legge** (RLS). Così un commento su un documento riservato
+  resta invisibile a chi non vede il documento, e il commento non esiste da solo.
+- **Modifica e cancellazione.** Solo l'autore modifica il testo (`edited_at` dal trigger); la
+  cancellazione è logica (`deleted_at`) dall'autore o da chi ha `comments.delete` (MFA). Nessun
+  `DELETE` fisico: il registro conserva tutto.
+- **Calendario.** Nessuna tabella nuova: la vista mese/settimana unisce scadenze e attività con
+  data, ciascuna letta con i propri permessi.
+
 ### Integrità del registro attività (migrazione `20261117130000_audit_hash_chain`)
 
 **ADR-010 — Catena di hash sul registro attività.** Decisione presa prima dell'implementazione
