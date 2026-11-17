@@ -8,7 +8,7 @@
 :root {
   /* "Cantiere digitale" (predefinito): navy profondo, vetro, luce blu del marchio */
   --background: #050b1a;
-  --card: rgb(16 28 62 / 0.58);
+  --card: rgb(16 28 62 / 0.44);
   --popover: #0c1530;
   --foreground: #eaf0ff;
   --muted-foreground: #8e9cc0;
@@ -17,7 +17,7 @@
   --primary: #4c97ff;
   --primary-foreground: #04101f;
   --cyan: #22c3ff;
-  --navy: rgb(7 14 34 / 0.72);
+  --navy: rgb(7 14 34 / 0.55);
   --navy-foreground: #eaf0ff;
   --navy-muted: #8e9cc0;
   --navy-accent: rgb(76 151 255 / 0.14);
@@ -27,17 +27,17 @@
   --danger: #ff7a6e;
   --info: #7fb0ff;
   --ring: #4c97ff;
-  --glass-blur: 22px;
+  --glass-blur: 28px;
   --primary-gradient: linear-gradient(135deg, #4c97ff 0%, #22c3ff 100%);
   --primary-glow: 0 0 0 1px rgb(76 151 255 / 0.45), 0 8px 24px -8px rgb(34 195 255 / 0.55);
   --card-glow:
-    inset 0 1px 0 rgb(255 255 255 / 0.1), inset 0 0 0 1px rgb(255 255 255 / 0.02),
+    inset 0 1px 0 rgb(255 255 255 / 0.18), inset 0 0 0 1px rgb(255 255 255 / 0.04),
     0 24px 48px -28px rgb(0 0 0 / 0.85);
   /* "Liquid": riflesso in alto sulle superfici di vetro e macchie di colore che scorrono dietro */
-  --liquid-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0) 42%);
-  --aurora-1: rgb(52 104 255 / 0.42);
-  --aurora-2: rgb(34 195 255 / 0.26);
-  --aurora-3: rgb(124 92 255 / 0.26);
+  --liquid-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.12), rgb(255 255 255 / 0) 46%);
+  --aurora-1: rgb(52 104 255 / 0.6);
+  --aurora-2: rgb(34 195 255 / 0.4);
+  --aurora-3: rgb(140 92 255 / 0.4);
   --canvas:
     radial-gradient(1200px 600px at 85% -10%, rgb(36 86 230 / 0.22), transparent 60%),
     linear-gradient(rgb(110 150 255 / 0.03) 1px, transparent 1px) 0 0 / 40px 40px,
@@ -48,7 +48,7 @@
 /* Tema chiaro: scelta esplicita, oppure "Sistema" con il sistema operativo in chiaro */
 .light {
   --background: #f6f7f9;
-  --card: rgb(255 255 255 / 0.72);
+  --card: rgb(255 255 255 / 0.56);
   --foreground: #0b1530;
   --muted-foreground: #5a6478;
   --border: #e3e7ee;
@@ -67,16 +67,16 @@
   --ring: #2456e6;
   --popover: #ffffff;
   --cyan: #0891b2;
-  --glass-blur: 20px;
+  --glass-blur: 26px;
   --primary-gradient: linear-gradient(135deg, #2f64f0 0%, #1c8fd6 100%);
   --primary-glow: 0 6px 18px -8px rgb(36 86 230 / 0.55);
   --card-glow:
     inset 0 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(11 21 48 / 0.04),
     0 18px 40px -28px rgb(11 21 48 / 0.35);
-  --liquid-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0) 45%);
-  --aurora-1: rgb(76 130 255 / 0.3);
-  --aurora-2: rgb(34 195 255 / 0.24);
-  --aurora-3: rgb(170 120 255 / 0.22);
+  --liquid-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.75), rgb(255 255 255 / 0) 50%);
+  --aurora-1: rgb(76 130 255 / 0.45);
+  --aurora-2: rgb(34 195 255 / 0.36);
+  --aurora-3: rgb(170 120 255 / 0.34);
   --canvas: #f3f5fa;
   color-scheme: light;
 }
@@ -84,7 +84,7 @@
 @media (prefers-color-scheme: light) {
   .system {
     --background: #f6f7f9;
-    --card: rgb(255 255 255 / 0.72);
+    --card: rgb(255 255 255 / 0.56);
     --foreground: #0b1530;
     --muted-foreground: #5a6478;
     --border: #e3e7ee;
@@ -103,16 +103,16 @@
     --ring: #2456e6;
     --popover: #ffffff;
     --cyan: #0891b2;
-    --glass-blur: 20px;
+    --glass-blur: 26px;
     --primary-gradient: linear-gradient(135deg, #2f64f0 0%, #1c8fd6 100%);
     --primary-glow: 0 6px 18px -8px rgb(36 86 230 / 0.55);
     --card-glow:
       inset 0 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(11 21 48 / 0.04),
       0 18px 40px -28px rgb(11 21 48 / 0.35);
-    --liquid-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0) 45%);
-    --aurora-1: rgb(76 130 255 / 0.3);
-    --aurora-2: rgb(34 195 255 / 0.24);
-    --aurora-3: rgb(170 120 255 / 0.22);
+    --liquid-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.75), rgb(255 255 255 / 0) 50%);
+    --aurora-1: rgb(76 130 255 / 0.45);
+    --aurora-2: rgb(34 195 255 / 0.36);
+    --aurora-3: rgb(170 120 255 / 0.34);
     --canvas: #f3f5fa;
     color-scheme: light;
   }
@@ -206,7 +206,7 @@ body::before {
     radial-gradient(30vmax 22vmax at 46% 30%, var(--aurora-1), transparent 70%),
     radial-gradient(26vmax 22vmax at 78% 52%, var(--aurora-2), transparent 70%),
     radial-gradient(30vmax 22vmax at 52% 74%, var(--aurora-3), transparent 70%);
-  animation: cos-aurora 38s ease-in-out infinite alternate;
+  animation: cos-aurora 26s ease-in-out infinite alternate;
 }
 @keyframes cos-aurora {
   0% {

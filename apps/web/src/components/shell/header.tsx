@@ -28,7 +28,7 @@ export function Header({
 }) {
   const pathname = usePathname();
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/60 px-4 backdrop-blur-xl lg:px-8">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/40 px-4 backdrop-blur-xl backdrop-saturate-150 lg:px-8">
       <MobileNav companies={companies} activeTenantId={activeTenantId} permissions={permissions} />
       <p className="hidden min-w-0 truncate text-sm font-semibold md:block md:w-48">
         {titleFor(pathname)}
