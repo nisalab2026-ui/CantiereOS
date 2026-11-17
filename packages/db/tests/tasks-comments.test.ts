@@ -70,7 +70,9 @@ describe("Attività", () => {
       );
     });
     await asUser(db, s.users.bobTechA, async () => {
-      const r = await db.query("update public.tasks set status = 'done' where id = $1", [taskCarol]);
+      const r = await db.query("update public.tasks set status = 'done' where id = $1", [
+        taskCarol,
+      ]);
       expect(r.rowCount).toBe(0);
     });
     await asUser(db, s.users.bobTechA, async () => {
@@ -87,7 +89,9 @@ describe("Attività", () => {
         "insert into public.tasks (tenant_id, title, assignee_user_id) values ($1, 'Ordine materiale', $2)",
         [s.tenantA, s.users.bobTechA],
       );
-      const r = await db.query("update public.tasks set title = 'Preventivo v2' where id = $1", [taskCarol]);
+      const r = await db.query("update public.tasks set title = 'Preventivo v2' where id = $1", [
+        taskCarol,
+      ]);
       expect(r.rowCount).toBe(1);
     });
     await asUser(db, s.users.daveOwnerB, async () => {
@@ -103,10 +107,10 @@ describe("Attività", () => {
   it("l'assegnatario deve essere membro della stessa azienda", async () => {
     await asUser(db, s.users.aliceOwnerA, async () => {
       await expectPgError(
-        db.query("insert into public.tasks (tenant_id, title, assignee_user_id) values ($1, 'x', $2)", [
-          s.tenantA,
-          s.users.daveOwnerB,
-        ]),
+        db.query(
+          "insert into public.tasks (tenant_id, title, assignee_user_id) values ($1, 'x', $2)",
+          [s.tenantA, s.users.daveOwnerB],
+        ),
         "23503",
       );
     });
@@ -120,7 +124,9 @@ describe("Commenti", () => {
         "insert into public.comments (tenant_id, subject_table, subject_id, body) values ($1, 'tasks', $2, 'Serve la scala lunga')",
         [s.tenantA, taskBob],
       );
-      const r = await db.query("select created_by from public.comments where subject_id = $1", [taskBob]);
+      const r = await db.query("select created_by from public.comments where subject_id = $1", [
+        taskBob,
+      ]);
       expect(r.rows).toEqual([{ created_by: s.users.bobTechA }]);
     });
     await asUser(db, s.users.daveOwnerB, async () => {
@@ -154,11 +160,15 @@ describe("Commenti", () => {
       [s.tenantA, confidentialDoc, s.users.aliceOwnerA],
     );
     await asUser(db, s.users.martaManagerA, async () => {
-      const r = await db.query("select 1 from public.comments where subject_id = $1", [confidentialDoc]);
+      const r = await db.query("select 1 from public.comments where subject_id = $1", [
+        confidentialDoc,
+      ]);
       expect(r.rowCount).toBe(0);
     });
     await asUser(db, s.users.aliceOwnerA, async () => {
-      const r = await db.query("select 1 from public.comments where subject_id = $1", [confidentialDoc]);
+      const r = await db.query("select 1 from public.comments where subject_id = $1", [
+        confidentialDoc,
+      ]);
       expect(r.rowCount).toBe(1);
     });
   });
@@ -204,7 +214,9 @@ describe("Commenti", () => {
       db,
       s.users.graceAdminA,
       async () => {
-        const r = await db.query("update public.comments set deleted_at = now() where id = $1", [id]);
+        const r = await db.query("update public.comments set deleted_at = now() where id = $1", [
+          id,
+        ]);
         expect(r.rowCount).toBe(0); // senza MFA niente moderazione
       },
       "aal1",

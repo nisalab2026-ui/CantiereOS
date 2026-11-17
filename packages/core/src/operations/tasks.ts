@@ -379,11 +379,11 @@ export async function getTaskSummary(tx: UserTx, access: TenantAccess): Promise<
 // --- Calendario ------------------------------------------------------------------
 
 export interface CalendarItem {
-  kind: "deadline" | "task";
+  kind: "deadline" | "task" | "payment" | "follow_up";
   id: string;
   date: string; // YYYY-MM-DD
   title: string;
-  /** deadline: tipo di scadenza; task: priorità */
+  /** deadline: tipo di scadenza; task: priorità; payment: direzione; follow_up: canale */
   category: string;
   done: boolean;
   overdue: boolean;
@@ -407,7 +407,11 @@ export async function listCalendar(
   if (!(days >= 0 && days <= 62)) throw new ValidationError({ form: "Intervallo non valido" });
   const canDeadlines = hasPermission(access, "deadlines.read");
   const canTasks = hasPermission(access, "tasks.read");
-  if (!canDeadlines && !canTasks) requirePermission(access, "tasks.read");
+  const canPayments = hasPermission(access, "payments.read");
+  const canComms = hasPermission(access, "communications.read");
+  if (!canDeadlines && !canTasks && !canPayments && !canComms) {
+    requirePermission(access, "tasks.read");
+  }
   const parts: string[] = [];
   if (canDeadlines) {
     parts.push(`
@@ -430,6 +434,28 @@ export async function listCalendar(
        where t.tenant_id = $1 and t.deleted_at is null and t.status <> 'cancelled'
          and t.due_date between $2::date and $3::date
          and (not $4 or t.assignee_user_id = auth.uid())`);
+  }
+  if (canPayments) {
+    // nessun responsabile: con «solo mie» i pagamenti non compaiono
+    parts.push(`
+      select 'payment', p.id, to_char(p.due_date, 'YYYY-MM-DD'), p.description,
+             p.direction, p.status = 'paid',
+             (p.status = 'open' and p.due_date < current_date),
+             null::text, '/app/pagamenti/' || p.id
+        from public.payments p
+       where p.tenant_id = $1 and p.deleted_at is null and p.status <> 'cancelled'
+         and p.due_date between $2::date and $3::date and not $4`);
+  }
+  if (canComms) {
+    parts.push(`
+      select 'follow_up', m.id, to_char(m.follow_up_date, 'YYYY-MM-DD'), 'Richiamare: ' || m.subject,
+             m.channel, m.follow_up_done,
+             (not m.follow_up_done and m.follow_up_date < current_date),
+             coalesce(u.full_name, u.email), '/app/comunicazioni/' || m.id
+        from public.communications m left join public.users u on u.id = m.created_by
+       where m.tenant_id = $1 and m.deleted_at is null and m.follow_up_date is not null
+         and m.follow_up_date between $2::date and $3::date
+         and (not $4 or m.created_by = auth.uid())`);
   }
   const { rows } = await tx.query<CalendarItem>(
     `${parts.join(" union all ")} order by 3, 6, 4 limit 1000`,

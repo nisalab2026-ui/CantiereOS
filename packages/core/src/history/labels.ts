@@ -28,6 +28,36 @@ export const TABLE_LABELS: Record<string, { one: string; section: string; href?:
   document_folders: { one: "Cartella", section: "Documenti", href: "/app/documenti" },
   tasks: { one: "Attività", section: "Attività", href: "/app/attivita" },
   comments: { one: "Commento", section: "Commenti" },
+  payments: { one: "Pagamento", section: "Pagamenti", href: "/app/pagamenti" },
+  communications: { one: "Comunicazione", section: "Comunicazioni", href: "/app/comunicazioni" },
+};
+
+export const PAYMENT_DIRECTION_NAMES: Record<string, string> = {
+  incoming: "Da incassare",
+  outgoing: "Da pagare",
+};
+export const PAYMENT_STATUS_NAMES: Record<string, string> = {
+  open: "Aperto",
+  paid: "Pagato",
+  cancelled: "Annullato",
+};
+export const PAYMENT_METHOD_NAMES: Record<string, string> = {
+  bank_transfer: "Bonifico",
+  riba: "Ri.Ba.",
+  card: "Carta",
+  cash: "Contanti",
+  check: "Assegno",
+  direct_debit: "Addebito diretto (SDD)",
+  other: "Altro",
+};
+export const COMMUNICATION_CHANNEL_NAMES: Record<string, string> = {
+  phone: "Telefonata",
+  email: "Email",
+  pec: "PEC",
+  meeting: "Incontro",
+  letter: "Lettera",
+  message: "Messaggio",
+  other: "Altro",
 };
 
 export const TASK_STATUS_NAMES: Record<string, string> = {
@@ -67,9 +97,12 @@ export const EXPORT_SECTION_LABELS: Record<string, string> = {
   audit: "Registro attività",
   documents: "Documenti",
   tasks: "Attività",
+  payments: "Pagamenti",
+  communications: "Comunicazioni",
 };
 
-type FieldKind = "text" | "date" | "datetime" | "bool" | "enum" | "ref" | "filters" | "bytes";
+type FieldKind =
+  "text" | "date" | "datetime" | "bool" | "enum" | "ref" | "filters" | "bytes" | "cents";
 
 interface FieldSpec {
   label: string;
@@ -211,6 +244,39 @@ export const FIELD_LABELS: Record<string, Record<string, FieldSpec>> = {
     team_id: { label: "Squadra", kind: "ref" },
     deleted_at: { label: "Eliminata il", kind: "datetime" },
   },
+  payments: {
+    direction: { label: "Tipo", kind: "enum", values: PAYMENT_DIRECTION_NAMES },
+    description: { label: "Descrizione" },
+    reference_code: { label: "Riferimento" },
+    amount_cents: { label: "Importo", kind: "cents" },
+    due_date: { label: "Data prevista", kind: "date" },
+    status: { label: "Stato", kind: "enum", values: PAYMENT_STATUS_NAMES },
+    paid_on: { label: "Pagato il", kind: "date" },
+    paid_amount_cents: { label: "Importo pagato", kind: "cents" },
+    method: { label: "Modalità", kind: "enum", values: PAYMENT_METHOD_NAMES },
+    notes: { label: "Note" },
+    customer_id: { label: "Cliente", kind: "ref" },
+    supplier_id: { label: "Fornitore", kind: "ref" },
+    deleted_at: { label: "Eliminato il", kind: "datetime" },
+  },
+  communications: {
+    channel: { label: "Canale", kind: "enum", values: COMMUNICATION_CHANNEL_NAMES },
+    direction: {
+      label: "Direzione",
+      kind: "enum",
+      values: { inbound: "Ricevuta", outbound: "Inviata" },
+    },
+    occurred_at: { label: "Data e ora", kind: "datetime" },
+    subject: { label: "Oggetto" },
+    body: { label: "Testo" },
+    contact_name: { label: "Referente" },
+    customer_id: { label: "Cliente", kind: "ref" },
+    supplier_id: { label: "Fornitore", kind: "ref" },
+    employee_id: { label: "Dipendente", kind: "ref" },
+    follow_up_date: { label: "Richiamare il", kind: "date" },
+    follow_up_done: { label: "Richiamo fatto", kind: "bool" },
+    deleted_at: { label: "Eliminata il", kind: "datetime" },
+  },
   comments: {
     body: { label: "Testo" },
     deleted_at: { label: "Eliminato il", kind: "datetime" },
@@ -314,6 +380,15 @@ export function formatFieldValue(table: string, field: string, value: unknown): 
     }
     case "enum":
       return spec.values?.[String(value)] ?? String(value);
+    case "cents": {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return String(value);
+      return new Intl.NumberFormat("it-IT", {
+        style: "currency",
+        currency: "EUR",
+        useGrouping: "always",
+      }).format(n / 100);
+    }
     case "bytes": {
       const n = Number(value);
       if (!Number.isFinite(n)) return String(value);
@@ -362,6 +437,10 @@ export function recordTitle(table: string, data: Record<string, unknown> | null)
     case "deadlines":
     case "tasks":
       return pick("title");
+    case "payments":
+      return pick("description");
+    case "communications":
+      return pick("subject");
     case "comments": {
       const body = typeof data.body === "string" ? data.body : "";
       return body.length > 60 ? `${body.slice(0, 57)}…` : body || null;

@@ -2,7 +2,15 @@ import { hasPermission, type TenantAccess } from "../auth/access";
 import type { UserTx } from "../db/transaction";
 
 export type SearchKind =
-  "customer" | "supplier" | "employee" | "team" | "deadline" | "document" | "task";
+  | "customer"
+  | "supplier"
+  | "employee"
+  | "team"
+  | "deadline"
+  | "document"
+  | "task"
+  | "payment"
+  | "communication";
 
 export interface SearchResult {
   kind: SearchKind;
@@ -102,6 +110,31 @@ export async function globalSearch(
         where tenant_id = $1 and deleted_at is null
           and lower(title) like $2
         order by (status in ('todo','in_progress')) desc, due_date nulls last limit $3`,
+      [t, pattern, limit],
+    );
+    results.push(...rows);
+  }
+  if (hasPermission(access, "payments.read")) {
+    const { rows } = await tx.query<SearchResult>(
+      `select 'payment' as kind, id, description as title,
+              concat_ws(' · ', case direction when 'incoming' then 'Da incassare' else 'Da pagare' end,
+                        reference_code, to_char(due_date, 'DD/MM/YYYY')) as subtitle
+         from public.payments
+        where tenant_id = $1 and deleted_at is null
+          and lower(concat_ws(' ', description, reference_code)) like $2
+        order by (status = 'open') desc, due_date limit $3`,
+      [t, pattern, limit],
+    );
+    results.push(...rows);
+  }
+  if (hasPermission(access, "communications.read")) {
+    const { rows } = await tx.query<SearchResult>(
+      `select 'communication' as kind, id, subject as title,
+              to_char(occurred_at at time zone 'Europe/Rome', 'DD/MM/YYYY HH24:MI') as subtitle
+         from public.communications
+        where tenant_id = $1 and deleted_at is null
+          and lower(concat_ws(' ', subject, contact_name)) like $2
+        order by occurred_at desc limit $3`,
       [t, pattern, limit],
     );
     results.push(...rows);

@@ -10,9 +10,11 @@ import {
   HardHat,
   ListTodo,
   type LucideIcon,
+  MessagesSquare,
   Search,
   Truck,
   UsersRound,
+  Wallet,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -29,6 +31,12 @@ const KIND: Record<SearchKind, { label: string; icon: LucideIcon; href: (id: str
     deadline: { label: "Scadenze", icon: CalendarClock, href: (id) => `/app/scadenze/${id}` },
     document: { label: "Documenti", icon: FileText, href: (id) => `/app/documenti/${id}` },
     task: { label: "Attività", icon: ListTodo, href: (id) => `/app/attivita/${id}` },
+    payment: { label: "Pagamenti", icon: Wallet, href: (id) => `/app/pagamenti/${id}` },
+    communication: {
+      label: "Comunicazioni",
+      icon: MessagesSquare,
+      href: (id) => `/app/comunicazioni/${id}`,
+    },
   };
 
 /**
