@@ -35,6 +35,7 @@ import {
   ListChecks,
   type LucideIcon,
   Pencil,
+  Palette,
   PenLine,
   Redo2,
   Rocket,
@@ -54,6 +55,7 @@ import { cn } from "@/lib/cn";
 import { publishTemplateAction, saveTemplateDraftAction } from "../../actions";
 import { FormDocument } from "../../form-document";
 import { FormFields } from "../../form-fields";
+import { AppearancePanel } from "./appearance-panel";
 
 const newId = (prefix: string) => `${prefix}_${Math.random().toString(36).slice(2, 8)}`;
 
@@ -92,6 +94,7 @@ function retype(f: FormField, type: FormFieldType): FormField {
 /** Prima di salvare: righe e opzioni vuote (lasciate mentre si scrive) spariscono. */
 function clean(def: FormDefinition): FormDefinition {
   return {
+    ...def,
     sections: def.sections.map((s) => ({
       ...s,
       fields: s.fields.map((f) =>
@@ -148,11 +151,13 @@ export function TemplateEditor({
   version,
   initial,
   published,
+  companyName,
 }: {
   id: string;
   version: string;
   initial: { name: string; description: string; category: string; definition: FormDefinition };
   published: boolean;
+  companyName: string;
 }) {
   const router = useRouter();
   const [meta, setMeta] = useState({
@@ -167,7 +172,7 @@ export function TemplateEditor({
   const [open, setOpen] = useState<string | null>(null);
   const [active, setActive] = useState(Math.max(0, initial.definition.sections.length - 1));
   const [view, setView] = useState<"edit" | "preview">("edit");
-  const [paper, setPaper] = useState<"sheet" | "try">("sheet");
+  const [paper, setPaper] = useState<"sheet" | "style" | "try">("sheet");
   const [preview, setPreview] = useState<FormValues>({});
   const [msg, setMsg] = useState<{ error?: string; ok?: string }>({});
   const [pending, start] = useTransition();
@@ -179,7 +184,9 @@ export function TemplateEditor({
   const cleaned = useMemo(() => clean(def), [def]);
   const fieldCount = def.sections.reduce((n, s) => n + s.fields.length, 0);
 
-  const change = (next: FormDefinition) => {
+  // le modifiche toccano solo ciò che cambia: sezioni o aspetto restano come sono
+  const change = (patch: Partial<FormDefinition>) => {
+    const next = { ...def, ...patch };
     setPast((p) => [...p.slice(-HISTORY + 1), def]);
     setFuture([]);
     setDef(next);
@@ -663,11 +670,13 @@ export function TemplateEditor({
               {(
                 [
                   ["sheet", "Foglio A4", FileText],
+                  ["style", "Aspetto", Palette],
                   ["try", "Prova a compilare", Pencil],
                 ] as const
               ).map(([v, l, Icon]) => (
                 <button
                   key={v}
+                  type="button"
                   role="tab"
                   aria-selected={paper === v}
                   onClick={() => setPaper(v)}
@@ -683,24 +692,33 @@ export function TemplateEditor({
             <span className="text-xs text-muted-foreground">non viene salvata</span>
           </div>
           <div className="max-h-[calc(100dvh-10rem)] overflow-y-auto rounded-xl xl:pr-1">
-            {def.sections.length === 0 ? (
+            {paper === "style" && (
+              <div className="mb-4">
+                <AppearancePanel
+                  value={def.appearance ?? {}}
+                  onChange={(appearance) => change({ appearance })}
+                />
+              </div>
+            )}
+            {def.sections.length === 0 && paper !== "style" ? (
               <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
                 Aggiungi una sezione per vedere l&apos;anteprima.
               </p>
-            ) : paper === "sheet" ? (
+            ) : paper !== "try" ? (
               <div className="light rounded-sm bg-white p-6 text-foreground shadow-[0_24px_60px_-20px_rgb(0_0_0/0.55)] ring-1 ring-black/5 sm:p-8">
-                <div className="mb-5 border-b-2 border-neutral-800 pb-3">
-                  <p className="text-[10px] tracking-[0.16em] text-neutral-500 uppercase">
-                    {FORM_CATEGORY_LABELS[meta.category as keyof typeof FORM_CATEGORY_LABELS] ?? ""}
-                  </p>
-                  <h3 className="text-lg font-bold text-neutral-900">
-                    {meta.name || "Senza nome"}
-                  </h3>
-                  {meta.description && (
-                    <p className="mt-1 text-xs text-neutral-600">{meta.description}</p>
-                  )}
-                </div>
-                <FormDocument definition={cleaned} values={preview} blank />
+                <FormDocument
+                  definition={cleaned}
+                  values={preview}
+                  blank
+                  heading={{
+                    kicker:
+                      FORM_CATEGORY_LABELS[meta.category as keyof typeof FORM_CATEGORY_LABELS] ??
+                      "",
+                    title: meta.name || "Senza nome",
+                    description: meta.description || undefined,
+                    company: companyName,
+                  }}
+                />
               </div>
             ) : (
               <FormFields

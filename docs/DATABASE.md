@@ -270,6 +270,17 @@ cantiere possono mandare un report facilmente?").
 - **Modello pronto «Rapportino giornaliero».** Cantiere e data automatici, persone e ore,
   lavori, materiali, mezzi, imprevisti, foto (fino a 10), firma del caposquadra e del cliente.
 
+#### Aggiunta: aspetto del documento (nessuna migrazione)
+
+Richiesta del titolare (17/11/2026): editor con logo, colori e caratteri. L'aspetto sta nella
+definizione del modello (`appearance`, facoltativo): colore principale, carattere del testo e dei
+titoli (sei famiglie incluse nell'app con `@fontsource`, nessuna richiesta a servizi esterni),
+stile delle intestazioni, densità, numerazione delle sezioni, logo, codice del modulo, revisione
+e piè di pagina. Il logo è un data URL PNG/JPEG/WebP (niente SVG) di al massimo 100 KB, verificato
+dal server anche nei primi byte. Stando nella definizione, segue le versioni pubblicate: un
+modulo già compilato resta con il logo e lo stile della sua versione. Le definizioni senza
+`appearance` mantengono l'aspetto di prima.
+
 ### Pagamenti attesi e comunicazioni (migrazione `20261117170000_payments_communications`)
 
 **ADR-012 — Scadenziario dei pagamenti e registro delle comunicazioni.** Decisione presa prima

@@ -144,8 +144,102 @@ export const formSectionSchema = z.object({
 });
 export type FormSection = z.infer<typeof formSectionSchema>;
 
+// --- Aspetto del documento (logo, colori, caratteri) -------------------------
+
+/** Caratteri del documento: file inclusi nell'app, nessun servizio esterno. */
+export const FORM_FONTS = ["system", "inter", "plex", "condensed", "serif", "lora"] as const;
+export type FormFont = (typeof FORM_FONTS)[number];
+export const FORM_FONT_LABELS: Record<FormFont, string> = {
+  system: "Come l'app",
+  inter: "Moderno (Inter)",
+  plex: "Tecnico (IBM Plex Sans)",
+  condensed: "Compatto (Roboto Condensed)",
+  serif: "Classico (Source Serif)",
+  lora: "Elegante (Lora)",
+};
+export const FORM_HEADER_STYLES = ["band", "line", "minimal"] as const;
+export type FormHeaderStyle = (typeof FORM_HEADER_STYLES)[number];
+export const FORM_HEADER_STYLE_LABELS: Record<FormHeaderStyle, string> = {
+  band: "Fascia colorata",
+  line: "Linea sottile",
+  minimal: "Essenziale",
+};
+export const FORM_DENSITIES = ["compact", "normal", "large"] as const;
+export type FormDensity = (typeof FORM_DENSITIES)[number];
+export const FORM_DENSITY_LABELS: Record<FormDensity, string> = {
+  compact: "Compatto",
+  normal: "Normale",
+  large: "Grande",
+};
+export const FORM_LOGO_POSITIONS = ["left", "center", "right"] as const;
+export type FormLogoPosition = (typeof FORM_LOGO_POSITIONS)[number];
+/** Logo come data URL nella definizione: segue le versioni pubblicate (immutabili). */
+export const MAX_LOGO_CHARS = 140_000;
+const LOGO = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/;
+
+/** Il contenuto deve essere davvero un PNG, JPEG o WebP (niente SVG né altro). */
+export function isValidLogo(v: string): boolean {
+  const m = LOGO.exec(v);
+  if (!m || v.length > MAX_LOGO_CHARS) return false;
+  let head: string;
+  try {
+    head = atob(v.slice(v.indexOf(",") + 1, v.indexOf(",") + 17));
+  } catch {
+    return false;
+  }
+  const b = Array.from(head, (c) => c.charCodeAt(0));
+  if (m[1] === "png") return b[0] === 0x89 && head.slice(1, 4) === "PNG";
+  if (m[1] === "jpeg") return b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+  return head.slice(0, 4) === "RIFF" && head.slice(8, 12) === "WEBP";
+}
+
+export const formAppearanceSchema = z.object({
+  accent: z
+    .string()
+    .regex(/^#[0-9a-f]{6}$/i, "Colore non valido")
+    .optional(),
+  font: z.enum(FORM_FONTS).optional(),
+  headingFont: z.enum(FORM_FONTS).optional(),
+  density: z.enum(FORM_DENSITIES).optional(),
+  header: z.enum(FORM_HEADER_STYLES).optional(),
+  logo: z
+    .string()
+    .refine(isValidLogo, "Logo non valido: usa un PNG, JPEG o WebP fino a 100 KB")
+    .optional(),
+  logoPosition: z.enum(FORM_LOGO_POSITIONS).optional(),
+  showCompany: z.boolean().optional(),
+  code: z.string().trim().max(40).optional(),
+  revision: z.string().trim().max(20).optional(),
+  footer: z.string().trim().max(300).optional(),
+  numbered: z.boolean().optional(),
+});
+export type FormAppearance = z.infer<typeof formAppearanceSchema>;
+
+/** Aspetto predefinito: lo stesso dei moduli creati prima di questa funzione. */
+export interface AppearanceDefaults {
+  accent: string;
+  font: FormFont;
+  density: FormDensity;
+  header: FormHeaderStyle;
+  logoPosition: FormLogoPosition;
+  numbered: boolean;
+  showCompany: boolean;
+}
+export const DEFAULT_APPEARANCE: AppearanceDefaults = {
+  accent: "#1d4ed8",
+  font: "system",
+  density: "normal",
+  header: "line",
+  logoPosition: "left",
+  numbered: true,
+  showCompany: true,
+};
+
 export const formDefinitionSchema = z
-  .object({ sections: z.array(formSectionSchema).max(30, "Massimo 30 sezioni") })
+  .object({
+    sections: z.array(formSectionSchema).max(30, "Massimo 30 sezioni"),
+    appearance: formAppearanceSchema.optional(),
+  })
   .superRefine((def, ctx) => {
     const ids = new Set<string>();
     const sectionIds = new Set<string>();

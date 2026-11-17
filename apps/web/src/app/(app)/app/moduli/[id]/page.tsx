@@ -33,7 +33,7 @@ export default async function FormSubmissionPage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const { access } = await getAppContext();
+  const { access, company } = await getAppContext();
   const gate = sectionGate(access, "forms.read");
   if (gate !== "ok") return <ForbiddenState needsMfa={gate === "mfa"} />;
   const canWrite = access.permissions.has("forms.write");
@@ -129,14 +129,11 @@ export default async function FormSubmissionPage({
                   definition={s.definition}
                   values={s.data}
                   photos={photos}
-                  header={
-                    <div className="hidden print:block">
-                      <p className="text-xs text-neutral-600">
-                        {s.templateName} · versione {s.version}
-                      </p>
-                      <h1 className="text-xl font-semibold">{s.title}</h1>
-                    </div>
-                  }
+                  heading={{
+                    kicker: `${s.templateName} · versione ${s.version}`,
+                    title: s.title,
+                    company: company.name,
+                  }}
                 />
                 <p className="mt-6 border-t border-border pt-3 text-xs text-muted-foreground print:text-neutral-600">
                   {s.status === "completed"
