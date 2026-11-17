@@ -8,7 +8,7 @@
 :root {
   /* "Cantiere digitale" (predefinito): navy profondo, vetro, luce blu del marchio */
   --background: #050b1a;
-  --card: rgb(13 23 50 / 0.78);
+  --card: rgb(16 28 62 / 0.58);
   --popover: #0c1530;
   --foreground: #eaf0ff;
   --muted-foreground: #8e9cc0;
@@ -27,22 +27,28 @@
   --danger: #ff7a6e;
   --info: #7fb0ff;
   --ring: #4c97ff;
-  --glass-blur: 16px;
+  --glass-blur: 22px;
   --primary-gradient: linear-gradient(135deg, #4c97ff 0%, #22c3ff 100%);
   --primary-glow: 0 0 0 1px rgb(76 151 255 / 0.45), 0 8px 24px -8px rgb(34 195 255 / 0.55);
-  --card-glow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 20px 40px -24px rgb(0 0 0 / 0.8);
+  --card-glow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1), inset 0 0 0 1px rgb(255 255 255 / 0.02),
+    0 24px 48px -28px rgb(0 0 0 / 0.85);
+  /* "Liquid": riflesso in alto sulle superfici di vetro e macchie di colore che scorrono dietro */
+  --liquid-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0) 42%);
+  --aurora-1: rgb(52 104 255 / 0.42);
+  --aurora-2: rgb(34 195 255 / 0.26);
+  --aurora-3: rgb(124 92 255 / 0.26);
   --canvas:
-    radial-gradient(1200px 600px at 85% -10%, rgb(36 86 230 / 0.28), transparent 60%),
-    radial-gradient(900px 500px at -10% 110%, rgb(34 195 255 / 0.12), transparent 60%),
-    linear-gradient(rgb(110 150 255 / 0.045) 1px, transparent 1px) 0 0 / 40px 40px,
-    linear-gradient(90deg, rgb(110 150 255 / 0.045) 1px, transparent 1px) 0 0 / 40px 40px, #050b1a;
+    radial-gradient(1200px 600px at 85% -10%, rgb(36 86 230 / 0.22), transparent 60%),
+    linear-gradient(rgb(110 150 255 / 0.03) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, rgb(110 150 255 / 0.03) 1px, transparent 1px) 0 0 / 40px 40px, #050b1a;
   color-scheme: dark;
 }
 
 /* Tema chiaro: scelta esplicita, oppure "Sistema" con il sistema operativo in chiaro */
 .light {
   --background: #f6f7f9;
-  --card: #ffffff;
+  --card: rgb(255 255 255 / 0.72);
   --foreground: #0b1530;
   --muted-foreground: #5a6478;
   --border: #e3e7ee;
@@ -61,18 +67,24 @@
   --ring: #2456e6;
   --popover: #ffffff;
   --cyan: #0891b2;
-  --glass-blur: 0px;
-  --primary-gradient: none;
-  --primary-glow: none;
-  --card-glow: none;
-  --canvas: #f6f7f9;
+  --glass-blur: 20px;
+  --primary-gradient: linear-gradient(135deg, #2f64f0 0%, #1c8fd6 100%);
+  --primary-glow: 0 6px 18px -8px rgb(36 86 230 / 0.55);
+  --card-glow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(11 21 48 / 0.04),
+    0 18px 40px -28px rgb(11 21 48 / 0.35);
+  --liquid-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0) 45%);
+  --aurora-1: rgb(76 130 255 / 0.3);
+  --aurora-2: rgb(34 195 255 / 0.24);
+  --aurora-3: rgb(170 120 255 / 0.22);
+  --canvas: #f3f5fa;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: light) {
   .system {
     --background: #f6f7f9;
-    --card: #ffffff;
+    --card: rgb(255 255 255 / 0.72);
     --foreground: #0b1530;
     --muted-foreground: #5a6478;
     --border: #e3e7ee;
@@ -91,11 +103,17 @@
     --ring: #2456e6;
     --popover: #ffffff;
     --cyan: #0891b2;
-    --glass-blur: 0px;
-    --primary-gradient: none;
-    --primary-glow: none;
-    --card-glow: none;
-    --canvas: #f6f7f9;
+    --glass-blur: 20px;
+    --primary-gradient: linear-gradient(135deg, #2f64f0 0%, #1c8fd6 100%);
+    --primary-glow: 0 6px 18px -8px rgb(36 86 230 / 0.55);
+    --card-glow:
+      inset 0 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(11 21 48 / 0.04),
+      0 18px 40px -28px rgb(11 21 48 / 0.35);
+    --liquid-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0) 45%);
+    --aurora-1: rgb(76 130 255 / 0.3);
+    --aurora-2: rgb(34 195 255 / 0.24);
+    --aurora-3: rgb(170 120 255 / 0.22);
+    --canvas: #f3f5fa;
     color-scheme: light;
   }
 }
@@ -131,8 +149,8 @@
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
 }
 
 body {
@@ -153,9 +171,12 @@ body {
 }
 .bg-card.shadow-xs,
 .bg-card.shadow-sm {
-  box-shadow:
-    var(--card-glow),
-    0 1px 2px rgb(0 0 0 / 0.04);
+  box-shadow: var(--card-glow);
+}
+/* Riflesso in alto sulle superfici di vetro ("liquid") */
+.bg-card,
+.cos-glass {
+  background-image: var(--liquid-sheen);
 }
 .cos-primary {
   background-image: var(--primary-gradient);
@@ -171,6 +192,65 @@ body {
   /* il prefisso prima: lightningcss tiene solo l'ultima delle due */
   -webkit-backdrop-filter: blur(18px) saturate(1.5);
   backdrop-filter: blur(18px) saturate(1.5);
+}
+
+/* --- Liquid: sfondo vivo e movimenti leggeri ------------------------------ */
+/* Macchie di colore sfocate che si muovono lentamente dietro l'interfaccia */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20vmax;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(30vmax 22vmax at 46% 30%, var(--aurora-1), transparent 70%),
+    radial-gradient(26vmax 22vmax at 78% 52%, var(--aurora-2), transparent 70%),
+    radial-gradient(30vmax 22vmax at 52% 74%, var(--aurora-3), transparent 70%);
+  animation: cos-aurora 38s ease-in-out infinite alternate;
+}
+@keyframes cos-aurora {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate3d(3vmax, -2vmax, 0) rotate(8deg) scale(1.06);
+  }
+  100% {
+    transform: translate3d(-3vmax, 2vmax, 0) rotate(-6deg) scale(1);
+  }
+}
+.cos-glass {
+  box-shadow: var(--card-glow);
+}
+/* Superfici cliccabili: si sollevano appena al passaggio */
+.cos-lift {
+  transition:
+    transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 220ms ease-out,
+    border-color 150ms ease-out;
+}
+.cos-lift:hover {
+  transform: translate3d(0, -2px, 0);
+  border-color: color-mix(in oklab, var(--primary) 35%, var(--border));
+}
+/* Pulsante principale: un riflesso lo attraversa al passaggio */
+.cos-primary {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.cos-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.3) 48%, transparent 66%);
+  transform: translateX(-120%);
+  transition: transform 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  pointer-events: none;
+}
+.cos-primary:hover::after {
+  transform: translateX(120%);
 }
 
 /* --- Stampa (moduli compilati, A4) ------------------------------------------ */
@@ -349,7 +429,11 @@ body {
     transition-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
-  .cos-tilt {
+  .cos-tilt,
+  .cos-lift:hover {
     transform: none !important;
+  }
+  body::before {
+    animation: none !important;
   }
 }
