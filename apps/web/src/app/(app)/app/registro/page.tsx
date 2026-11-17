@@ -3,6 +3,7 @@ import { ChevronDown } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Timeline } from "@/components/history/timeline";
+import { ExportButton } from "@/components/export-button";
 import { Card, CardBody } from "@/components/ui/card";
 import { FilterBar } from "@/components/ui/filter-bar";
 import { PageHeader } from "@/components/ui/page-header";
@@ -24,8 +25,14 @@ const SECTIONS = [
   "invitations",
   "roles",
   "tenant_settings",
+  "data_exports",
 ];
-const VERBS = { created: "Creazioni", updated: "Modifiche", deleted: "Eliminazioni" } as const;
+const VERBS = {
+  created: "Creazioni",
+  updated: "Modifiche",
+  deleted: "Eliminazioni",
+  exported: "Esportazioni",
+} as const;
 const one = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
 const isoDate = (v: string | undefined) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined);
 
@@ -65,6 +72,7 @@ export default async function ActivityPage({
       <PageHeader
         title="Registro attività"
         description="Ogni creazione, modifica ed eliminazione dell'azienda, con autore, data e valori prima e dopo. Il registro non è modificabile da nessun utente."
+        actions={<ExportButton section="audit" params={sp} />}
       />
       <Card className="overflow-hidden">
         <FilterBar

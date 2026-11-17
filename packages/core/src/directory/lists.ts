@@ -21,6 +21,11 @@ export interface ListQuery {
   type?: string;
 }
 
+/** Opzioni interne (mai dall'URL): le esportazioni leggono più righe di una pagina. */
+export interface ListOptions {
+  maxPageSize?: number;
+}
+
 export interface Page<T> {
   rows: T[];
   total: number;
@@ -42,8 +47,9 @@ async function runList<T>(
   access: TenantAccess,
   spec: ListSpec,
   q: ListQuery,
+  opts: ListOptions = {},
 ): Promise<Page<T>> {
-  const pageSize = Math.min(Math.max(q.pageSize ?? 25, 1), 100);
+  const pageSize = Math.min(Math.max(q.pageSize ?? 25, 1), opts.maxPageSize ?? 100);
   const page = Math.min(Math.max(q.page ?? 1, 1), 10_000);
   const params: unknown[] = [access.tenantId];
   const where = ["x.tenant_id = $1", "x.deleted_at is null"];
@@ -94,6 +100,7 @@ export function listCustomers(
   tx: UserTx,
   access: TenantAccess,
   q: ListQuery,
+  opts: ListOptions = {},
 ): Promise<Page<CustomerRow>> {
   requirePermission(access, "customers.read");
   return runList<CustomerRow>(
@@ -121,6 +128,7 @@ export function listCustomers(
       },
     },
     q,
+    opts,
   );
 }
 
@@ -142,6 +150,7 @@ export function listSuppliers(
   tx: UserTx,
   access: TenantAccess,
   q: ListQuery,
+  opts: ListOptions = {},
 ): Promise<Page<SupplierRow>> {
   requirePermission(access, "suppliers.read");
   return runList<SupplierRow>(
@@ -161,6 +170,7 @@ export function listSuppliers(
       defaultSort: "name",
     },
     q,
+    opts,
   );
 }
 
@@ -182,6 +192,7 @@ export function listEmployees(
   tx: UserTx,
   access: TenantAccess,
   q: ListQuery,
+  opts: ListOptions = {},
 ): Promise<Page<EmployeeRow>> {
   requirePermission(access, "employees.read");
   return runList<EmployeeRow>(
@@ -211,6 +222,7 @@ export function listEmployees(
       },
     },
     q,
+    opts,
   );
 }
 
@@ -225,7 +237,12 @@ export interface TeamRow {
 
 export const TEAM_SORTS = ["name", "members"] as const;
 
-export function listTeams(tx: UserTx, access: TenantAccess, q: ListQuery): Promise<Page<TeamRow>> {
+export function listTeams(
+  tx: UserTx,
+  access: TenantAccess,
+  q: ListQuery,
+  opts: ListOptions = {},
+): Promise<Page<TeamRow>> {
   requirePermission(access, "teams.read");
   return runList<TeamRow>(
     tx,
@@ -240,6 +257,7 @@ export function listTeams(tx: UserTx, access: TenantAccess, q: ListQuery): Promi
       defaultSort: "name",
     },
     q,
+    opts,
   );
 }
 

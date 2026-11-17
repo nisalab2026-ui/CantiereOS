@@ -21,9 +21,20 @@ export const TABLE_LABELS: Record<string, { one: string; section: string; href?:
   tenant_settings: { one: "Impostazioni azienda", section: "Azienda" },
   subscriptions: { one: "Abbonamento", section: "Abbonamento" },
   notifications: { one: "Notifica", section: "Notifiche" },
+  data_exports: { one: "Esportazione", section: "Esportazioni" },
 };
 
-type FieldKind = "text" | "date" | "datetime" | "bool" | "enum" | "ref";
+/** Sezioni esportabili e loro nome nella UI. */
+export const EXPORT_SECTION_LABELS: Record<string, string> = {
+  customers: "Clienti",
+  suppliers: "Fornitori",
+  employees: "Personale",
+  teams: "Squadre",
+  deadlines: "Scadenze",
+  audit: "Registro attività",
+};
+
+type FieldKind = "text" | "date" | "datetime" | "bool" | "enum" | "ref" | "filters";
 
 interface FieldSpec {
   label: string;
@@ -151,6 +162,12 @@ export const FIELD_LABELS: Record<string, Record<string, FieldSpec>> = {
     accepted_at: { label: "Accettato il", kind: "datetime" },
   },
   tenants: { name: { label: "Nome" }, status: { label: "Stato" } },
+  data_exports: {
+    section: { label: "Sezione", kind: "enum", values: EXPORT_SECTION_LABELS },
+    format: { label: "Formato", kind: "enum", values: { csv: "CSV" } },
+    row_count: { label: "Righe esportate" },
+    filters: { label: "Filtri", kind: "filters" },
+  },
 };
 
 const dateFmt = new Intl.DateTimeFormat("it-IT", { dateStyle: "short", timeZone: "Europe/Rome" });
@@ -159,6 +176,40 @@ const dateTimeFmt = new Intl.DateTimeFormat("it-IT", {
   timeStyle: "short",
   timeZone: "Europe/Rome",
 });
+
+const FILTER_KEY_LABELS: Record<string, string> = {
+  q: "ricerca",
+  sort: "ordine",
+  dir: "direzione",
+  status: "stato",
+  type: "tipo",
+  kind: "tipo",
+  state: "stato",
+  responsible: "responsabile",
+  from: "dal",
+  to: "al",
+  table: "sezione",
+  actorId: "utente",
+  verb: "operazione",
+};
+
+const FILTER_VALUE_LABELS: Record<string, string> = {
+  all: "tutte",
+  open: "aperte",
+  overdue: "in ritardo",
+  due_soon: "in scadenza",
+  done: "completate",
+  cancelled: "annullate",
+  active: "attivi",
+  inactive: "archiviati",
+  me: "io",
+  none: "nessuno",
+  asc: "crescente",
+  desc: "decrescente",
+  ...DEADLINE_KIND_LABELS,
+  ...PARTY_TYPE_LABELS,
+  ...EMPLOYMENT_TYPE_LABELS,
+};
 
 /** Valore leggibile di un campo dello storico; null = vuoto. */
 export function formatFieldValue(table: string, field: string, value: unknown): string | null {
@@ -177,6 +228,16 @@ export function formatFieldValue(table: string, field: string, value: unknown): 
     }
     case "enum":
       return spec.values?.[String(value)] ?? String(value);
+    case "filters": {
+      if (typeof value !== "object") return String(value);
+      const parts = Object.entries(value as Record<string, unknown>)
+        .filter(([, v]) => v !== null && v !== undefined && v !== "")
+        .map(
+          ([k, v]) =>
+            `${FILTER_KEY_LABELS[k] ?? k}: ${FILTER_VALUE_LABELS[String(v)] ?? String(v)}`,
+        );
+      return parts.length ? parts.join(", ") : "nessuno";
+    }
     default:
       return typeof value === "object" ? JSON.stringify(value) : String(value);
   }
@@ -209,6 +270,12 @@ export function recordTitle(table: string, data: Record<string, unknown> | null)
       return pick("title");
     case "invitations":
       return pick("email");
+    case "data_exports": {
+      const label = EXPORT_SECTION_LABELS[String(data.section)] ?? String(data.section ?? "");
+      if (data.row_count == null) return label;
+      const n = Number(data.row_count);
+      return `${label} (${n} ${n === 1 ? "riga" : "righe"})`;
+    }
     default:
       return pick("name", "display_name", "title");
   }

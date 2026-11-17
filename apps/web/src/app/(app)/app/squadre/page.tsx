@@ -2,6 +2,7 @@ import { listTeams, TEAM_SORTS, type TeamRow } from "@cantiereos/core";
 import { UsersRound } from "lucide-react";
 import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
+import { ExportButton } from "@/components/export-button";
 import { Card } from "@/components/ui/card";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { FilterBar } from "@/components/ui/filter-bar";
@@ -73,7 +74,11 @@ export default async function TeamsPage({ searchParams }: { searchParams: Promis
 
   return (
     <div>
-      <PageHeader title="Squadre" description="Squadre operative e loro composizione." />
+      <PageHeader
+        title="Squadre"
+        description="Squadre operative e loro composizione."
+        actions={<ExportButton section="teams" params={sp} />}
+      />
       <Card className="overflow-hidden">
         <FilterBar
           pathname={PATH}

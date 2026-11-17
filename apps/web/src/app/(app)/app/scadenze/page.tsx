@@ -3,6 +3,7 @@ import { CalendarClock } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Notice } from "@/components/ui";
+import { ExportButton } from "@/components/export-button";
 import { Card } from "@/components/ui/card";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { FilterBar } from "@/components/ui/filter-bar";
@@ -171,9 +172,12 @@ export default async function DeadlinesPage({
         title="Scadenze"
         description="Certificazioni, manutenzioni, controlli periodici, documenti e pagamenti in un unico scadenziario."
         actions={
-          options ? (
-            <DeadlineDialog mode="create" subjects={options.subjects} members={options.members} />
-          ) : undefined
+          <>
+            <ExportButton section="deadlines" params={sp} />
+            {options && (
+              <DeadlineDialog mode="create" subjects={options.subjects} members={options.members} />
+            )}
+          </>
         }
       />
       {eliminata === "1" && (

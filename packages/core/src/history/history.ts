@@ -21,7 +21,8 @@ export type HistoryVerb =
   | "restored"
   | "completed"
   | "reopened"
-  | "cancelled";
+  | "cancelled"
+  | "exported";
 
 export interface FieldChange {
   field: string;
@@ -84,6 +85,7 @@ const REF_TARGETS: Record<string, { sql: string }> = {
 const HREF_TABLES = new Set(["customers", "employees", "deadlines"]);
 
 function verbOf(row: AuditRow): HistoryVerb {
+  if (row.table_name === "data_exports") return "exported";
   if (row.action === "INSERT") return "created";
   if (row.action === "DELETE") return "deleted";
   const changed = new Set(row.changed_fields ?? []);
@@ -202,7 +204,7 @@ export async function getRecordHistory(
 export interface ActivityFilter {
   table?: string;
   actorId?: string;
-  verb?: "created" | "updated" | "deleted";
+  verb?: "created" | "updated" | "deleted" | "exported";
   from?: string; // YYYY-MM-DD
   to?: string; // YYYY-MM-DD
   q?: string;
@@ -227,9 +229,10 @@ export async function listActivity(
   tx: UserTx,
   access: TenantAccess,
   f: ActivityFilter,
+  opts: { maxLimit?: number } = {},
 ): Promise<ActivityPage> {
   requirePermission(access, "audit.read");
-  const limit = Math.min(Math.max(f.limit ?? 50, 1), 200);
+  const limit = Math.min(Math.max(f.limit ?? 50, 1), opts.maxLimit ?? 200);
   const params: unknown[] = [access.tenantId, ACTIVITY_HIDDEN_TABLES];
   const where = ["a.tenant_id = $1", "not (a.table_name = any($2))"];
   if (f.table && TABLE_LABELS[f.table]) {
@@ -240,9 +243,11 @@ export async function listActivity(
     params.push(f.actorId);
     where.push(`a.actor_user_id = $${params.length}`);
   }
-  if (f.verb && ACTION_BY_VERB[f.verb]) {
+  if (f.verb === "exported") {
+    where.push("a.table_name = 'data_exports'");
+  } else if (f.verb && ACTION_BY_VERB[f.verb]) {
     params.push(ACTION_BY_VERB[f.verb]);
-    where.push(`a.action = $${params.length}`);
+    where.push(`a.action = $${params.length}`, "a.table_name <> 'data_exports'");
   }
   if (f.from && isoDate.safeParse(f.from).success) {
     params.push(f.from);
