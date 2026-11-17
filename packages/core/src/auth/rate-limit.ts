@@ -20,6 +20,8 @@ export const RATE_LIMITS = {
   reset_ip: { limit: 10, windowSeconds: 60 * 60 },
   /** Registrazione: per IP. */
   signup_ip: { limit: 10, windowSeconds: 60 * 60 },
+  /** Geocodifica (servizio esterno a uso equo): per azienda. */
+  geocode_tenant: { limit: 120, windowSeconds: 60 * 60 },
 } as const;
 
 export type RateLimitBucket = keyof typeof RATE_LIMITS;

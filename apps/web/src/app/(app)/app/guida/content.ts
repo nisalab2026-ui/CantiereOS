@@ -396,7 +396,7 @@ export const GUIDE: GuideTopic[] = [
   {
     id: "clienti",
     title: "Clienti",
-    summary: "Anagrafica, sedi, documenti, moduli e cronologia del cliente.",
+    summary: "Anagrafica, sedi, mappa, documenti, moduli e cronologia del cliente.",
     icon: "customers",
     href: "/app/clienti",
     permission: "customers.read",
@@ -405,6 +405,14 @@ export const GUIDE: GuideTopic[] = [
         q: "Cosa trovo nella scheda di un cliente?",
         a: [
           "Dati e sedi del cliente, e tutto ciò che lo riguarda: scadenze, documenti, pagamenti, comunicazioni, moduli compilati, commenti e la cronologia delle modifiche.",
+        ],
+      },
+      {
+        q: "Come funziona la mappa?",
+        a: [
+          "In «Clienti» apri la scheda «Mappa»: vedi clienti, sedi e cantieri con i colori del tipo. Puoi accendere o spegnere i tipi, cercare per nome o città e toccare una puntina per aprire la scheda. Una mappa più piccola è anche nella Panoramica.",
+          "Chi può modificare i clienti (o le commesse, per i cantieri) trova la posizione dall'indirizzo con «Trova», oppure con «Metti a mano» tocca il punto giusto sulla mappa. Dal riquadro di una puntina puoi spostarla trascinandola o toglierla.",
+          "Se cambi l'indirizzo, la posizione si azzera: cercala di nuovo. Le posizioni trovate dall'indirizzo sono indicative; mappa e ricerca usano OpenStreetMap.",
         ],
       },
       {

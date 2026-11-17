@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { mapTileOrigin } from "./lib/map-config";
 
 /**
  * Proxy (ex middleware): rinnova la sessione Supabase quando il token di
@@ -30,9 +31,9 @@ const PUBLIC_PATHS = [
 
 /**
  * Content Security Policy con nonce per richiesta: solo gli script emessi da
- * Next.js con quel nonce vengono eseguiti (niente script iniettati). Lo storage
- * dei documenti è l'unica origine esterna: caricamento diretto firmato (connect),
- * anteprime di immagini e PDF (img, frame).
+ * Next.js con quel nonce vengono eseguiti (niente script iniettati). Origini
+ * esterne: lo storage dei documenti (caricamento firmato, anteprime di immagini e
+ * PDF) e, solo come immagini, le tile della mappa (OpenStreetMap o MAP_TILE_URL).
  */
 function contentSecurityPolicy(nonce: string): string {
   const dev = process.env.NODE_ENV !== "production";
@@ -42,13 +43,14 @@ function contentSecurityPolicy(nonce: string): string {
   } catch {
     storage = "";
   }
+  const tiles = mapTileOrigin();
   const https = process.env.APP_URL?.startsWith("https://") ?? false;
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ""}`,
     // style inline: variabili CSS per le animazioni (style="--i: 2") e Tailwind
     "style-src 'self' 'unsafe-inline'",
-    `img-src 'self' data: blob: ${storage}`.trim(),
+    `img-src 'self' data: blob: ${storage} ${tiles}`.trim(),
     "font-src 'self' data:",
     `connect-src 'self' ${storage}`.trim(),
     `frame-src 'self' ${storage}`.trim(),
