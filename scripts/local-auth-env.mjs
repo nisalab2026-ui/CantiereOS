@@ -50,6 +50,7 @@ const files = {
     `DATABASE_URL=postgresql://postgres:${dbPassword}@127.0.0.1:54330/postgres`,
     `SUPABASE_SERVICE_ROLE_KEY=${serviceKey}`,
     "DOCUMENTS_BUCKET=documents",
+    "FORMS_BUCKET=form-files",
     "SMTP_URL=smtp://127.0.0.1:1025",
     'MAIL_FROM="CantiereOS (sviluppo) <no-reply@cantiereos.invalid>"',
     "",

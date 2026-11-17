@@ -7,6 +7,7 @@ import {
   FORM_CATEGORY_LABELS,
   FORM_FIELD_TYPE_LABELS,
   FORM_FIELD_TYPES,
+  MAX_PHOTOS,
   parseFormDefinition,
   type FormAutoSource,
   type FormDefinition,
@@ -17,25 +18,44 @@ import {
   type FormValues,
 } from "@cantiereos/core/forms";
 import {
+  AlignLeft,
   ArrowDown,
   ArrowUp,
+  CalendarDays,
+  Camera,
   ChevronDown,
+  ClipboardList,
   Copy,
+  CopyPlus,
   Eye,
+  FileText,
+  GripVertical,
+  Hash,
+  LayoutList,
+  ListChecks,
+  type LucideIcon,
   Pencil,
-  Plus,
+  Palette,
+  PenLine,
+  Redo2,
   Rocket,
   Save,
+  Sparkles,
+  ToggleLeft,
   Trash2,
+  Type,
+  Undo2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-alert";
 import { FormField as Labeled, Input, Select, Textarea } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
 import { publishTemplateAction, saveTemplateDraftAction } from "../../actions";
+import { FormDocument } from "../../form-document";
 import { FormFields } from "../../form-fields";
+import { AppearancePanel } from "./appearance-panel";
 
 const newId = (prefix: string) => `${prefix}_${Math.random().toString(36).slice(2, 8)}`;
 
@@ -74,6 +94,7 @@ function retype(f: FormField, type: FormFieldType): FormField {
 /** Prima di salvare: righe e opzioni vuote (lasciate mentre si scrive) spariscono. */
 function clean(def: FormDefinition): FormDefinition {
   return {
+    ...def,
     sections: def.sections.map((s) => ({
       ...s,
       fields: s.fields.map((f) =>
@@ -91,16 +112,52 @@ function clean(def: FormDefinition): FormDefinition {
   };
 }
 
+const TYPE_ICONS: Record<FormFieldType, LucideIcon> = {
+  text: Type,
+  textarea: AlignLeft,
+  number: Hash,
+  date: CalendarDays,
+  yes_no: ToggleLeft,
+  choice: ListChecks,
+  checklist: ClipboardList,
+  signature: PenLine,
+  auto: Sparkles,
+  photo: Camera,
+};
+
+const TYPE_HINTS: Record<FormFieldType, string> = {
+  text: "Una riga: nome, codice, matricola",
+  textarea: "Più righe: note, descrizioni",
+  number: "Valori con unità, minimo e massimo",
+  date: "Giorno dal calendario",
+  yes_no: "Risposta secca, con nota",
+  choice: "Una o più opzioni da un elenco",
+  checklist: "Righe da verificare con esito e nota",
+  signature: "Firma con il dito o il mouse",
+  auto: "Cliente, sede, azienda, data…",
+  photo: "Scatta o carica foto dal telefono",
+};
+
+type Drag =
+  | { kind: "field"; si: number; fi: number }
+  | { kind: "section"; si: number }
+  | { kind: "new"; type: FormFieldType };
+type Drop = { si: number; fi: number } | { section: number } | null;
+
+const HISTORY = 50;
+
 export function TemplateEditor({
   id,
   version,
   initial,
   published,
+  companyName,
 }: {
   id: string;
   version: string;
   initial: { name: string; description: string; category: string; definition: FormDefinition };
   published: boolean;
+  companyName: string;
 }) {
   const router = useRouter();
   const [meta, setMeta] = useState({
@@ -109,20 +166,48 @@ export function TemplateEditor({
     category: initial.category,
   });
   const [def, setDef] = useState<FormDefinition>(initial.definition);
+  const [past, setPast] = useState<FormDefinition[]>([]);
+  const [future, setFuture] = useState<FormDefinition[]>([]);
   const [dirty, setDirty] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
+  const [active, setActive] = useState(Math.max(0, initial.definition.sections.length - 1));
   const [view, setView] = useState<"edit" | "preview">("edit");
+  const [paper, setPaper] = useState<"sheet" | "style" | "try">("sheet");
   const [preview, setPreview] = useState<FormValues>({});
   const [msg, setMsg] = useState<{ error?: string; ok?: string }>({});
   const [pending, start] = useTransition();
+  const drag = useRef<Drag | null>(null);
+  const [drop, setDrop] = useState<Drop>(null);
+  const [flash, setFlash] = useState<string | null>(null);
 
   const check = useMemo(() => parseFormDefinition(clean(def)), [def]);
+  const cleaned = useMemo(() => clean(def), [def]);
   const fieldCount = def.sections.reduce((n, s) => n + s.fields.length, 0);
 
-  const change = (next: FormDefinition) => {
+  // le modifiche toccano solo ciò che cambia: sezioni o aspetto restano come sono
+  const change = (patch: Partial<FormDefinition>) => {
+    const next = { ...def, ...patch };
+    setPast((p) => [...p.slice(-HISTORY + 1), def]);
+    setFuture([]);
     setDef(next);
     setDirty(true);
     setMsg({});
+  };
+  const undo = () => {
+    const prev = past.at(-1);
+    if (!prev) return;
+    setPast(past.slice(0, -1));
+    setFuture([def, ...future]);
+    setDef(prev);
+    setDirty(true);
+  };
+  const redo = () => {
+    const next = future[0];
+    if (!next) return;
+    setFuture(future.slice(1));
+    setPast([...past, def]);
+    setDef(next);
+    setDirty(true);
   };
   const updateSection = (si: number, patch: Partial<FormSection>) =>
     change({ sections: def.sections.map((s, i) => (i === si ? { ...s, ...patch } : s)) });
@@ -134,6 +219,78 @@ export function TemplateEditor({
     const next = [...arr];
     [next[i], next[j]] = [next[j]!, next[i]!];
     return next;
+  };
+  const highlight = (fid: string) => {
+    setFlash(fid);
+    setTimeout(() => setFlash((f) => (f === fid ? null : f)), 900);
+  };
+
+  /** Aggiunge un campo nella sezione attiva (o ne crea una se non ce ne sono). */
+  const addField = (type: FormFieldType, at?: { si: number; fi: number }) => {
+    const f = blankField(type);
+    if (!def.sections.length) {
+      change({ sections: [{ id: newId("s"), title: "Sezione 1", fields: [f] }] });
+      setActive(0);
+    } else {
+      const si = at?.si ?? Math.min(active, def.sections.length - 1);
+      const fields = [...def.sections[si]!.fields];
+      fields.splice(at?.fi ?? fields.length, 0, f);
+      updateSection(si, { fields });
+      setActive(si);
+    }
+    setOpen(f.id);
+    highlight(f.id);
+  };
+  const addSection = () => {
+    const sec = { id: newId("s"), title: `Sezione ${def.sections.length + 1}`, fields: [] };
+    change({ sections: [...def.sections, sec] });
+    setActive(def.sections.length);
+  };
+  const duplicateSection = (si: number) => {
+    const src = def.sections[si]!;
+    const copy: FormSection = {
+      ...structuredClone(src),
+      id: newId("s"),
+      title: `${src.title} (copia)`,
+      fields: src.fields.map((f) => ({
+        ...structuredClone(f),
+        id: newId("c"),
+        ...(f.type === "text" ? { isSubjectCode: undefined } : {}),
+      })) as FormField[],
+    };
+    change({ sections: [...def.sections.slice(0, si + 1), copy, ...def.sections.slice(si + 1)] });
+    setActive(si + 1);
+  };
+
+  /** Rilascio di un trascinamento: sposta un campo, una sezione, o crea un campo nuovo. */
+  const onDrop = (target: Drop) => {
+    const d = drag.current;
+    drag.current = null;
+    setDrop(null);
+    if (!d || !target) return;
+    if (d.kind === "section") {
+      const to = "section" in target ? target.section : target.si;
+      if (to === d.si) return;
+      const sections = [...def.sections];
+      const [moved] = sections.splice(d.si, 1);
+      sections.splice(to, 0, moved!);
+      change({ sections });
+      setActive(to);
+      return;
+    }
+    const si = "section" in target ? target.section : target.si;
+    const fi = "section" in target ? def.sections[si]!.fields.length : target.fi;
+    if (d.kind === "new") {
+      addField(d.type, { si, fi });
+      return;
+    }
+    const sections = def.sections.map((s) => ({ ...s, fields: [...s.fields] }));
+    const [moved] = sections[d.si]!.fields.splice(d.fi, 1);
+    const adj = d.si === si && d.fi < fi ? fi - 1 : fi;
+    sections[si]!.fields.splice(adj, 0, moved!);
+    change({ sections });
+    setActive(si);
+    highlight(moved!.id);
   };
 
   const save = (thenPublish: boolean) =>
@@ -163,28 +320,54 @@ export function TemplateEditor({
       router.refresh();
     });
 
+  // Ctrl/⌘ S salva; Ctrl/⌘ Z e Maiusc+Ctrl/⌘ Z annullano e ripristinano fuori dai campi di testo
+  const keys = useRef({ save, undo, redo });
+  keys.current = { save, undo, redo };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const k = e.key.toLowerCase();
+      if (k === "s") {
+        e.preventDefault();
+        keys.current.save(false);
+        return;
+      }
+      const t = e.target as HTMLElement | null;
+      if (t?.closest("input, textarea, select, [contenteditable]")) return;
+      if (k === "z") {
+        e.preventDefault();
+        if (e.shiftKey) keys.current.redo();
+        else keys.current.undo();
+      } else if (k === "y") {
+        e.preventDefault();
+        keys.current.redo();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const setMetaField = (patch: Partial<typeof meta>) => {
+    setMeta({ ...meta, ...patch });
+    setDirty(true);
+  };
+
   return (
     <div className="space-y-4 pb-24">
-      <section className="grid gap-4 rounded-lg border border-border bg-card/60 p-4 sm:grid-cols-[2fr_1fr] sm:p-5">
+      <section className="grid gap-4 rounded-xl border border-border bg-card/60 p-4 sm:grid-cols-[2fr_1fr] sm:p-5">
         <Labeled id="te-name" label="Nome del modello" required>
           <Input
             id="te-name"
             value={meta.name}
             maxLength={200}
-            onChange={(e) => {
-              setMeta({ ...meta, name: e.target.value });
-              setDirty(true);
-            }}
+            onChange={(e) => setMetaField({ name: e.target.value })}
           />
         </Labeled>
         <Labeled id="te-category" label="Categoria" required>
           <Select
             id="te-category"
             value={meta.category}
-            onChange={(e) => {
-              setMeta({ ...meta, category: e.target.value });
-              setDirty(true);
-            }}
+            onChange={(e) => setMetaField({ category: e.target.value })}
           >
             {FORM_CATEGORIES.map((c) => (
               <option key={c} value={c}>
@@ -200,20 +383,17 @@ export function TemplateEditor({
               className="min-h-16"
               value={meta.description}
               maxLength={2000}
-              onChange={(e) => {
-                setMeta({ ...meta, description: e.target.value });
-                setDirty(true);
-              }}
+              onChange={(e) => setMetaField({ description: e.target.value })}
             />
           </Labeled>
         </div>
       </section>
 
-      {/* su telefono: modifica o anteprima; su schermi larghi affiancate */}
-      <div className="flex gap-1 rounded-md border border-border p-0.5 xl:hidden" role="tablist">
+      {/* su telefono e tablet: struttura o anteprima; su schermi larghi affiancate */}
+      <div className="flex gap-1 rounded-lg border border-border p-0.5 xl:hidden" role="tablist">
         {(
           [
-            ["edit", "Modifica", Pencil],
+            ["edit", "Struttura", Pencil],
             ["preview", "Anteprima", Eye],
           ] as const
         ).map(([v, l, Icon]) => (
@@ -223,7 +403,7 @@ export function TemplateEditor({
             aria-selected={view === v}
             onClick={() => setView(v)}
             className={cn(
-              "flex flex-1 items-center justify-center gap-1.5 rounded-sm py-1.5 text-sm transition-colors",
+              "flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-sm transition-colors",
               view === v ? "bg-accent font-medium" : "text-muted-foreground",
             )}
           >
@@ -232,14 +412,137 @@ export function TemplateEditor({
         ))}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[13rem_minmax(0,1fr)] xl:grid-cols-[13rem_minmax(0,1fr)_minmax(0,1fr)]">
+        {/* Componenti: clic per aggiungere alla sezione attiva, oppure trascina nel punto voluto */}
+        <aside
+          className={cn(
+            "min-w-0 lg:sticky lg:top-20 lg:self-start",
+            view === "preview" && "hidden xl:block",
+          )}
+          aria-label="Componenti"
+        >
+          <p className="mb-2 hidden text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase lg:block">
+            Componenti
+          </p>
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:grid lg:overflow-visible lg:px-0">
+            {FORM_FIELD_TYPES.map((t) => {
+              const Icon = TYPE_ICONS[t];
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  draggable
+                  onDragStart={(e) => {
+                    drag.current = { kind: "new", type: t };
+                    e.dataTransfer.effectAllowed = "copy";
+                  }}
+                  onDragEnd={() => setDrop(null)}
+                  onClick={() => addField(t)}
+                  title={`${FORM_FIELD_TYPE_LABELS[t]}: ${TYPE_HINTS[t]}`}
+                  data-testid="palette-item"
+                  className="cos-lift group flex shrink-0 cursor-grab items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2 text-left active:cursor-grabbing"
+                >
+                  <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary/12 text-primary transition-transform group-hover:scale-110">
+                    <Icon className="size-4" aria-hidden />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium whitespace-nowrap">
+                      {FORM_FIELD_TYPE_LABELS[t]}
+                    </span>
+                    <span className="hidden text-[11px] leading-tight text-muted-foreground lg:block">
+                      {TYPE_HINTS[t]}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={addSection}
+              className="cos-lift flex shrink-0 items-center gap-2.5 rounded-lg border border-dashed border-border px-3 py-2 text-left text-sm font-medium"
+            >
+              <span className="grid size-7 place-items-center rounded-md bg-accent">
+                <LayoutList className="size-4" aria-hidden />
+              </span>
+              Nuova sezione
+            </button>
+          </div>
+          {def.sections.length > 0 && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Si aggiunge in{" "}
+              <span className="font-medium text-foreground">
+                {def.sections[Math.min(active, def.sections.length - 1)]?.title || "sezione"}
+              </span>
+              . Puoi anche trascinarlo dove vuoi.
+            </p>
+          )}
+        </aside>
+
+        {/* Struttura del documento */}
         <div
-          className={cn("space-y-4", view === "preview" && "hidden xl:block")}
+          className={cn("min-w-0 space-y-3", view === "preview" && "hidden xl:block")}
           data-testid="editor"
         >
+          <div className="flex items-center gap-1">
+            <p className="flex-1 text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+              Struttura
+            </p>
+            <IconButton label="Annulla (Ctrl Z)" onClick={undo} disabled={!past.length}>
+              <Undo2 />
+            </IconButton>
+            <IconButton label="Ripristina (Ctrl Maiusc Z)" onClick={redo} disabled={!future.length}>
+              <Redo2 />
+            </IconButton>
+          </div>
+
+          {def.sections.length === 0 && (
+            <button
+              type="button"
+              onClick={addSection}
+              className="grid w-full place-items-center gap-2 rounded-xl border border-dashed border-border p-10 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+            >
+              <FileText className="size-8 text-primary" aria-hidden />
+              Il documento è vuoto: aggiungi la prima sezione, poi i campi dai componenti.
+            </button>
+          )}
+
           {def.sections.map((s, si) => (
-            <section key={s.id} className="cos-enter rounded-lg border border-border bg-card/60">
-              <header className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
+            <section
+              key={s.id}
+              onFocusCapture={() => setActive(si)}
+              onClick={() => setActive(si)}
+              onDragOver={(e) => {
+                if (!drag.current) return;
+                e.preventDefault();
+                if (drag.current.kind === "section" || !s.fields.length) setDrop({ section: si });
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                onDrop(drop ?? { section: si });
+              }}
+              className={cn(
+                "cos-enter rounded-xl border bg-card/60 transition-[border-color,box-shadow]",
+                active === si
+                  ? "border-primary/45 shadow-[0_0_0_3px_rgb(76_151_255/0.12)]"
+                  : "border-border",
+                drop && "section" in drop && drop.section === si && "border-primary border-dashed",
+              )}
+              data-testid="section-editor"
+            >
+              <header className="flex flex-wrap items-center gap-1.5 border-b border-border px-3 py-2.5">
+                <span
+                  draggable
+                  onDragStart={(e) => {
+                    drag.current = { kind: "section", si };
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                  onDragEnd={() => setDrop(null)}
+                  className="hidden cursor-grab touch-none text-muted-foreground hover:text-foreground sm:block"
+                  title="Trascina per spostare la sezione"
+                  aria-hidden
+                >
+                  <GripVertical className="size-4" />
+                </span>
                 <span className="text-sm text-muted-foreground tabular-nums">{si + 1}.</span>
                 <Input
                   aria-label={`Titolo della sezione ${si + 1}`}
@@ -262,6 +565,9 @@ export function TemplateEditor({
                 >
                   <ArrowDown />
                 </IconButton>
+                <IconButton label="Duplica sezione" onClick={() => duplicateSection(si)}>
+                  <CopyPlus />
+                </IconButton>
                 <IconButton
                   label="Elimina sezione"
                   danger
@@ -270,7 +576,7 @@ export function TemplateEditor({
                   <Trash2 />
                 </IconButton>
               </header>
-              <div className="space-y-2 p-3">
+              <div className="space-y-1.5 p-3">
                 <Input
                   aria-label={`Descrizione della sezione ${si + 1}`}
                   className="h-8 text-xs"
@@ -286,75 +592,141 @@ export function TemplateEditor({
                   }
                 />
                 {s.fields.map((f, fi) => (
-                  <FieldEditor
+                  <div
                     key={f.id}
-                    field={f}
-                    open={open === f.id}
-                    onToggle={() => setOpen(open === f.id ? null : f.id)}
-                    onChange={(nf) => updateField(si, fi, nf)}
-                    onMove={(d) => updateSection(si, { fields: move(s.fields, fi, d) })}
-                    onDuplicate={() => {
-                      const copy = {
-                        ...structuredClone(f),
-                        id: newId("c"),
-                        label: `${f.label} (copia)`,
-                      };
-                      updateSection(si, {
-                        fields: [...s.fields.slice(0, fi + 1), copy, ...s.fields.slice(fi + 1)],
-                      });
-                      setOpen(copy.id);
+                    onDragOver={(e) => {
+                      const d = drag.current;
+                      if (!d || d.kind === "section") return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const r = e.currentTarget.getBoundingClientRect();
+                      setDrop({ si, fi: e.clientY > r.top + r.height / 2 ? fi + 1 : fi });
                     }}
-                    onRemove={() =>
-                      updateSection(si, { fields: s.fields.filter((_, i) => i !== fi) })
-                    }
-                    first={fi === 0}
-                    last={fi === s.fields.length - 1}
-                  />
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onDrop(drop);
+                    }}
+                    className="relative"
+                  >
+                    {drop && "fi" in drop && drop.si === si && drop.fi === fi && <DropLine top />}
+                    <FieldEditor
+                      field={f}
+                      open={open === f.id}
+                      flash={flash === f.id}
+                      onToggle={() => setOpen(open === f.id ? null : f.id)}
+                      onChange={(nf) => updateField(si, fi, nf)}
+                      onMove={(d) => updateSection(si, { fields: move(s.fields, fi, d) })}
+                      onDragStart={() => {
+                        drag.current = { kind: "field", si, fi };
+                        setOpen(null);
+                      }}
+                      onDragEnd={() => setDrop(null)}
+                      onDuplicate={() => {
+                        const copy = {
+                          ...structuredClone(f),
+                          id: newId("c"),
+                          label: `${f.label} (copia)`,
+                          ...(f.type === "text" ? { isSubjectCode: undefined } : {}),
+                        } as FormField;
+                        updateSection(si, {
+                          fields: [...s.fields.slice(0, fi + 1), copy, ...s.fields.slice(fi + 1)],
+                        });
+                        setOpen(copy.id);
+                        highlight(copy.id);
+                      }}
+                      onRemove={() =>
+                        updateSection(si, { fields: s.fields.filter((_, i) => i !== fi) })
+                      }
+                      first={fi === 0}
+                      last={fi === s.fields.length - 1}
+                    />
+                    {drop &&
+                      "fi" in drop &&
+                      drop.si === si &&
+                      drop.fi === fi + 1 &&
+                      fi === s.fields.length - 1 && <DropLine />}
+                  </div>
                 ))}
-                <AddField
-                  onAdd={(type) => {
-                    const f = blankField(type);
-                    updateSection(si, { fields: [...s.fields, f] });
-                    setOpen(f.id);
-                  }}
-                />
+                {s.fields.length === 0 && (
+                  <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
+                    Sezione vuota: tocca un componente o trascinalo qui.
+                  </p>
+                )}
               </div>
             </section>
           ))}
-          <Button
-            variant="secondary"
-            className="w-full border-dashed"
-            onClick={() =>
-              change({
-                sections: [
-                  ...def.sections,
-                  { id: newId("s"), title: `Sezione ${def.sections.length + 1}`, fields: [] },
-                ],
-              })
-            }
-          >
-            <Plus aria-hidden /> Aggiungi sezione
-          </Button>
         </div>
 
+        {/* Anteprima: il foglio A4 come verrà stampato, oppure una prova di compilazione */}
         <div
-          className={cn("xl:sticky xl:top-20 xl:self-start", view === "edit" && "hidden xl:block")}
+          className={cn(
+            "min-w-0 lg:col-span-2 xl:sticky xl:top-20 xl:col-span-1 xl:self-start",
+            view === "edit" && "hidden xl:block",
+          )}
         >
-          <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-            <Eye className="size-4" aria-hidden /> Anteprima: prova a compilarla, non viene salvata.
+          <div className="mb-2 flex items-center gap-2">
+            <div className="flex gap-0.5 rounded-lg border border-border p-0.5" role="tablist">
+              {(
+                [
+                  ["sheet", "Foglio A4", FileText],
+                  ["style", "Aspetto", Palette],
+                  ["try", "Prova a compilare", Pencil],
+                ] as const
+              ).map(([v, l, Icon]) => (
+                <button
+                  key={v}
+                  type="button"
+                  role="tab"
+                  aria-selected={paper === v}
+                  onClick={() => setPaper(v)}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors",
+                    paper === v ? "bg-accent font-medium" : "text-muted-foreground",
+                  )}
+                >
+                  <Icon className="size-3.5" aria-hidden /> {l}
+                </button>
+              ))}
+            </div>
+            <span className="text-xs text-muted-foreground">non viene salvata</span>
           </div>
-          <div className="max-h-[calc(100dvh-10rem)] overflow-y-auto rounded-lg xl:pr-1">
-            {def.sections.length ? (
+          <div className="max-h-[calc(100dvh-10rem)] overflow-y-auto rounded-xl xl:pr-1">
+            {paper === "style" && (
+              <div className="mb-4">
+                <AppearancePanel
+                  value={def.appearance ?? {}}
+                  onChange={(appearance) => change({ appearance })}
+                />
+              </div>
+            )}
+            {def.sections.length === 0 && paper !== "style" ? (
+              <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                Aggiungi una sezione per vedere l&apos;anteprima.
+              </p>
+            ) : paper !== "try" ? (
+              <div className="light rounded-sm bg-white p-6 text-foreground shadow-[0_24px_60px_-20px_rgb(0_0_0/0.55)] ring-1 ring-black/5 sm:p-8">
+                <FormDocument
+                  definition={cleaned}
+                  values={preview}
+                  blank
+                  heading={{
+                    kicker:
+                      FORM_CATEGORY_LABELS[meta.category as keyof typeof FORM_CATEGORY_LABELS] ??
+                      "",
+                    title: meta.name || "Senza nome",
+                    description: meta.description || undefined,
+                    company: companyName,
+                  }}
+                />
+              </div>
+            ) : (
               <FormFields
-                definition={clean(def)}
+                definition={cleaned}
                 values={preview}
                 onChange={(fid: string, v: FormValue) => setPreview((p) => ({ ...p, [fid]: v }))}
                 idPrefix="pv"
               />
-            ) : (
-              <p className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-                Aggiungi una sezione per vedere l&apos;anteprima.
-              </p>
             )}
           </div>
         </div>
@@ -366,6 +738,9 @@ export function TemplateEditor({
           {dirty ? " · non salvato" : msg.ok ? ` · ${msg.ok}` : ""}
           {!check.ok && <span className="block text-danger">{check.error}</span>}
         </p>
+        <span className="hidden text-[11px] text-muted-foreground lg:inline">
+          Ctrl S per salvare
+        </span>
         <Button size="sm" variant="secondary" loading={pending} onClick={() => save(false)}>
           <Save aria-hidden /> Salva<span className="hidden sm:inline"> bozza</span>
         </Button>
@@ -376,6 +751,18 @@ export function TemplateEditor({
       </div>
       <FormAlert error={msg.error} />
     </div>
+  );
+}
+
+function DropLine({ top }: { top?: boolean }) {
+  return (
+    <div
+      aria-hidden
+      className={cn(
+        "pointer-events-none absolute right-0 left-0 z-10 h-0.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]",
+        top ? "-top-1" : "-bottom-1",
+      )}
+    />
   );
 }
 
@@ -409,32 +796,12 @@ function IconButton({
   );
 }
 
-function AddField({ onAdd }: { onAdd: (t: FormFieldType) => void }) {
-  const [type, setType] = useState<FormFieldType>("text");
-  return (
-    <div className="flex gap-2 pt-1">
-      <Select
-        aria-label="Tipo del nuovo campo"
-        className="h-8 flex-1 text-xs"
-        value={type}
-        onChange={(e) => setType(e.target.value as FormFieldType)}
-      >
-        {FORM_FIELD_TYPES.map((t) => (
-          <option key={t} value={t}>
-            {FORM_FIELD_TYPE_LABELS[t]}
-          </option>
-        ))}
-      </Select>
-      <Button size="sm" variant="secondary" onClick={() => onAdd(type)}>
-        <Plus aria-hidden /> Aggiungi campo
-      </Button>
-    </div>
-  );
-}
-
 function FieldEditor({
   field: f,
   open,
+  flash,
+  onDragStart,
+  onDragEnd,
   onToggle,
   onChange,
   onMove,
@@ -445,6 +812,9 @@ function FieldEditor({
 }: {
   field: FormField;
   open: boolean;
+  flash: boolean;
+  onDragStart: () => void;
+  onDragEnd: () => void;
   onToggle: () => void;
   onChange: (f: FormField) => void;
   onMove: (d: -1 | 1) => void;
@@ -455,15 +825,33 @@ function FieldEditor({
 }) {
   const p = `fe-${f.id}`;
   const lines = (v: string) => v.split("\n").slice(0, 60);
+  const Icon = TYPE_ICONS[f.type];
   return (
     <div
       className={cn(
-        "rounded-md border transition-colors",
-        open ? "border-primary/50 bg-accent/30" : "border-border",
+        "group/field rounded-lg border bg-card/40 transition-[border-color,background-color,box-shadow] duration-300",
+        open ? "border-primary/50 bg-accent/30" : "border-border hover:border-primary/30",
+        flash && "border-primary shadow-[0_0_0_3px_rgb(76_151_255/0.25)]",
       )}
       data-testid="field-editor"
     >
-      <div className="flex items-center gap-1 px-2 py-1.5">
+      <div className="flex items-center gap-1 px-1.5 py-1.5">
+        <span
+          draggable
+          onDragStart={(e) => {
+            e.dataTransfer.effectAllowed = "move";
+            onDragStart();
+          }}
+          onDragEnd={onDragEnd}
+          className="hidden cursor-grab touch-none px-0.5 text-muted-foreground/60 hover:text-foreground sm:block"
+          title="Trascina per spostare il campo"
+          aria-hidden
+        >
+          <GripVertical className="size-4" />
+        </span>
+        <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
+          <Icon className="size-3.5" aria-hidden />
+        </span>
         <button
           type="button"
           onClick={onToggle}
@@ -483,7 +871,7 @@ function FieldEditor({
               *
             </span>
           )}
-          <span className="ml-auto shrink-0 rounded-full bg-accent px-2 py-0.5 text-[11px] text-muted-foreground">
+          <span className="ml-auto hidden shrink-0 rounded-full bg-accent px-2 py-0.5 text-[11px] text-muted-foreground sm:inline">
             {FORM_FIELD_TYPE_LABELS[f.type]}
           </span>
         </button>
@@ -587,6 +975,28 @@ function FieldEditor({
                 </Labeled>
               ))}
             </div>
+          )}
+          {f.type === "photo" && (
+            <Labeled id={`${p}-max`} label="Numero massimo di foto">
+              <Input
+                id={`${p}-max`}
+                type="number"
+                min={1}
+                max={MAX_PHOTOS}
+                value={f.maxPhotos ?? ""}
+                placeholder={String(MAX_PHOTOS)}
+                onChange={(e) => {
+                  const n = Math.trunc(Number(e.target.value));
+                  onChange({
+                    ...f,
+                    maxPhotos:
+                      e.target.value === "" || !Number.isFinite(n)
+                        ? undefined
+                        : Math.min(MAX_PHOTOS, Math.max(1, n)),
+                  });
+                }}
+              />
+            </Labeled>
           )}
           {f.type === "choice" && (
             <div className="sm:col-span-2">

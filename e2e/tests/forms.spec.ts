@@ -33,6 +33,7 @@ test("dal modello pronto al modulo chiuso e firmato", async ({ page }) => {
   await page.getByRole("link", { name: "Modelli" }).click();
   await page
     .getByTestId("library-entry")
+    .filter({ hasText: "Ispezione linea vita" })
     .getByRole("button", { name: "Usa questo modello" })
     .click();
   await page.getByRole("dialog").getByRole("button", { name: "Crea la copia" }).click();

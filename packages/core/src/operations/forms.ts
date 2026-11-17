@@ -18,6 +18,7 @@ import {
   type FormValues,
 } from "./form-definition";
 import { findLibraryEntry } from "./form-library";
+import { checkFormPhotos } from "./form-photos";
 
 /**
  * Moduli compilabili (ADR-013): modelli dell'azienda con versioni immutabili e
@@ -539,6 +540,17 @@ export async function saveFormSubmission(
   const def = formDefinitionSchema.parse(current.definition);
   const { data, errors } = validateFormData(def, input.data, complete ? "complete" : "draft");
   if (Object.keys(errors).length) throw new ValidationError(errors);
+  const photoErrors = await checkFormPhotos(
+    tx,
+    access,
+    id,
+    Object.fromEntries(
+      allFields(def)
+        .filter((f) => f.type === "photo" && Array.isArray(data[f.id]))
+        .map((f) => [f.id, data[f.id] as string[]]),
+    ),
+  );
+  if (Object.keys(photoErrors).length) throw new ValidationError(photoErrors);
   const subjectField = subjectCodeField(def);
   const subjectCode =
     subjectField && typeof data[subjectField.id] === "string"

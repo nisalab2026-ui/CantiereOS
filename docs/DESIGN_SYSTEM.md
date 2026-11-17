@@ -64,7 +64,7 @@ Mai comunicare uno stato **solo** con il colore: c'è sempre un'etichetta o un'i
 ### Spazi, raggi, ombre, movimento
 
 - Griglia di 4 px. Padding standard: card 20–24 px, celle di tabella 12×16 px.
-- Raggi: `sm` 6 px (input, badge), `md` 8 px (bottoni), `lg` 12 px (card, modali).
+- Raggi: `sm` 6 px (input, badge), `md` 10 px (bottoni), `lg` 16 px (card, modali).
 - Ombre minime: solo card sollevate e menu/modali (`shadow-sm` / `shadow-lg`).
 - Movimento (classi in `globals.css`, componenti in `components/motion/`):
   - ingresso dei contenuti `cos-enter` (fade + 8 px, 360 ms) a cascata con `--i`, anche sulle righe
@@ -75,6 +75,14 @@ Mai comunicare uno stato **solo** con il colore: c'è sempre un'etichetta o un'i
     valore vero è già nel markup);
   - pannello del marchio nelle pagine di accesso: marchio fluttuante inclinabile (max 14°) e piano di
     cantiere in prospettiva che scorre.
+  - **stile "liquid"**: dietro l'interfaccia tre macchie di colore sfumate (`body::before`, token
+    `--aurora-1/2/3`) si spostano in 38 s; card e barre sono vetro smerigliato (`--glass-blur`,
+    `.cos-glass`) con un riflesso in alto (`--liquid-sheen`) e un bordo di luce (`--card-glow`); il
+    pulsante principale è attraversato da un riflesso al passaggio; i pulsanti rientrano leggermente
+    alla pressione; `.cos-lift` solleva di 2 px le superfici cliccabili;
+  - le animazioni d'ingresso usano `fill-mode: backwards`: a fine animazione non resta alcun
+    `transform` sugli elementi, che altrimenti impedirebbe la sfocatura del vetro in Chrome. In CSS
+    scrivere `-webkit-backdrop-filter` **prima** di `backdrop-filter` (la build tiene solo l'ultima);
   - Con `prefers-reduced-motion: reduce` animazioni e inclinazioni si spengono.
 - Bersagli touch: almeno 40 px (44 px nelle schermate del tecnico).
 
@@ -158,6 +166,16 @@ creato (`?id=…`); un componente `Toast` arriverà quando servirà davvero.
   accanto al campo e messaggio generale con `role="alert"`.
 - **Grafici** (`components/charts/bar-charts.tsx`): una serie, un colore (`primary`), barre sottili
   con angoli 4px, valore al passaggio, tabella nascosta per i lettori di schermo, link alla lista.
+
+- **Editor dei modelli** (`moduli/modelli/[id]/template-editor.tsx`): tre colonne su schermi larghi —
+  componenti (clic = aggiungi alla sezione attiva, oppure trascina), struttura con trascinamento di
+  campi e sezioni (maniglia; frecce su telefono), duplicazione, annulla/ripristina (50 passi,
+  Ctrl Z / Ctrl Maiusc Z fuori dai campi di testo), Ctrl S per salvare; anteprima "Foglio A4"
+  (`FormDocument` con `blank`: caselle, righe e spazio firma come sul cartaceo) o "Prova a compilare".
+  La scheda "Aspetto" (`appearance-panel.tsx`) cambia logo, colore, caratteri, intestazioni,
+  densità, codice, revisione e piè di pagina; `FormDocument` li applica ovunque (foglio A4, stampa,
+  moduli chiusi) tramite `document-style.ts`. Le intestazioni a fascia scelgono da sole testo
+  bianco o scuro per restare leggibili; la stampa conserva i colori (`print-color-adjust: exact`).
 
 ## 6. Stati
 
