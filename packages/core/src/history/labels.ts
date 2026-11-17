@@ -193,6 +193,24 @@ const FILTER_KEY_LABELS: Record<string, string> = {
   verb: "operazione",
 };
 
+const FILTER_VALUE_LABELS: Record<string, string> = {
+  all: "tutte",
+  open: "aperte",
+  overdue: "in ritardo",
+  due_soon: "in scadenza",
+  done: "completate",
+  cancelled: "annullate",
+  active: "attivi",
+  inactive: "archiviati",
+  me: "io",
+  none: "nessuno",
+  asc: "crescente",
+  desc: "decrescente",
+  ...DEADLINE_KIND_LABELS,
+  ...PARTY_TYPE_LABELS,
+  ...EMPLOYMENT_TYPE_LABELS,
+};
+
 /** Valore leggibile di un campo dello storico; null = vuoto. */
 export function formatFieldValue(table: string, field: string, value: unknown): string | null {
   if (value === null || value === undefined || value === "") return null;
@@ -214,7 +232,10 @@ export function formatFieldValue(table: string, field: string, value: unknown): 
       if (typeof value !== "object") return String(value);
       const parts = Object.entries(value as Record<string, unknown>)
         .filter(([, v]) => v !== null && v !== undefined && v !== "")
-        .map(([k, v]) => `${FILTER_KEY_LABELS[k] ?? k}: ${String(v)}`);
+        .map(
+          ([k, v]) =>
+            `${FILTER_KEY_LABELS[k] ?? k}: ${FILTER_VALUE_LABELS[String(v)] ?? String(v)}`,
+        );
       return parts.length ? parts.join(", ") : "nessuno";
     }
     default:
