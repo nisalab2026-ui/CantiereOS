@@ -26,6 +26,22 @@ export const TABLE_LABELS: Record<string, { one: string; section: string; href?:
   document_versions: { one: "File", section: "Documenti", href: "/app/documenti" },
   document_downloads: { one: "Documento", section: "Documenti", href: "/app/documenti" },
   document_folders: { one: "Cartella", section: "Documenti", href: "/app/documenti" },
+  tasks: { one: "Attività", section: "Attività", href: "/app/attivita" },
+  comments: { one: "Commento", section: "Commenti" },
+};
+
+export const TASK_STATUS_NAMES: Record<string, string> = {
+  todo: "Da fare",
+  in_progress: "In corso",
+  done: "Completata",
+  cancelled: "Annullata",
+};
+
+export const TASK_PRIORITY_NAMES: Record<string, string> = {
+  low: "Bassa",
+  normal: "Normale",
+  high: "Alta",
+  urgent: "Urgente",
 };
 
 export const DOCUMENT_CATEGORY_NAMES: Record<string, string> = {
@@ -50,6 +66,7 @@ export const EXPORT_SECTION_LABELS: Record<string, string> = {
   deadlines: "Scadenze",
   audit: "Registro attività",
   documents: "Documenti",
+  tasks: "Attività",
 };
 
 type FieldKind = "text" | "date" | "datetime" | "bool" | "enum" | "ref" | "filters" | "bytes";
@@ -180,6 +197,24 @@ export const FIELD_LABELS: Record<string, Record<string, FieldSpec>> = {
     accepted_at: { label: "Accettato il", kind: "datetime" },
   },
   tenants: { name: { label: "Nome" }, status: { label: "Stato" } },
+  tasks: {
+    title: { label: "Titolo" },
+    description: { label: "Descrizione" },
+    status: { label: "Stato", kind: "enum", values: TASK_STATUS_NAMES },
+    priority: { label: "Priorità", kind: "enum", values: TASK_PRIORITY_NAMES },
+    due_date: { label: "Entro il", kind: "date" },
+    assignee_user_id: { label: "Assegnata a", kind: "ref" },
+    completion_notes: { label: "Note di completamento" },
+    customer_id: { label: "Cliente", kind: "ref" },
+    supplier_id: { label: "Fornitore", kind: "ref" },
+    employee_id: { label: "Dipendente", kind: "ref" },
+    team_id: { label: "Squadra", kind: "ref" },
+    deleted_at: { label: "Eliminata il", kind: "datetime" },
+  },
+  comments: {
+    body: { label: "Testo" },
+    deleted_at: { label: "Eliminato il", kind: "datetime" },
+  },
   documents: {
     title: { label: "Titolo" },
     category: { label: "Categoria", kind: "enum", values: DOCUMENT_CATEGORY_NAMES },
@@ -325,7 +360,12 @@ export function recordTitle(table: string, data: Record<string, unknown> | null)
     case "contacts":
       return pick("first_name", "last_name");
     case "deadlines":
+    case "tasks":
       return pick("title");
+    case "comments": {
+      const body = typeof data.body === "string" ? data.body : "";
+      return body.length > 60 ? `${body.slice(0, 57)}…` : body || null;
+    }
     case "invitations":
       return pick("email");
     case "documents":

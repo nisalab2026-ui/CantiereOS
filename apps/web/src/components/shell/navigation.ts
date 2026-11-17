@@ -1,10 +1,12 @@
 import {
   Building2,
   CalendarClock,
+  CalendarDays,
   FolderOpen,
   History,
   HardHat,
   LayoutDashboard,
+  ListTodo,
   ShieldCheck,
   Truck,
   Users,
@@ -24,6 +26,20 @@ export interface NavItem {
 /** Solo voci con una pagina reale dietro (niente voci "in arrivo"). */
 export const NAV_ITEMS: NavItem[] = [
   { href: "/app", label: "Panoramica", icon: LayoutDashboard, group: "lavoro" },
+  {
+    href: "/app/attivita",
+    label: "Attività",
+    icon: ListTodo,
+    permission: "tasks.read",
+    group: "lavoro",
+  },
+  {
+    href: "/app/calendario",
+    label: "Calendario",
+    icon: CalendarDays,
+    permission: "tasks.read",
+    group: "lavoro",
+  },
   {
     href: "/app/scadenze",
     label: "Scadenze",

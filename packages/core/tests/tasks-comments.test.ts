@@ -112,7 +112,11 @@ describe("Attività", () => {
       setTaskStatus(tx, await resolveActiveTenant(tx), mine, { status: "done", notes: "Fatto" }),
     );
     const t = await run(s, async (tx) => getTask(tx, await resolveActiveTenant(tx), mine));
-    expect(t).toMatchObject({ status: "done", completionNotes: "Fatto", completedByName: tech.email });
+    expect(t).toMatchObject({
+      status: "done",
+      completionNotes: "Fatto",
+      completedByName: tech.email,
+    });
     expect(t!.completedAt).toBeInstanceOf(Date);
     const err = await run(s, async (tx) =>
       setTaskStatus(tx, await resolveActiveTenant(tx), other, { status: "in_progress" }),
@@ -177,7 +181,9 @@ describe("Attività", () => {
 
   it("un'altra azienda non vede le attività", async () => {
     const s = await createSession(pool, ownerB);
-    const res = await run(s, async (tx) => listTasks(tx, await resolveActiveTenant(tx), { state: "all" }));
+    const res = await run(s, async (tx) =>
+      listTasks(tx, await resolveActiveTenant(tx), { state: "all" }),
+    );
     expect(res.total).toBe(0);
   });
 });
@@ -192,10 +198,19 @@ describe("Calendario", () => {
         dueDate: day(5),
       }),
     );
-    const { id: tk } = await newTask(s, { title: "Ordine materiale", dueDate: day(5), assigneeUserId: tech.id });
+    const { id: tk } = await newTask(s, {
+      title: "Ordine materiale",
+      dueDate: day(5),
+      assigneeUserId: tech.id,
+    });
     const range = { from: day(0), to: day(10) };
-    const items = await run(s, async (tx) => listCalendar(tx, await resolveActiveTenant(tx), range));
-    expect(items.find((i) => i.id === dl)).toMatchObject({ kind: "deadline", href: `/app/scadenze/${dl}` });
+    const items = await run(s, async (tx) =>
+      listCalendar(tx, await resolveActiveTenant(tx), range),
+    );
+    expect(items.find((i) => i.id === dl)).toMatchObject({
+      kind: "deadline",
+      href: `/app/scadenze/${dl}`,
+    });
     expect(items.find((i) => i.id === tk)).toMatchObject({ kind: "task", ownerName: tech.email });
 
     const techItems = await run(await createSession(pool, tech), async (tx) =>
@@ -227,7 +242,9 @@ describe("Commenti", () => {
     ).catch((e) => e);
     expect(editErr).toBeInstanceOf(ValidationError);
     await run(so, async (tx) =>
-      editComment(tx, await resolveActiveTenant(tx), c1, { body: "Chiamato il cliente, richiamare" }),
+      editComment(tx, await resolveActiveTenant(tx), c1, {
+        body: "Chiamato il cliente, richiamare",
+      }),
     );
     const delErr = await run(so, async (tx) =>
       deleteComment(tx, await resolveActiveTenant(tx), c2),
@@ -235,8 +252,13 @@ describe("Commenti", () => {
     expect(delErr).toBeInstanceOf(ValidationError);
 
     const sv = await createSession(pool, viewer);
-    const list = await run(sv, async (tx) => listComments(tx, await resolveActiveTenant(tx), subject));
-    expect(list.map((c) => c.body)).toEqual(["Chiamato il cliente, richiamare", "Materiale in arrivo"]);
+    const list = await run(sv, async (tx) =>
+      listComments(tx, await resolveActiveTenant(tx), subject),
+    );
+    expect(list.map((c) => c.body)).toEqual([
+      "Chiamato il cliente, richiamare",
+      "Materiale in arrivo",
+    ]);
     expect(list[0]!.editedAt).toBeInstanceOf(Date);
     expect(list[0]!.authorName).toBe(office.email);
     const vErr = await run(sv, async (tx) =>
@@ -247,14 +269,21 @@ describe("Commenti", () => {
     // Il titolare (comments.delete, MFA) può moderare.
     const sOwner = await createSession(pool, owner);
     await run(sOwner, async (tx) => deleteComment(tx, await resolveActiveTenant(tx), c2));
-    const after = await run(so, async (tx) => listComments(tx, await resolveActiveTenant(tx), subject));
+    const after = await run(so, async (tx) =>
+      listComments(tx, await resolveActiveTenant(tx), subject),
+    );
     expect(after.map((c) => c.id)).toEqual([c1]);
   });
 
   it("commento su un elemento di un'altra azienda: rifiutato", async () => {
     const s = await createSession(pool, ownerB);
     const err = await run(s, async (tx) =>
-      addComment(tx, await resolveActiveTenant(tx), { table: "customers", id: customerId }, { body: "x" }),
+      addComment(
+        tx,
+        await resolveActiveTenant(tx),
+        { table: "customers", id: customerId },
+        { body: "x" },
+      ),
     ).catch((e) => e);
     expect(err).toBeInstanceOf(AuthError);
   });

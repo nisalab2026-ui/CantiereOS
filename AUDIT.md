@@ -159,5 +159,5 @@ manutenzioni, documenti, pagamenti, comunicazioni, attività) non esistono ancor
 | F     | Esportazione CSV con registrazione nello storico                                                                       | ✅ (PR #6)                                                   |
 | G     | Archivio documentale con storage privato e versioni                                                                    | ✅ (PR #7); OCR e antivirus non configurati                  |
 | H     | Catena di hash sull'audit log, rate limiting, CSP, codici MFA                                                          | ✅ (PR #8); limiti sugli inviti e ancoraggio esterno da fare |
-| I     | Calendario, attività, commenti, pagamenti, comunicazioni                                                               | da fare                                                      |
+| I     | Calendario, attività, commenti, pagamenti, comunicazioni                                                               | ✅ attività, calendario, commenti (PR #9); pagamenti e comunicazioni da fare |
 | J     | Versione dimostrativa online (Supabase + Vercel, dati DEMO separati)                                                   | in attesa di account                                         |

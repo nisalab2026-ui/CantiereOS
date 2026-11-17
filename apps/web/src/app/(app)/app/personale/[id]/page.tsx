@@ -2,6 +2,7 @@ import {
   getEmployee,
   getRecordHistory,
   listDeadlines,
+  listTasks,
   listDocuments,
   listFolders,
   listSubjectOptions,
@@ -19,6 +20,9 @@ import { ForbiddenState } from "@/components/ui/states";
 import { TabsNav } from "@/components/ui/tabs-nav";
 import { asCurrentUser, getAppContext } from "@/lib/auth";
 import { loadDeadlineOptions } from "@/lib/deadline-options";
+import { CommentsPanel } from "@/components/comments/comments-panel";
+import { TaskMiniList } from "../../attivita/task-mini-list";
+import { TaskDialog } from "../../attivita/task-form";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { sectionGate } from "@/lib/permissions";
 import { fileStorage } from "@/lib/storage";
@@ -59,6 +63,9 @@ export default async function EmployeePage({
   const canDeadlines = access.permissions.has("deadlines.read");
   const canDocuments = access.permissions.has("documents.read");
   const canUpload = access.permissions.has("documents.write");
+  const canWriteDeadlines = access.permissions.has("deadlines.write");
+  const canTasks = access.permissions.has("tasks.read");
+  const canWriteTasks = access.permissions.has("tasks.write");
 
   const data = await asCurrentUser(async (tx) => {
     const e = await getEmployee(tx, access, id);
@@ -90,13 +97,15 @@ export default async function EmployeePage({
             }
           : null,
       history: tab === "storico" ? await getRecordHistory(tx, access, "employees", id) : null,
-      options: access.permissions.has("deadlines.write")
-        ? await loadDeadlineOptions(tx, access)
-        : null,
+      openTasks:
+        canTasks && tab === "panoramica"
+          ? await listTasks(tx, access, { employeeId: id, state: "open", pageSize: 6 })
+          : null,
+      options: canWriteDeadlines || canWriteTasks ? await loadDeadlineOptions(tx, access) : null,
     };
   });
   if (!data) notFound();
-  const { e, open, all, history, options, docs, docOptions } = data;
+  const { e, open, all, openTasks, history, options, docs, docOptions } = data;
   const name = `${e.firstName} ${e.lastName}`;
   const base = `/app/personale/${id}`;
   const overdue = open?.rows.filter((r) => r.state === "overdue").length ?? 0;
@@ -117,7 +126,7 @@ export default async function EmployeePage({
         }
         actions={
           <div className="flex flex-wrap justify-end gap-2">
-            {options && (
+            {options && canWriteDeadlines && (
               <DeadlineDialog
                 mode="create"
                 subjects={options.subjects}
@@ -219,20 +228,48 @@ export default async function EmployeePage({
               />
             </CardBody>
           </Card>
-          {open && (
-            <Card>
-              <CardHeader
-                title="Prossime scadenze"
-                description="Certificazioni, corsi, visite mediche."
-              />
-              <CardBody>
-                <DeadlineMiniList
-                  rows={open.rows.slice(0, 6)}
-                  emptyText="Nessuna scadenza aperta per questa persona."
+          <div className="space-y-4">
+            {open && (
+              <Card>
+                <CardHeader
+                  title="Prossime scadenze"
+                  description="Certificazioni, corsi, visite mediche."
                 />
-              </CardBody>
-            </Card>
-          )}
+                <CardBody>
+                  <DeadlineMiniList
+                    rows={open.rows.slice(0, 6)}
+                    emptyText="Nessuna scadenza aperta per questa persona."
+                  />
+                </CardBody>
+              </Card>
+            )}
+            {openTasks && (
+              <Card>
+                <CardHeader
+                  title="Attività aperte"
+                  actions={
+                    canWriteTasks && options ? (
+                      <TaskDialog
+                        mode="create"
+                        subjects={options.subjects}
+                        members={options.members}
+                        defaults={{ subject: `employee:${e.id}` }}
+                        lockSubject
+                        triggerLabel="Nuova attività"
+                      />
+                    ) : undefined
+                  }
+                />
+                <CardBody>
+                  <TaskMiniList
+                    rows={openTasks.rows}
+                    emptyText="Nessuna attività aperta collegata a questa persona."
+                  />
+                </CardBody>
+              </Card>
+            )}
+            <CommentsPanel table="employees" id={e.id} />
+          </div>
         </div>
       )}
 

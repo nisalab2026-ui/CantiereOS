@@ -22,6 +22,8 @@ const SECTIONS = [
   "employees",
   "teams",
   "deadlines",
+  "tasks",
+  "comments",
   "memberships",
   "invitations",
   "roles",

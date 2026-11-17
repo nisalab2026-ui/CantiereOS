@@ -65,6 +65,11 @@
 - [x] Sicurezza: catena di hash verificabile sul registro attività, limite ai tentativi (accesso,
       MFA, recupero password, registrazione), Content Security Policy con nonce e HSTS, codici di
       recupero MFA
+- [x] Attività assegnabili (stato, priorità, data, collegamento a clienti/personale/fornitori/
+      squadre, notifica all'assegnatario che può aggiornarne solo lo stato), calendario mensile di
+      attività e scadenze con agenda su telefono, commenti interni su clienti, personale, scadenze,
+      documenti e attività (ADR-011)
+- [ ] Pagamenti attesi e registro comunicazioni (passo I, seconda parte)
 - [ ] Conferma ADR-006 (Kysely) e ADR-007 (BullMQ)
 
 ## Fase 3 — Operatività di campo

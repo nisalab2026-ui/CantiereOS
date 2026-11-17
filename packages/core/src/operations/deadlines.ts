@@ -525,7 +525,7 @@ export interface Option {
 
 /** Membri attivi assegnabili come responsabili (esclusi i clienti esterni). */
 export async function listAssignableMembers(tx: UserTx, access: TenantAccess): Promise<Option[]> {
-  requirePermission(access, "deadlines.read");
+  if (!hasPermission(access, "tasks.read")) requirePermission(access, "deadlines.read");
   const { rows } = await tx.query<Option>(
     `select u.id, coalesce(u.full_name, u.email) as name
        from public.memberships m

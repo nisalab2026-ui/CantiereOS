@@ -401,7 +401,8 @@ export async function listCalendar(
   range: { from: string; to: string; mine?: boolean },
 ): Promise<CalendarItem[]> {
   const iso = /^\d{4}-\d{2}-\d{2}$/;
-  if (!iso.test(range.from) || !iso.test(range.to)) throw new ValidationError({ form: "Date non valide" });
+  if (!iso.test(range.from) || !iso.test(range.to))
+    throw new ValidationError({ form: "Date non valide" });
   const days = (Date.parse(range.to) - Date.parse(range.from)) / 86_400_000;
   if (!(days >= 0 && days <= 62)) throw new ValidationError({ form: "Intervallo non valido" });
   const canDeadlines = hasPermission(access, "deadlines.read");
