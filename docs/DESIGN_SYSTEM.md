@@ -63,6 +63,9 @@ Mai comunicare uno stato **solo** con il colore: c'è sempre un'etichetta o un'i
 
 ### Spazi, raggi, ombre, movimento
 
+> Il sito pubblico ha una coreografia più ricca (scorrimento, parallasse, capitoli): vedi
+> [SITO_PUBBLICO.md](SITO_PUBBLICO.md). Il gestionale resta sobrio.
+
 - Griglia di 4 px. Padding standard: card 20–24 px, celle di tabella 12×16 px.
 - Raggi: `sm` 6 px (input, badge), `md` 10 px (bottoni), `lg` 16 px (card, modali).
 - Ombre minime: solo card sollevate e menu/modali (`shadow-sm` / `shadow-lg`).
