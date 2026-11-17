@@ -13,6 +13,7 @@ import Link from "next/link";
 import { FEATURE_ICONS, TRADE_ICONS } from "@/components/site/icons";
 import { CtaBand, FaqList, SectionHeading } from "@/components/site/blocks";
 import { Seal, StatsStrip } from "@/components/site/extras";
+import { TradeScene } from "@/components/site/trade-scenes";
 import { AppWindow, DashboardMock, FeatureMock, PhoneMock } from "@/components/site/mockups";
 import { ScrubText, SplitWords } from "@/components/site/split-words";
 import { getVerifiedSession } from "@/lib/auth";
@@ -171,7 +172,7 @@ export default async function HomePage() {
       />
 
       {/* --- Per ogni mestiere ------------------------------------------------------------------ */}
-      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28" data-progress>
         <div className="flex flex-wrap items-end justify-between gap-6">
           <SectionHeading
             eyebrow="Mestieri"
@@ -198,12 +199,13 @@ export default async function HomePage() {
                 <Link
                   href={`/mestieri#${t.id}`}
                   data-cursor="APRI"
-                  className="site-spot trade-tile group flex h-full flex-col rounded-3xl border border-border bg-card p-6"
+                  className="site-spot trade-tile group flex h-full flex-col rounded-3xl border border-border bg-card p-4 pb-6"
                 >
-                  <span className="trade-tile-icon grid size-11 place-items-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                    <Icon className="size-5" aria-hidden />
+                  <TradeScene icon={t.icon} decorative className="mb-5" />
+                  <span className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+                    <Icon className="size-5 text-primary" aria-hidden />
+                    {t.name}
                   </span>
-                  <span className="mt-5 text-lg font-semibold tracking-tight">{t.name}</span>
                   <span className="mt-1.5 text-sm text-muted-foreground">{t.who}</span>
                   <span className="mt-auto flex items-center gap-1 pt-5 text-sm font-medium text-primary opacity-70 transition-opacity group-hover:opacity-100">
                     Scopri

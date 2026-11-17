@@ -74,6 +74,10 @@ Stesso motore del sito Lume Studio (`components/site/motion/`), adattato allo st
    che contano da zero), `data-scrollspy` (indice che si accende, pagine legali e Mestieri), sigillo
    che ruota con `--scroll`, righe degli occhielli che si disegnano, icone e barre dei mestieri guidate
    da `--vp`, nome a contorno di ogni mestiere in parallasse.
+   Ogni mestiere ha una scena illustrata originale in SVG (`components/site/trade-scenes.tsx`:
+   gru e piani, quadro elettrico, caldaia e radiatore, tetto con linea vita, ingranaggi,
+   estintore, finestra, edifici collegati) che si compone allo scorrimento tramite `--vp`; senza
+   motore o con "riduci movimento" si vede la scena completa e ferma.
 4. **Momenti firma**: la finestra dell'app che si raddrizza scendendo, l'anello di luce sul piano
    consigliato, il nome "CantiereOS" che sale lettera per lettera in fondo alla pagina.
 5. **Cursore personalizzato** (`motion/cursor.tsx`): punto verde più anello che segue, che si allarga

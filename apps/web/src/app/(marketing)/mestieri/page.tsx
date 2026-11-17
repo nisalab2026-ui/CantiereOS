@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CtaBand, PageIntro } from "@/components/site/blocks";
 import { TRADE_ICONS } from "@/components/site/icons";
+import { TradeScene } from "@/components/site/trade-scenes";
 import { getVerifiedSession } from "@/lib/auth";
 import { TRADE_PAGES } from "../trades-content";
 
@@ -79,7 +80,7 @@ export default async function MestieriPage() {
               />
 
               <div className="mx-auto grid max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
-                <div className="lg:sticky lg:top-40 lg:self-start">
+                <div className="lg:sticky lg:top-36 lg:self-start">
                   <div className="flex items-center gap-4">
                     <span className="trade-icon grid size-14 place-items-center rounded-2xl bg-[image:var(--primary-gradient)] text-white shadow-[0_14px_34px_-14px_var(--site-shadow)]">
                       <Icon className="size-7" aria-hidden />
@@ -91,33 +92,30 @@ export default async function MestieriPage() {
                   <h2
                     id={`${t.id}-title`}
                     data-reveal
-                    className="mt-7 text-[clamp(2.2rem,5vw,3.8rem)] leading-[1] font-semibold tracking-[-0.04em]"
+                    className="mt-6 text-[clamp(2rem,4.4vw,3.2rem)] leading-[1] font-semibold tracking-[-0.04em]"
                   >
                     {t.name}
                   </h2>
                   <p
                     data-reveal
                     style={{ "--reveal-i": 1 } as React.CSSProperties}
-                    className="site-accent mt-4 text-xl font-semibold tracking-tight sm:text-2xl"
+                    className="site-accent mt-3 text-lg font-semibold tracking-tight sm:text-xl"
                   >
                     {t.claim}
                   </p>
-                  <p
-                    data-reveal
-                    style={{ "--reveal-i": 2 } as React.CSSProperties}
-                    className="mt-5 text-muted-foreground sm:text-lg"
-                  >
-                    {t.intro}
-                  </p>
+                  <TradeScene icon={t.icon} className="mt-7" />
                   <div
                     aria-hidden
-                    className="trade-progress mt-8 h-0.5 w-full max-w-xs rounded-full bg-border"
+                    className="trade-progress mt-5 h-0.5 w-full rounded-full bg-border"
                   >
                     <div className="h-full rounded-full bg-[image:var(--primary-gradient)]" />
                   </div>
                 </div>
 
                 <div className="space-y-4">
+                  <p data-reveal className="pb-2 text-muted-foreground sm:text-lg lg:pt-24">
+                    {t.intro}
+                  </p>
                   {t.needs.map((need, k) => (
                     <article
                       key={need.title}
