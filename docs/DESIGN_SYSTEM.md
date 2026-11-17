@@ -64,7 +64,7 @@ Mai comunicare uno stato **solo** con il colore: c'è sempre un'etichetta o un'i
 ### Spazi, raggi, ombre, movimento
 
 - Griglia di 4 px. Padding standard: card 20–24 px, celle di tabella 12×16 px.
-- Raggi: `sm` 6 px (input, badge), `md` 8 px (bottoni), `lg` 12 px (card, modali).
+- Raggi: `sm` 6 px (input, badge), `md` 10 px (bottoni), `lg` 16 px (card, modali).
 - Ombre minime: solo card sollevate e menu/modali (`shadow-sm` / `shadow-lg`).
 - Movimento (classi in `globals.css`, componenti in `components/motion/`):
   - ingresso dei contenuti `cos-enter` (fade + 8 px, 360 ms) a cascata con `--i`, anche sulle righe
@@ -75,6 +75,14 @@ Mai comunicare uno stato **solo** con il colore: c'è sempre un'etichetta o un'i
     valore vero è già nel markup);
   - pannello del marchio nelle pagine di accesso: marchio fluttuante inclinabile (max 14°) e piano di
     cantiere in prospettiva che scorre.
+  - **stile "liquid"**: dietro l'interfaccia tre macchie di colore sfumate (`body::before`, token
+    `--aurora-1/2/3`) si spostano in 38 s; card e barre sono vetro smerigliato (`--glass-blur`,
+    `.cos-glass`) con un riflesso in alto (`--liquid-sheen`) e un bordo di luce (`--card-glow`); il
+    pulsante principale è attraversato da un riflesso al passaggio; i pulsanti rientrano leggermente
+    alla pressione; `.cos-lift` solleva di 2 px le superfici cliccabili;
+  - le animazioni d'ingresso usano `fill-mode: backwards`: a fine animazione non resta alcun
+    `transform` sugli elementi, che altrimenti impedirebbe la sfocatura del vetro in Chrome. In CSS
+    scrivere `-webkit-backdrop-filter` **prima** di `backdrop-filter` (la build tiene solo l'ultima);
   - Con `prefers-reduced-motion: reduce` animazioni e inclinazioni si spengono.
 - Bersagli touch: almeno 40 px (44 px nelle schermate del tecnico).
 

@@ -161,4 +161,5 @@ manutenzioni, documenti, pagamenti, comunicazioni, attività) non esistono ancor
 | H     | Catena di hash sull'audit log, rate limiting, CSP, codici MFA                                                          | ✅ (PR #8); limiti sugli inviti e ancoraggio esterno da fare                  |
 | I     | Calendario, attività, commenti, pagamenti, comunicazioni                                                               | ✅ attività, calendario, commenti (PR #9); pagamenti e comunicazioni (PR #10) |
 | K     | Moduli compilabili al posto del cartaceo (modelli, compilazione, firma, stampa/PDF)                                    | ✅ (PR #11); importazione da PDF/foto con OCR non configurata                 |
+| L     | Stile "liquid" con animazioni e sezione Guida all'uso                                                                  | ✅ (PR #12)                                                                   |
 | J     | Versione dimostrativa online (Supabase + Vercel, dati DEMO separati)                                                   | in attesa di account                                                          |

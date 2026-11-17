@@ -5,6 +5,7 @@ import {
   CalendarDays,
   FolderOpen,
   History,
+  LifeBuoy,
   HardHat,
   LayoutDashboard,
   MessagesSquare,
@@ -121,6 +122,7 @@ export const NAV_ITEMS: NavItem[] = [
     group: "azienda",
   },
   { href: "/account/sicurezza", label: "Sicurezza", icon: ShieldCheck, group: "account" },
+  { href: "/app/guida", label: "Guida", icon: LifeBuoy, group: "account" },
 ];
 
 export const NAV_GROUPS: Record<NavItem["group"], string> = {

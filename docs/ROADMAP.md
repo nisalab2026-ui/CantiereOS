@@ -76,6 +76,8 @@
       immutabili, modello pronto "Ispezione linea vita" (UNI 11560), dati automatici da cliente,
       sede, azienda e ispezione precedente, firma sul display, chiusura definitiva, stampa/PDF,
       CSV, ricerca e scheda cliente (ADR-013)
+- [x] Stile "liquid" (vetro, sfondo vivo, movimenti leggeri, rispetto di "riduci movimento") e
+      sezione **Guida** con ricerca, voci per ogni parte dell'app filtrate per ruolo
 - [ ] Conferma ADR-006 (Kysely) e ADR-007 (BullMQ)
 
 ## Fase 3 — Operatività di campo

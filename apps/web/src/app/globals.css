@@ -253,6 +253,11 @@ body::before {
   transform: translateX(120%);
 }
 
+/* Guida: la risposta scivola dentro quando si apre la domanda */
+.guide-entry[open] > .guide-answer {
+  animation: cos-enter 260ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
 /* --- Stampa (moduli compilati, A4) ------------------------------------------ */
 @media print {
   @page {
