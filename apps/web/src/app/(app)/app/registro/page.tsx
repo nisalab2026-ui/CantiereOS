@@ -24,6 +24,8 @@ const SECTIONS = [
   "deadlines",
   "tasks",
   "comments",
+  "payments",
+  "communications",
   "memberships",
   "invitations",
   "roles",

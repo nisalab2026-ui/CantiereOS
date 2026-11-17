@@ -3,6 +3,7 @@ import {
   getRecordHistory,
   listDeadlines,
   listTasks,
+  listCommunications,
   listDocuments,
   listFolders,
   listSubjectOptions,
@@ -23,7 +24,9 @@ import { loadDeadlineOptions } from "@/lib/deadline-options";
 import { CommentsPanel } from "@/components/comments/comments-panel";
 import { TaskMiniList } from "../../attivita/task-mini-list";
 import { TaskDialog } from "../../attivita/task-form";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { CommunicationDialog } from "../../comunicazioni/communication-form";
+import { CommunicationMiniList } from "../../comunicazioni/communication-mini-list";
+import { formatDate, formatDateTime, romeLocalDateTime } from "@/lib/format";
 import { sectionGate } from "@/lib/permissions";
 import { fileStorage } from "@/lib/storage";
 import { DocumentMiniList } from "../../documenti/document-mini-list";
@@ -66,6 +69,8 @@ export default async function EmployeePage({
   const canWriteDeadlines = access.permissions.has("deadlines.write");
   const canTasks = access.permissions.has("tasks.read");
   const canWriteTasks = access.permissions.has("tasks.write");
+  const canComms = access.permissions.has("communications.read");
+  const canWriteComms = access.permissions.has("communications.write");
 
   const data = await asCurrentUser(async (tx) => {
     const e = await getEmployee(tx, access, id);
@@ -101,11 +106,18 @@ export default async function EmployeePage({
         canTasks && tab === "panoramica"
           ? await listTasks(tx, access, { employeeId: id, state: "open", pageSize: 6 })
           : null,
-      options: canWriteDeadlines || canWriteTasks ? await loadDeadlineOptions(tx, access) : null,
+      comms:
+        canComms && tab === "panoramica"
+          ? await listCommunications(tx, access, { employeeId: id, pageSize: 5 })
+          : null,
+      options:
+        canWriteDeadlines || canWriteTasks || canWriteComms
+          ? await loadDeadlineOptions(tx, access)
+          : null,
     };
   });
   if (!data) notFound();
-  const { e, open, all, openTasks, history, options, docs, docOptions } = data;
+  const { e, open, all, openTasks, comms, history, options, docs, docOptions } = data;
   const name = `${e.firstName} ${e.lastName}`;
   const base = `/app/personale/${id}`;
   const overdue = open?.rows.filter((r) => r.state === "overdue").length ?? 0;
@@ -264,6 +276,32 @@ export default async function EmployeePage({
                   <TaskMiniList
                     rows={openTasks.rows}
                     emptyText="Nessuna attività aperta collegata a questa persona."
+                  />
+                </CardBody>
+              </Card>
+            )}
+            {comms && (
+              <Card>
+                <CardHeader
+                  title="Comunicazioni recenti"
+                  actions={
+                    canWriteComms && options ? (
+                      <CommunicationDialog
+                        mode="create"
+                        subjects={options.subjects}
+                        now={romeLocalDateTime()}
+                        defaults={{ related: `employee:${e.id}` }}
+                        lockRelated
+                        lockedName={name}
+                        triggerLabel="Registra"
+                      />
+                    ) : undefined
+                  }
+                />
+                <CardBody>
+                  <CommunicationMiniList
+                    rows={comms.rows}
+                    emptyText="Nessuna comunicazione registrata con questa persona."
                   />
                 </CardBody>
               </Card>

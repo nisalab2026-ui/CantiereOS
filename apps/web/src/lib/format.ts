@@ -30,3 +30,21 @@ export function formatRelative(d: Date | string, now = Date.now()): string {
   if (abs < 86400 * 30) return relFmt.format(Math.round(diff / 86400), "day");
   return formatDate(d);
 }
+
+/** Data di oggi nel fuso dell'azienda (Italia), come YYYY-MM-DD. */
+export function todayInRome(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome" }).format(new Date());
+}
+
+/** Data e ora in Italia nel formato del campo datetime-local ("2026-11-17T09:30"). */
+export function romeLocalDateTime(d: Date | string = new Date()): string {
+  const s = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Rome",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(d));
+  return s.replace(" ", "T").slice(0, 16);
+}
