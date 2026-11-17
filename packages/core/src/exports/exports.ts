@@ -33,6 +33,11 @@ import {
   listCommunications,
   type CommunicationQuery,
 } from "../operations/communications";
+import {
+  FORM_STATUS_LABELS,
+  listFormSubmissions,
+  type FormSubmissionQuery,
+} from "../operations/forms";
 import { toCsv, type CsvColumn } from "./csv";
 import {
   DOCUMENT_CATEGORY_LABELS,
@@ -57,6 +62,7 @@ export const EXPORT_SECTIONS = [
   "tasks",
   "payments",
   "communications",
+  "forms",
 ] as const;
 export type ExportSection = (typeof EXPORT_SECTIONS)[number];
 
@@ -74,6 +80,7 @@ export const EXPORT_PERMISSION: Record<ExportSection, string> = {
   tasks: "tasks.read",
   payments: "payments.read",
   communications: "communications.read",
+  forms: "forms.read",
 };
 
 const FILE_PREFIX: Record<ExportSection, string> = {
@@ -87,6 +94,7 @@ const FILE_PREFIX: Record<ExportSection, string> = {
   tasks: "attivita",
   payments: "pagamenti",
   communications: "comunicazioni",
+  forms: "moduli",
 };
 
 export interface ExportResult {
@@ -321,6 +329,28 @@ export async function exportSection(
         { header: "Richiamare il", value: (x) => itDate(x.followUpDate) },
         { header: "Richiamo fatto", value: (x) => (x.followUpDate ? x.followUpDone : null) },
         { header: "Registrata da", value: (x) => x.createdByName },
+      ];
+      csv = toCsv(cols, r.rows);
+      [rows, total, filters] = [r.rows.length, r.total, q as Record<string, unknown>];
+      break;
+    }
+    case "forms": {
+      const q = compact({
+        q: str(params.q),
+        status: str(params.status, 20),
+        templateId: str(params.template, 40),
+        customerId: str(params.customer, 40),
+      }) as FormSubmissionQuery;
+      const r = await listFormSubmissions(tx, access, { ...q, ...page }, opts);
+      const cols: CsvColumn<(typeof r.rows)[number]>[] = [
+        { header: "Titolo", value: (x) => x.title },
+        { header: "Modello", value: (x) => `${x.templateName} (v${x.version})` },
+        { header: "Impianto", value: (x) => x.subjectCode },
+        { header: "Cliente", value: (x) => x.customer?.name ?? null },
+        { header: "Sede", value: (x) => x.site?.name ?? null },
+        { header: "Stato", value: (x) => FORM_STATUS_LABELS[x.status] },
+        { header: "Chiuso il", value: (x) => x.completedAt },
+        { header: "Creato da", value: (x) => x.createdByName },
       ];
       csv = toCsv(cols, r.rows);
       [rows, total, filters] = [r.rows.length, r.total, q as Record<string, unknown>];

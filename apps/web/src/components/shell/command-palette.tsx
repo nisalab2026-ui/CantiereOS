@@ -3,6 +3,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Command } from "cmdk";
 import {
+  ClipboardCheck,
   Building2,
   CalendarClock,
   CornerDownLeft,
@@ -37,6 +38,7 @@ const KIND: Record<SearchKind, { label: string; icon: LucideIcon; href: (id: str
       icon: MessagesSquare,
       href: (id) => `/app/comunicazioni/${id}`,
     },
+    form: { label: "Moduli", icon: ClipboardCheck, href: (id) => `/app/moduli/${id}` },
   };
 
 /**

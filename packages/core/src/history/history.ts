@@ -21,6 +21,7 @@ export type HistoryVerb =
   | "restored"
   | "completed"
   | "paid"
+  | "published"
   | "reopened"
   | "cancelled"
   | "exported"
@@ -65,6 +66,9 @@ interface AuditRow {
 }
 
 const REF_TARGETS: Record<string, { sql: string }> = {
+  site_id: {
+    sql: "select id, name from public.customer_sites where tenant_id = $1 and id = any($2)",
+  },
   customer_id: {
     sql: "select id, display_name as name from public.customers where tenant_id = $1 and id = any($2)",
   },
@@ -107,6 +111,8 @@ const HREF_TABLES = new Set([
   "tasks",
   "payments",
   "communications",
+  "form_submissions",
+  "form_templates",
 ]);
 /** Tabelle il cui link punta al documento padre (document_id) invece che al record. */
 const DOC_CHILD_TABLES = new Set(["document_versions", "document_downloads"]);
@@ -139,6 +145,10 @@ function verbOf(row: AuditRow): HistoryVerb {
     if (n.status === "cancelled") return "cancelled";
     return "reopened";
   }
+  if (changed.has("status") && row.table_name === "form_submissions") {
+    return n.status === "completed" ? "completed" : "reopened";
+  }
+  if (row.table_name === "form_template_versions") return "published";
   if (changed.has("status") && row.table_name === "tasks") {
     if (n.status === "done") return "completed";
     if (n.status === "cancelled") return "cancelled";
@@ -233,6 +243,8 @@ export const HISTORY_TABLES = [
   "tasks",
   "payments",
   "communications",
+  "form_submissions",
+  "form_templates",
 ] as const;
 export type HistoryTable = (typeof HISTORY_TABLES)[number];
 

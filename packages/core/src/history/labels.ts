@@ -30,6 +30,13 @@ export const TABLE_LABELS: Record<string, { one: string; section: string; href?:
   comments: { one: "Commento", section: "Commenti" },
   payments: { one: "Pagamento", section: "Pagamenti", href: "/app/pagamenti" },
   communications: { one: "Comunicazione", section: "Comunicazioni", href: "/app/comunicazioni" },
+  form_templates: { one: "Modello di modulo", section: "Moduli", href: "/app/moduli/modelli" },
+  form_template_versions: {
+    one: "Versione del modello",
+    section: "Moduli",
+    href: "/app/moduli/modelli",
+  },
+  form_submissions: { one: "Modulo", section: "Moduli", href: "/app/moduli" },
 };
 
 export const PAYMENT_DIRECTION_NAMES: Record<string, string> = {
@@ -99,10 +106,20 @@ export const EXPORT_SECTION_LABELS: Record<string, string> = {
   tasks: "Attività",
   payments: "Pagamenti",
   communications: "Comunicazioni",
+  forms: "Moduli",
+};
+
+export const FORM_CATEGORY_NAMES: Record<string, string> = {
+  inspection: "Ispezione",
+  checklist: "Checklist",
+  report: "Verbale / rapporto",
+  safety: "Sicurezza",
+  delivery: "Consegna",
+  other: "Altro",
 };
 
 type FieldKind =
-  "text" | "date" | "datetime" | "bool" | "enum" | "ref" | "filters" | "bytes" | "cents";
+  "text" | "date" | "datetime" | "bool" | "enum" | "ref" | "filters" | "bytes" | "cents" | "values";
 
 interface FieldSpec {
   label: string;
@@ -277,6 +294,33 @@ export const FIELD_LABELS: Record<string, Record<string, FieldSpec>> = {
     follow_up_done: { label: "Richiamo fatto", kind: "bool" },
     deleted_at: { label: "Eliminata il", kind: "datetime" },
   },
+  form_templates: {
+    name: { label: "Nome" },
+    description: { label: "Descrizione" },
+    category: { label: "Categoria", kind: "enum", values: FORM_CATEGORY_NAMES },
+    current_version: { label: "Versione pubblicata" },
+    is_archived: { label: "Archiviato", kind: "bool" },
+    draft_definition: { label: "Campi (bozza)", kind: "values" },
+    deleted_at: { label: "Eliminato il", kind: "datetime" },
+  },
+  form_template_versions: {
+    version: { label: "Versione" },
+    name: { label: "Nome" },
+  },
+  form_submissions: {
+    title: { label: "Titolo" },
+    subject_code: { label: "Impianto" },
+    status: {
+      label: "Stato",
+      kind: "enum",
+      values: { draft: "In compilazione", completed: "Chiuso" },
+    },
+    data: { label: "Valori compilati", kind: "values" },
+    customer_id: { label: "Cliente", kind: "ref" },
+    site_id: { label: "Sede", kind: "ref" },
+    completed_at: { label: "Chiuso il", kind: "datetime" },
+    deleted_at: { label: "Eliminato il", kind: "datetime" },
+  },
   comments: {
     body: { label: "Testo" },
     deleted_at: { label: "Eliminato il", kind: "datetime" },
@@ -396,6 +440,19 @@ export function formatFieldValue(table: string, field: string, value: unknown): 
         ? `${Math.max(1, Math.round(n / 1024))} KB`
         : `${(n / 1024 / 1024).toFixed(1).replace(".", ",")} MB`;
     }
+    case "values": {
+      if (typeof value !== "object" || value === null) return String(value);
+      const v = value as Record<string, unknown>;
+      if (Array.isArray(v.sections)) {
+        const n = (v.sections as { fields?: unknown[] }[]).reduce(
+          (t, s) => t + (s.fields?.length ?? 0),
+          0,
+        );
+        return `${v.sections.length} sezioni, ${n} campi`;
+      }
+      const n = Object.values(v).filter((x) => x !== null && x !== "").length;
+      return n === 1 ? "1 campo compilato" : `${n} campi compilati`;
+    }
     case "filters": {
       if (typeof value !== "object") return String(value);
       const parts = Object.entries(value as Record<string, unknown>)
@@ -441,6 +498,11 @@ export function recordTitle(table: string, data: Record<string, unknown> | null)
       return pick("description");
     case "communications":
       return pick("subject");
+    case "form_templates":
+    case "form_template_versions":
+      return pick("name");
+    case "form_submissions":
+      return pick("title");
     case "comments": {
       const body = typeof data.body === "string" ? data.body : "";
       return body.length > 60 ? `${body.slice(0, 57)}…` : body || null;
