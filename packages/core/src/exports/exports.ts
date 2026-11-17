@@ -15,6 +15,12 @@ import {
   PARTY_TYPE_LABELS,
 } from "../history/labels";
 import { DEADLINE_STATE_LABELS, listDeadlines, type DeadlineQuery } from "../operations/deadlines";
+import {
+  listTasks,
+  TASK_PRIORITY_LABELS,
+  TASK_STATUS_LABELS,
+  type TaskQuery,
+} from "../operations/tasks";
 import { toCsv, type CsvColumn } from "./csv";
 import {
   DOCUMENT_CATEGORY_LABELS,
@@ -36,6 +42,7 @@ export const EXPORT_SECTIONS = [
   "deadlines",
   "audit",
   "documents",
+  "tasks",
 ] as const;
 export type ExportSection = (typeof EXPORT_SECTIONS)[number];
 
@@ -50,6 +57,7 @@ export const EXPORT_PERMISSION: Record<ExportSection, string> = {
   deadlines: "deadlines.read",
   audit: "audit.read",
   documents: "documents.read",
+  tasks: "tasks.read",
 };
 
 const FILE_PREFIX: Record<ExportSection, string> = {
@@ -60,6 +68,7 @@ const FILE_PREFIX: Record<ExportSection, string> = {
   deadlines: "scadenze",
   audit: "registro-attivita",
   documents: "documenti",
+  tasks: "attivita",
 };
 
 export interface ExportResult {
@@ -209,6 +218,31 @@ export async function exportSection(
         { header: "Riferimento", value: (x) => x.referenceCode },
         { header: "Responsabile", value: (x) => x.responsibleName },
         { header: "Ricorrenza (mesi)", value: (x) => x.recurrenceMonths },
+      ];
+      csv = toCsv(cols, r.rows);
+      [rows, total, filters] = [r.rows.length, r.total, q as Record<string, unknown>];
+      break;
+    }
+    case "tasks": {
+      const assignee = str(params.assignee, 40);
+      const q = compact({
+        q: str(params.q),
+        state: str(params.state, 20) ?? "open",
+        priority: str(params.priority, 20),
+        assignee,
+        sort: str(params.sort, 20),
+        dir: dir(params.dir),
+      }) as TaskQuery;
+      const r = await listTasks(tx, access, { ...q, ...page }, opts);
+      const cols: CsvColumn<(typeof r.rows)[number]>[] = [
+        { header: "Entro il", value: (x) => itDate(x.dueDate) },
+        { header: "Titolo", value: (x) => x.title },
+        { header: "Stato", value: (x) => TASK_STATUS_LABELS[x.status] },
+        { header: "Priorità", value: (x) => TASK_PRIORITY_LABELS[x.priority] },
+        { header: "In ritardo", value: (x) => x.overdue },
+        { header: "Assegnata a", value: (x) => x.assigneeName },
+        { header: "Collegata a", value: (x) => x.subject?.name ?? null },
+        { header: "Ultima modifica", value: (x) => x.updatedAt },
       ];
       csv = toCsv(cols, r.rows);
       [rows, total, filters] = [r.rows.length, r.total, q as Record<string, unknown>];

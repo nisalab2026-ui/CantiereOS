@@ -1,7 +1,8 @@
 import { hasPermission, type TenantAccess } from "../auth/access";
 import type { UserTx } from "../db/transaction";
 
-export type SearchKind = "customer" | "supplier" | "employee" | "team" | "deadline" | "document";
+export type SearchKind =
+  "customer" | "supplier" | "employee" | "team" | "deadline" | "document" | "task";
 
 export interface SearchResult {
   kind: SearchKind;
@@ -87,6 +88,20 @@ export async function globalSearch(
         where tenant_id = $1 and deleted_at is null
           and lower(concat_ws(' ', title, reference_code)) like $2
         order by (status = 'open') desc, due_date limit $3`,
+      [t, pattern, limit],
+    );
+    results.push(...rows);
+  }
+  if (hasPermission(access, "tasks.read")) {
+    const { rows } = await tx.query<SearchResult>(
+      `select 'task' as kind, id, title,
+              concat_ws(' · ', case status when 'todo' then 'Da fare' when 'in_progress' then 'In corso'
+                                          when 'done' then 'Completata' else 'Annullata' end,
+                        'entro il ' || to_char(due_date, 'DD/MM/YYYY')) as subtitle
+         from public.tasks
+        where tenant_id = $1 and deleted_at is null
+          and lower(title) like $2
+        order by (status in ('todo','in_progress')) desc, due_date nulls last limit $3`,
       [t, pattern, limit],
     );
     results.push(...rows);

@@ -8,6 +8,7 @@ import {
   CornerDownLeft,
   FileText,
   HardHat,
+  ListTodo,
   type LucideIcon,
   Search,
   Truck,
@@ -27,6 +28,7 @@ const KIND: Record<SearchKind, { label: string; icon: LucideIcon; href: (id: str
     team: { label: "Squadre", icon: UsersRound, href: (id) => `/app/squadre?id=${id}` },
     deadline: { label: "Scadenze", icon: CalendarClock, href: (id) => `/app/scadenze/${id}` },
     document: { label: "Documenti", icon: FileText, href: (id) => `/app/documenti/${id}` },
+    task: { label: "Attività", icon: ListTodo, href: (id) => `/app/attivita/${id}` },
   };
 
 /**

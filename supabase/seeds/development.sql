@@ -129,3 +129,20 @@ insert into public.deadlines (id, tenant_id, kind, title, reference_code, due_da
   ('d8000000-0000-4000-8000-000000000007', 'd1000000-0000-4000-8000-000000000001', 'payment',       'DEMO Verifica incasso SAL 2',            null, current_date - 1,  7,  null, 'd2000000-0000-4000-8000-000000000003', null, null, null),
   ('d8000000-0000-4000-8000-000000000008', 'd1000000-0000-4000-8000-000000000002', 'maintenance',   'DEMO Manutenzione centrale termica hotel', null, current_date + 12, 30, 12, 'd2000000-0000-4000-8000-000000000004', null, null, 'd0000000-0000-4000-8000-000000000004')
 on conflict (id) do nothing;
+
+-- Attività DEMO (date relative a oggi) e commenti interni, scritti a nome dell'ufficio
+do $$ begin perform set_config('app.actor_user_id', 'd0000000-0000-4000-8000-000000000002', false); end $$;
+insert into public.tasks (id, tenant_id, title, description, status, priority, due_date,
+                          assignee_user_id, customer_id, employee_id, team_id) values
+  ('d9000000-0000-4000-8000-000000000001', 'd1000000-0000-4000-8000-000000000001', 'DEMO Sopralluogo per preventivo bagno', 'Misure e foto del locale, verificare scarichi.', 'todo', 'high', current_date + 1, 'd0000000-0000-4000-8000-000000000003', 'd2000000-0000-4000-8000-000000000001', null, null),
+  ('d9000000-0000-4000-8000-000000000002', 'd1000000-0000-4000-8000-000000000001', 'DEMO Ordinare materiale impianto elettrico', null, 'in_progress', 'normal', current_date + 3, 'd0000000-0000-4000-8000-000000000002', 'd2000000-0000-4000-8000-000000000003', null, null),
+  ('d9000000-0000-4000-8000-000000000003', 'd1000000-0000-4000-8000-000000000001', 'DEMO Inviare SAL al cliente', null, 'todo', 'urgent', current_date - 2, 'd0000000-0000-4000-8000-000000000001', 'd2000000-0000-4000-8000-000000000003', null, null),
+  ('d9000000-0000-4000-8000-000000000004', 'd1000000-0000-4000-8000-000000000001', 'DEMO Consegnare DPI alla squadra', null, 'todo', 'normal', current_date + 6, 'd0000000-0000-4000-8000-000000000003', null, null, 'd7000000-0000-4000-8000-000000000001'),
+  ('d9000000-0000-4000-8000-000000000005', 'd1000000-0000-4000-8000-000000000001', 'DEMO Prenotare visita medica', null, 'todo', 'low', current_date + 10, null, null, 'd6000000-0000-4000-8000-000000000002', null)
+on conflict (id) do nothing;
+
+insert into public.comments (id, tenant_id, subject_table, subject_id, body) values
+  ('da000000-0000-4000-8000-000000000001', 'd1000000-0000-4000-8000-000000000001', 'tasks', 'd9000000-0000-4000-8000-000000000001', 'DEMO Il cliente è disponibile solo al mattino, chiamare prima.'),
+  ('da000000-0000-4000-8000-000000000002', 'd1000000-0000-4000-8000-000000000001', 'customers', 'd2000000-0000-4000-8000-000000000001', 'DEMO Amministratore cambiato da gennaio: aggiornare i contatti.')
+on conflict (id) do nothing;
+do $$ begin perform set_config('app.actor_user_id', '', false); end $$;

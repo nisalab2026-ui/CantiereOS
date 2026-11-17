@@ -2,6 +2,7 @@ import {
   getCustomer,
   getRecordHistory,
   listDeadlines,
+  listTasks,
   listDocuments,
   listFolders,
   listSubjectOptions,
@@ -19,6 +20,9 @@ import { ForbiddenState } from "@/components/ui/states";
 import { TabsNav } from "@/components/ui/tabs-nav";
 import { asCurrentUser, getAppContext } from "@/lib/auth";
 import { loadDeadlineOptions } from "@/lib/deadline-options";
+import { CommentsPanel } from "@/components/comments/comments-panel";
+import { TaskMiniList } from "../../attivita/task-mini-list";
+import { TaskDialog } from "../../attivita/task-form";
 import { formatDateTime } from "@/lib/format";
 import { sectionGate } from "@/lib/permissions";
 import { fileStorage } from "@/lib/storage";
@@ -55,6 +59,8 @@ export default async function CustomerPage({
   const canDocuments = access.permissions.has("documents.read");
   const canUpload = access.permissions.has("documents.write");
   const canWriteDeadlines = access.permissions.has("deadlines.write");
+  const canTasks = access.permissions.has("tasks.read");
+  const canWriteTasks = access.permissions.has("tasks.write");
 
   const data = await asCurrentUser(async (tx) => {
     const c = await getCustomer(tx, access, id);
@@ -86,11 +92,15 @@ export default async function CustomerPage({
             }
           : null,
       history: tab === "storico" ? await getRecordHistory(tx, access, "customers", id) : null,
-      options: canWriteDeadlines ? await loadDeadlineOptions(tx, access) : null,
+      openTasks:
+        canTasks && tab === "panoramica"
+          ? await listTasks(tx, access, { customerId: id, state: "open", pageSize: 6 })
+          : null,
+      options: canWriteDeadlines || canWriteTasks ? await loadDeadlineOptions(tx, access) : null,
     };
   });
   if (!data) notFound();
-  const { c, openDeadlines, allDeadlines, history, options, docs, docOptions } = data;
+  const { c, openDeadlines, allDeadlines, openTasks, history, options, docs, docOptions } = data;
   const base = `/app/clienti/${id}`;
   const overdue = openDeadlines?.rows.filter((r) => r.state === "overdue").length ?? 0;
   const address = [
@@ -116,7 +126,7 @@ export default async function CustomerPage({
         }
         actions={
           <div className="flex flex-wrap justify-end gap-2">
-            {options && (
+            {options && canWriteDeadlines && (
               <DeadlineDialog
                 mode="create"
                 subjects={options.subjects}
@@ -266,6 +276,31 @@ export default async function CustomerPage({
                 )}
               </CardBody>
             </Card>
+            {openTasks && (
+              <Card>
+                <CardHeader
+                  title="Attività aperte"
+                  actions={
+                    canWriteTasks && options ? (
+                      <TaskDialog
+                        mode="create"
+                        subjects={options.subjects}
+                        members={options.members}
+                        defaults={{ subject: `customer:${c.id}` }}
+                        lockSubject
+                        triggerLabel="Nuova attività"
+                      />
+                    ) : undefined
+                  }
+                />
+                <CardBody>
+                  <TaskMiniList
+                    rows={openTasks.rows}
+                    emptyText="Nessuna attività aperta per questo cliente."
+                  />
+                </CardBody>
+              </Card>
+            )}
             {openDeadlines && (
               <Card>
                 <CardHeader title="Prossime scadenze" />
@@ -277,6 +312,7 @@ export default async function CustomerPage({
                 </CardBody>
               </Card>
             )}
+            <CommentsPanel table="customers" id={c.id} />
           </div>
         </div>
       )}

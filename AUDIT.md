@@ -149,15 +149,15 @@ manutenzioni, documenti, pagamenti, comunicazioni, attività) non esistono ancor
 
 ## 14. Piano di lavoro (aggiornato a ogni PR)
 
-| Passo | Contenuto                                                                                                              | Stato                                                        |
-| ----- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| A     | AUDIT.md (questo documento)                                                                                            | ✅                                                           |
-| B     | Storico consultabile: pagina Registro attività con filtri ed etichette italiane, cronologia nella scheda               | ✅ (PR #5)                                                   |
-| C     | Scheda di dettaglio e modifica per clienti e personale, con breadcrumb e storico                                       | ✅ clienti e personale (PR #5); fornitori e squadre da fare  |
-| D     | Scadenziario unico (certificazioni, manutenzioni, controlli, pagamenti, documenti) con stati, responsabili, ricorrenza | ✅ (PR #5)                                                   |
-| E     | Notifiche scadenze senza duplicati + dashboard "Priorità"                                                              | ✅ (PR #5); job pianificato da fare                          |
-| F     | Esportazione CSV con registrazione nello storico                                                                       | ✅ (PR #6)                                                   |
-| G     | Archivio documentale con storage privato e versioni                                                                    | ✅ (PR #7); OCR e antivirus non configurati                  |
-| H     | Catena di hash sull'audit log, rate limiting, CSP, codici MFA                                                          | ✅ (PR #8); limiti sugli inviti e ancoraggio esterno da fare |
-| I     | Calendario, attività, commenti, pagamenti, comunicazioni                                                               | da fare                                                      |
-| J     | Versione dimostrativa online (Supabase + Vercel, dati DEMO separati)                                                   | in attesa di account                                         |
+| Passo | Contenuto                                                                                                              | Stato                                                                        |
+| ----- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| A     | AUDIT.md (questo documento)                                                                                            | ✅                                                                           |
+| B     | Storico consultabile: pagina Registro attività con filtri ed etichette italiane, cronologia nella scheda               | ✅ (PR #5)                                                                   |
+| C     | Scheda di dettaglio e modifica per clienti e personale, con breadcrumb e storico                                       | ✅ clienti e personale (PR #5); fornitori e squadre da fare                  |
+| D     | Scadenziario unico (certificazioni, manutenzioni, controlli, pagamenti, documenti) con stati, responsabili, ricorrenza | ✅ (PR #5)                                                                   |
+| E     | Notifiche scadenze senza duplicati + dashboard "Priorità"                                                              | ✅ (PR #5); job pianificato da fare                                          |
+| F     | Esportazione CSV con registrazione nello storico                                                                       | ✅ (PR #6)                                                                   |
+| G     | Archivio documentale con storage privato e versioni                                                                    | ✅ (PR #7); OCR e antivirus non configurati                                  |
+| H     | Catena di hash sull'audit log, rate limiting, CSP, codici MFA                                                          | ✅ (PR #8); limiti sugli inviti e ancoraggio esterno da fare                 |
+| I     | Calendario, attività, commenti, pagamenti, comunicazioni                                                               | ✅ attività, calendario, commenti (PR #9); pagamenti e comunicazioni da fare |
+| J     | Versione dimostrativa online (Supabase + Vercel, dati DEMO separati)                                                   | in attesa di account                                                         |

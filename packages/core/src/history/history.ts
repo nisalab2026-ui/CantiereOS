@@ -77,6 +77,9 @@ const REF_TARGETS: Record<string, { sql: string }> = {
     sql: "select id, concat_ws(' ', first_name, last_name) as name from public.employees where tenant_id = $1 and id = any($2)",
   },
   team_id: { sql: "select id, name from public.teams where tenant_id = $1 and id = any($2)" },
+  assignee_user_id: {
+    sql: "select id, coalesce(full_name, email) as name from public.users where $1::uuid is not null and id = any($2)",
+  },
   responsible_user_id: {
     sql: "select id, coalesce(full_name, email) as name from public.users where $1::uuid is not null and id = any($2)",
   },
@@ -95,7 +98,7 @@ const REF_TARGETS: Record<string, { sql: string }> = {
   },
 };
 
-const HREF_TABLES = new Set(["customers", "employees", "deadlines", "documents"]);
+const HREF_TABLES = new Set(["customers", "employees", "deadlines", "documents", "tasks"]);
 /** Tabelle il cui link punta al documento padre (document_id) invece che al record. */
 const DOC_CHILD_TABLES = new Set(["document_versions", "document_downloads"]);
 
@@ -121,6 +124,11 @@ function verbOf(row: AuditRow): HistoryVerb {
     if (n.status === "done") return "completed";
     if (n.status === "cancelled") return "cancelled";
     if (o.status !== "open" && n.status === "open") return "reopened";
+  }
+  if (changed.has("status") && row.table_name === "tasks") {
+    if (n.status === "done") return "completed";
+    if (n.status === "cancelled") return "cancelled";
+    if (o.status === "done" || o.status === "cancelled") return "reopened";
   }
   if (changed.has("is_active") && n.is_active === false) return "archived";
   if (changed.has("is_active") && n.is_active === true) return "restored";
@@ -208,6 +216,7 @@ export const HISTORY_TABLES = [
   "teams",
   "deadlines",
   "documents",
+  "tasks",
 ] as const;
 export type HistoryTable = (typeof HISTORY_TABLES)[number];
 

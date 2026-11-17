@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Repeat } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CommentsPanel } from "@/components/comments/comments-panel";
 import { Timeline } from "@/components/history/timeline";
 import { Notice } from "@/components/ui";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -213,6 +214,7 @@ export default async function DeadlinePage({
               </CardBody>
             </Card>
           )}
+          <CommentsPanel table="deadlines" id={d.id} />
         </div>
         <Card>
           <CardHeader

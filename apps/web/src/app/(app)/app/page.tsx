@@ -2,16 +2,21 @@ import {
   getDashboard,
   getDeadlineSummary,
   getDocumentExpirySummary,
+  getTaskSummary,
   listActivity,
+  listTasks,
   type DashboardData,
   type DeadlineSummary,
   type HistoryEvent,
+  type TaskRow,
+  type TaskSummary,
   type TeamSummary,
 } from "@cantiereos/core";
 import {
   Building2,
   CalendarClock,
   HardHat,
+  ListTodo,
   MailPlus,
   Truck,
   Users,
@@ -27,6 +32,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/states";
 import { asCurrentUser, getAppContext } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
+import { TaskMiniList } from "./attivita/task-mini-list";
 import { PrioritySection, RecentChanges } from "./priority";
 
 export const metadata: Metadata = { title: "Panoramica" };
@@ -48,7 +54,7 @@ export default async function DashboardPage({
     return sp[key!] === value;
   })?.[1];
   const { company, access } = await getAppContext();
-  const { data, deadlines, docs, activity } = await asCurrentUser(async (tx) => {
+  const { data, deadlines, docs, activity, tasks } = await asCurrentUser(async (tx) => {
     const d = await getDashboard(tx, access);
     return {
       data: d,
@@ -60,6 +66,14 @@ export default async function DashboardPage({
       activity:
         d.kind === "admin" && access.permissions.has("audit.read")
           ? (await listActivity(tx, access, { limit: 8 })).events
+          : null,
+      tasks:
+        d.kind !== "portal" && access.permissions.has("tasks.read")
+          ? {
+              summary: await getTaskSummary(tx, access),
+              mine: (await listTasks(tx, access, { assignee: "me", state: "open", pageSize: 5 }))
+                .rows,
+            }
           : null,
     };
   });
@@ -87,7 +101,13 @@ export default async function DashboardPage({
           Azienda dimostrativa: tutti i dati che vedi vengono dal seed di sviluppo e non sono reali.
         </p>
       )}
-      <DashboardBody data={data} deadlines={deadlines} docs={docs} activity={activity} />
+      <DashboardBody
+        data={data}
+        deadlines={deadlines}
+        docs={docs}
+        activity={activity}
+        tasks={tasks ? <MyTasks {...tasks} /> : null}
+      />
     </div>
   );
 }
@@ -97,11 +117,13 @@ function DashboardBody({
   deadlines,
   docs,
   activity,
+  tasks,
 }: {
   data: DashboardData;
   deadlines: DeadlineSummary | null;
   docs: { expired: number; expiring: number } | null;
   activity: HistoryEvent[] | null;
+  tasks: React.ReactNode;
 }) {
   const priority = deadlines ? <PrioritySection s={deadlines} docs={docs} /> : null;
   switch (data.kind) {
@@ -109,6 +131,7 @@ function DashboardBody({
       return (
         <>
           {priority}
+          {tasks}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {data.activeMembers !== null && (
               <KpiCard
@@ -174,6 +197,7 @@ function DashboardBody({
       return (
         <>
           {priority}
+          {tasks}
           <div className="grid gap-4 sm:grid-cols-3">
             {data.employees !== null && (
               <KpiCard
@@ -207,6 +231,7 @@ function DashboardBody({
     case "technician":
       return (
         <>
+          {tasks}
           <Card>
             <CardHeader title="La tua scheda" />
             <CardBody>
@@ -292,6 +317,53 @@ function Teams({ teams, title }: { teams: TeamSummary[]; title: string }) {
           ))}
         </ul>
       )}
+    </Card>
+  );
+}
+
+/** Le attività assegnate all'utente, con i numeri che portano alla lista filtrata. */
+function MyTasks({ summary, mine }: { summary: TaskSummary; mine: TaskRow[] }) {
+  const stats = [
+    { label: "Assegnate a te", value: summary.mine, href: "/app/attivita?assignee=me" },
+    {
+      label: "In ritardo",
+      value: summary.overdue,
+      href: "/app/attivita?state=overdue",
+      danger: true,
+    },
+    { label: "Aperte in azienda", value: summary.open, href: "/app/attivita" },
+  ];
+  return (
+    <Card data-testid="my-tasks">
+      <CardHeader
+        title="Le tue attività"
+        actions={
+          <Link href="/app/calendario?mie=1" className="text-sm text-primary hover:underline">
+            Apri il calendario
+          </Link>
+        }
+      />
+      <div className="grid grid-cols-3 divide-x divide-border border-b border-border">
+        {stats.map((s) => (
+          <Link key={s.label} href={s.href} className="px-4 py-3 hover:bg-accent/40">
+            <p
+              className={`text-xl font-semibold tabular-nums ${s.danger && s.value > 0 ? "text-danger" : ""}`}
+            >
+              {s.value}
+            </p>
+            <p className="text-xs text-muted-foreground">{s.label}</p>
+          </Link>
+        ))}
+      </div>
+      <CardBody>
+        {mine.length === 0 ? (
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <ListTodo className="size-4" aria-hidden /> Nessuna attività aperta assegnata a te.
+          </p>
+        ) : (
+          <TaskMiniList rows={mine} emptyText="" />
+        )}
+      </CardBody>
     </Card>
   );
 }

@@ -9,6 +9,7 @@ import { Download, Eye, FileText, Lock, ScanText } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CommentsPanel } from "@/components/comments/comments-panel";
 import { Timeline } from "@/components/history/timeline";
 import { Notice } from "@/components/ui";
 import { Badge } from "@/components/ui/badge";
@@ -309,6 +310,7 @@ export default async function DocumentPage({
                 </p>
               </CardBody>
             </Card>
+            <CommentsPanel table="documents" id={d.id} />
           </div>
         </div>
       )}

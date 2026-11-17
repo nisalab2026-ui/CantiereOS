@@ -14,6 +14,8 @@ export * from "./validation";
 export * from "./history/labels";
 export * from "./history/history";
 export * from "./operations/deadlines";
+export * from "./operations/tasks";
+export * from "./operations/comments";
 export * from "./directory/records";
 export * from "./exports/csv";
 export * from "./exports/exports";

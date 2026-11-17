@@ -174,6 +174,21 @@ Le email di autenticazione le invia Supabase Auth con il proprio SMTP.
   mai sovrascritta in silenzio.
 - Chi ha completato una scadenza e quando lo stabilisce un trigger, non il browser.
 
+### Attività e commenti (ADR-011)
+
+- Le attività si creano e modificano solo con `tasks.write`. L'assegnatario senza quel permesso può
+  cambiare **solo** lo stato e le note di completamento: lo impone un trigger nel database
+  (`app.task_update_guard`), non la visibilità dei pulsanti. Chi l'ha completata e quando lo
+  stabilisce il database.
+- La notifica all'assegnatario la crea un trigger (mai a chi assegna a sé stesso), senza duplicati.
+- I commenti si leggono e scrivono solo se si può vedere l'elemento commentato
+  (`app.comment_subject_visible`, valutata con RLS dell'utente): un commento non apre l'accesso a un
+  cliente o a un documento riservato. L'elemento commentato non si può cambiare dopo.
+- Solo l'autore modifica il testo; l'eliminazione è logica (autore, oppure `comments.delete` con
+  MFA per moderare) e resta nel registro attività con il testo precedente.
+- Il calendario legge scadenze e attività ciascuna con il proprio permesso, per un massimo di 62
+  giorni per richiesta.
+
 ## 6. File (archivio documentale)
 
 - Bucket privato (Supabase Storage), nessun URL pubblico permanente. La chiave del file è una
