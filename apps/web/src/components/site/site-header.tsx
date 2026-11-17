@@ -4,7 +4,7 @@ import { ArrowRight, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Logo } from "@/components/brand/logo";
+import { BrandLogo } from "@/components/brand-logo";
 import { cn } from "@/lib/cn";
 
 type NavItem = { href: string; label: string };
@@ -50,7 +50,7 @@ export function SiteHeader({ nav, signedIn }: { nav: readonly NavItem[]; signedI
     >
       <div className="site-header-bar mx-auto flex h-14 max-w-6xl items-center gap-2 rounded-2xl pr-2 pl-3 sm:pl-4">
         <Link href="/" aria-label="CantiereOS, pagina iniziale" className="text-[1.05rem]">
-          <Logo animated />
+          <BrandLogo />
         </Link>
 
         <nav aria-label="Principale" className="ml-6 hidden md:block">

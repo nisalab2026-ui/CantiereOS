@@ -202,7 +202,10 @@ export const PRINCIPLES = [
 
 /** In sviluppo: mai presentato come disponibile. Ordine da docs/ROADMAP.md. */
 export const COMING_SOON = [
-  { title: "Cantieri", text: "Scheda del cantiere con squadre, documenti, avanzamento e diario." },
+  {
+    title: "Diario di cantiere",
+    text: "Avanzamento, foto e note di ogni giornata sulla scheda del cantiere.",
+  },
   {
     title: "Rapportini giornalieri",
     text: "Ore, materiali e foto inviati dal cantiere in un minuto.",

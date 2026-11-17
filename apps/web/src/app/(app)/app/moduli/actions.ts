@@ -146,6 +146,7 @@ export async function createSubmissionAction(_: FormState, form: FormData): Prom
         ...(formText(form, "title") ? { title: formText(form, "title")! } : {}),
         ...(formText(form, "customerId") ? { customerId: formText(form, "customerId")! } : {}),
         ...(formText(form, "siteId") ? { siteId: formText(form, "siteId")! } : {}),
+        ...(formText(form, "projectId") ? { projectId: formText(form, "projectId")! } : {}),
       }),
     );
     refresh();
@@ -158,7 +159,7 @@ export async function createSubmissionAction(_: FormState, form: FormData): Prom
 export async function saveSubmissionAction(
   id: string,
   version: string,
-  input: { title: string; customerId: string; siteId: string; data: unknown },
+  input: { title: string; customerId: string; siteId: string; projectId?: string; data: unknown },
   complete: boolean,
 ): Promise<FormState> {
   try {
@@ -171,6 +172,7 @@ export async function saveSubmissionAction(
           title: input.title,
           ...(input.customerId ? { customerId: input.customerId } : {}),
           ...(input.siteId ? { siteId: input.siteId } : {}),
+          ...(input.projectId ? { projectId: input.projectId } : {}),
           data: input.data,
         },
         version,

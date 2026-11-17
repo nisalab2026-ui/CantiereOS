@@ -205,6 +205,33 @@ chi li gestisce non può concedere permessi che non possiede.
 Tutte le funzioni `SECURITY DEFINER` hanno `search_path = ''`; nessuna è eseguibile da `PUBLIC` o
 `anon` (verificato dai test).
 
+### Commesse e cantieri (migrazione `20261117200000_projects`)
+
+**ADR-014 — La commessa al centro.** Decisione presa prima dell'implementazione (piano del
+17/11/2026, proposte in attesa di conferma del titolare, tutte modificabili con migrazioni in avanti).
+
+- **Commessa (`projects`).** Il lavoro concordato con un cliente: codice (automatico `AAAA-NNN` se
+  non indicato, unico per azienda), nome, cliente, tipo (a corpo, a misura, in economia,
+  manutenzione, altro), stato (in offerta, in corso, sospesa, conclusa, annullata), date,
+  responsabile (dal personale), descrizione. La data di chiusura la scrive il database.
+- **Cantieri (`project_sites`).** Una commessa ha uno o più cantieri: collegati a una sede del
+  cliente della commessa (lo verifica il database) oppure con indirizzo proprio. Un cantiere non
+  cambia commessa; il cliente della commessa non cambia finché ha cantieri sulle sue sedi.
+- **Importi (`project_financials`).** Importo concordato e budget di costo in centesimi, in una
+  tabella separata perché RLS non nasconde singole colonne: li legge e scrive solo chi ha
+  `projects.finance` (titolare, amministratore, amministrazione). Costi effettivi e margine
+  arriveranno con i rapportini (ADR successivo) e useranno lo stesso permesso.
+- **Collegamenti.** Attività, documenti e moduli compilati hanno una colonna `project_id`
+  facoltativa (FK composta, nessun dato esistente modificato). Un modulo chiuso non cambia
+  commessa e la commessa deve essere dello stesso cliente del modulo.
+- **Permessi.** `projects.read` a tutti i ruoli interni; `projects.write` a titolare,
+  amministratore, responsabile operativo e amministrazione; `projects.finance` come sopra;
+  `projects.delete` (MFA) a titolare e amministratore. Eliminazione solo logica.
+- **Cronologia.** La scheda della commessa mostra anche cantieri, importi (con permesso),
+  attività, documenti e moduli collegati.
+- **Non ancora.** Commenti sulla commessa, assegnazione delle squadre ai cantieri, costi effettivi
+  (con i rapportini), SAL e fatturazione.
+
 ### Moduli compilabili (migrazione `20261117180000_forms`)
 
 **ADR-013 — Moduli compilabili al posto del cartaceo.** Decisione presa prima

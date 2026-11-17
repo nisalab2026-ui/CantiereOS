@@ -2,118 +2,118 @@
 
 /*
  * Token del design system (docs/DESIGN_SYSTEM.md §2).
- * Tema su <html>: "dark" (predefinito, "Cantiere digitale"), "light" o "system"
+ * Tema su <html>: "light" (predefinito, bianco e verde), "dark" ("Cantiere digitale") o "system"
  * (segue il sistema operativo). I componenti usano SOLO questi token.
  */
 :root {
-  /* "Cantiere digitale" (predefinito): navy profondo, vetro, luce blu del marchio */
-  --background: #050b1a;
-  --card: rgb(16 28 62 / 0.44);
-  --popover: #0c1530;
-  --foreground: #eaf0ff;
-  --muted-foreground: #8e9cc0;
-  --border: rgb(110 150 255 / 0.16);
-  --input: rgb(110 150 255 / 0.26);
-  --primary: #4c97ff;
-  --primary-foreground: #04101f;
-  --cyan: #22c3ff;
-  --navy: rgb(7 14 34 / 0.55);
-  --navy-foreground: #eaf0ff;
-  --navy-muted: #8e9cc0;
-  --navy-accent: rgb(76 151 255 / 0.14);
-  --accent: rgb(110 150 255 / 0.1);
+  /* "Cantiere digitale" (scuro, a scelta): verde profondo, vetro, luce verde del marchio */
+  --background: #04140c;
+  --card: rgb(14 40 28 / 0.44);
+  --popover: #0a2016;
+  --foreground: #ecfdf3;
+  --muted-foreground: #94b8a4;
+  --border: rgb(74 180 120 / 0.16);
+  --input: rgb(74 180 120 / 0.26);
+  --primary: #22c55e;
+  --primary-foreground: #04140c;
+  --cyan: #10b981;
+  --navy: rgb(5 22 14 / 0.55);
+  --navy-foreground: #ecfdf3;
+  --navy-muted: #94b8a4;
+  --navy-accent: rgb(34 197 94 / 0.14);
+  --accent: rgb(74 180 120 / 0.1);
   --success: #3ddc97;
   --warning: #ffc04d;
   --danger: #ff7a6e;
   --info: #7fb0ff;
-  --ring: #4c97ff;
+  --ring: #22c55e;
   --glass-blur: 28px;
-  --primary-gradient: linear-gradient(135deg, #4c97ff 0%, #22c3ff 100%);
-  --primary-glow: 0 0 0 1px rgb(76 151 255 / 0.45), 0 8px 24px -8px rgb(34 195 255 / 0.55);
+  --primary-gradient: linear-gradient(135deg, #22c55e 0%, #10b981 100%);
+  --primary-glow: 0 0 0 1px rgb(34 197 94 / 0.45), 0 8px 24px -8px rgb(16 185 129 / 0.55);
   --card-glow:
     inset 0 1px 0 rgb(255 255 255 / 0.18), inset 0 0 0 1px rgb(255 255 255 / 0.04),
     0 24px 48px -28px rgb(0 0 0 / 0.85);
   /* "Liquid": riflesso in alto sulle superfici di vetro e macchie di colore che scorrono dietro */
   --liquid-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.12), rgb(255 255 255 / 0) 46%);
-  --aurora-1: rgb(52 104 255 / 0.6);
-  --aurora-2: rgb(34 195 255 / 0.4);
-  --aurora-3: rgb(140 92 255 / 0.4);
+  --aurora-1: rgb(22 163 74 / 0.6);
+  --aurora-2: rgb(16 185 129 / 0.4);
+  --aurora-3: rgb(132 204 22 / 0.4);
   --canvas:
-    radial-gradient(1200px 600px at 85% -10%, rgb(36 86 230 / 0.22), transparent 60%),
-    linear-gradient(rgb(110 150 255 / 0.03) 1px, transparent 1px) 0 0 / 40px 40px,
-    linear-gradient(90deg, rgb(110 150 255 / 0.03) 1px, transparent 1px) 0 0 / 40px 40px, #050b1a;
+    radial-gradient(1200px 600px at 85% -10%, rgb(21 128 61 / 0.22), transparent 60%),
+    linear-gradient(rgb(74 180 120 / 0.03) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, rgb(74 180 120 / 0.03) 1px, transparent 1px) 0 0 / 40px 40px, #04140c;
   color-scheme: dark;
 }
 
 /* Tema chiaro: scelta esplicita, oppure "Sistema" con il sistema operativo in chiaro */
 .light {
-  --background: #f6f7f9;
+  --background: #ffffff;
   --card: rgb(255 255 255 / 0.56);
-  --foreground: #0b1530;
+  --foreground: #0f2a1d;
   --muted-foreground: #5a6478;
-  --border: #e3e7ee;
-  --input: #d5dbe5;
-  --primary: #2456e6;
+  --border: #dfe9e3;
+  --input: #cddcd3;
+  --primary: #15803d;
   --primary-foreground: #ffffff;
-  --navy: #0b1530;
-  --navy-foreground: #e7eaf0;
-  --navy-muted: #9aa6c2;
-  --navy-accent: #18244a;
-  --accent: #eef2fb;
+  --navy: #0f2a1d;
+  --navy-foreground: #e8f3ec;
+  --navy-muted: #a3c2b0;
+  --navy-accent: #1a3d2b;
+  --accent: #ecf7ef;
   --success: #0f7a4a;
   --warning: #b45309;
   --danger: #b42318;
   --info: #1d4ed8;
-  --ring: #2456e6;
+  --ring: #15803d;
   --popover: #ffffff;
-  --cyan: #0891b2;
+  --cyan: #0d9488;
   --glass-blur: 26px;
-  --primary-gradient: linear-gradient(135deg, #2f64f0 0%, #1c8fd6 100%);
-  --primary-glow: 0 6px 18px -8px rgb(36 86 230 / 0.55);
+  --primary-gradient: linear-gradient(135deg, #16a34a 0%, #059669 100%);
+  --primary-glow: 0 6px 18px -8px rgb(21 128 61 / 0.55);
   --card-glow:
-    inset 0 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(11 21 48 / 0.04),
-    0 18px 40px -28px rgb(11 21 48 / 0.35);
+    inset 0 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(10 40 25 / 0.04),
+    0 18px 40px -28px rgb(10 40 25 / 0.35);
   --liquid-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.75), rgb(255 255 255 / 0) 50%);
-  --aurora-1: rgb(76 130 255 / 0.45);
-  --aurora-2: rgb(34 195 255 / 0.36);
-  --aurora-3: rgb(170 120 255 / 0.34);
-  --canvas: #f3f5fa;
+  --aurora-1: rgb(34 170 90 / 0.45);
+  --aurora-2: rgb(16 185 129 / 0.36);
+  --aurora-3: rgb(163 230 53 / 0.34);
+  --canvas: #f4faf6;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: light) {
   .system {
-    --background: #f6f7f9;
+    --background: #ffffff;
     --card: rgb(255 255 255 / 0.56);
-    --foreground: #0b1530;
+    --foreground: #0f2a1d;
     --muted-foreground: #5a6478;
-    --border: #e3e7ee;
-    --input: #d5dbe5;
-    --primary: #2456e6;
+    --border: #dfe9e3;
+    --input: #cddcd3;
+    --primary: #15803d;
     --primary-foreground: #ffffff;
-    --navy: #0b1530;
-    --navy-foreground: #e7eaf0;
-    --navy-muted: #9aa6c2;
-    --navy-accent: #18244a;
-    --accent: #eef2fb;
+    --navy: #0f2a1d;
+    --navy-foreground: #e8f3ec;
+    --navy-muted: #a3c2b0;
+    --navy-accent: #1a3d2b;
+    --accent: #ecf7ef;
     --success: #0f7a4a;
     --warning: #b45309;
     --danger: #b42318;
     --info: #1d4ed8;
-    --ring: #2456e6;
+    --ring: #15803d;
     --popover: #ffffff;
-    --cyan: #0891b2;
+    --cyan: #0d9488;
     --glass-blur: 26px;
-    --primary-gradient: linear-gradient(135deg, #2f64f0 0%, #1c8fd6 100%);
-    --primary-glow: 0 6px 18px -8px rgb(36 86 230 / 0.55);
+    --primary-gradient: linear-gradient(135deg, #16a34a 0%, #059669 100%);
+    --primary-glow: 0 6px 18px -8px rgb(21 128 61 / 0.55);
     --card-glow:
-      inset 0 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(11 21 48 / 0.04),
-      0 18px 40px -28px rgb(11 21 48 / 0.35);
+      inset 0 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(10 40 25 / 0.04),
+      0 18px 40px -28px rgb(10 40 25 / 0.35);
     --liquid-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.75), rgb(255 255 255 / 0) 50%);
-    --aurora-1: rgb(76 130 255 / 0.45);
-    --aurora-2: rgb(34 195 255 / 0.36);
-    --aurora-3: rgb(170 120 255 / 0.34);
-    --canvas: #f3f5fa;
+    --aurora-1: rgb(34 170 90 / 0.45);
+    --aurora-2: rgb(16 185 129 / 0.36);
+    --aurora-3: rgb(163 230 53 / 0.34);
+    --canvas: #f4faf6;
     color-scheme: light;
   }
 }
@@ -389,8 +389,8 @@ body::before {
 }
 .cos-tilt:hover {
   box-shadow:
-    0 1px 2px rgb(11 21 48 / 0.06),
-    0 12px 28px -12px rgb(36 86 230 / 0.35);
+    0 1px 2px rgb(10 40 25 / 0.06),
+    0 12px 28px -12px rgb(21 128 61 / 0.35);
 }
 .cos-tilt .cos-depth {
   transform: translateZ(24px);
@@ -411,8 +411,8 @@ body::before {
 /* Pannello del marchio: piano di cantiere in prospettiva */
 .cos-floor {
   background-image:
-    linear-gradient(rgb(91 134 255 / 0.22) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(91 134 255 / 0.22) 1px, transparent 1px);
+    linear-gradient(rgb(34 160 90 / 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(34 160 90 / 0.22) 1px, transparent 1px);
   background-size: 48px 48px;
   transform: perspective(520px) rotateX(62deg);
   transform-origin: 50% 0%;
@@ -443,79 +443,102 @@ body::before {
   }
 }
 
-/* --- Marchio (components/brand/logo.tsx) --------------------------------------------------------
- * Con .cos-logo-animated: la "C" si traccia, gli edifici salgono uno dopo l'altro, un riflesso passa
- * ogni tanto sulla tessera; al passaggio del puntatore gli edifici rimbalzano. */
-.cos-logo {
-  overflow: visible;
+/* --- Marchio animato (components/brand-logo.tsx) ---------------------------------------------- */
+.brand-mark .brand-mark-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: brand-draw 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-.cos-logo-bar {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
+.brand-mark .brand-mark-draw:nth-child(2) {
+  animation-delay: 0.15s;
 }
-.cos-logo-sweep {
+.brand-mark .brand-mark-draw:nth-child(3) {
+  animation-delay: 0.35s;
+}
+.brand-mark .brand-mark-draw:nth-child(4) {
+  animation-delay: 0.5s;
+}
+.brand-mark .brand-mark-load {
+  transform-origin: 24.5px 9.5px;
+  transform-box: view-box;
   opacity: 0;
+  animation:
+    brand-drop 0.6s 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards,
+    brand-swing 3.2s 1.3s ease-in-out infinite;
 }
-.cos-logo-animated .cos-logo-arc {
-  stroke-dasharray: 100;
-  animation: cos-logo-draw 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+.brand-mark .brand-mark-sheen {
+  animation: brand-sheen 6s ease-in-out infinite;
 }
-.cos-logo-animated .cos-logo-bar {
-  animation: cos-logo-rise 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  animation-delay: calc(0.45s + var(--i, 0) * 0.13s);
+.brand-logo:hover .brand-mark,
+a:hover > .brand-mark {
+  transform: rotate(-4deg) scale(1.06);
 }
-.cos-logo-animated .cos-logo-sweep {
-  animation: cos-logo-sweep 6s ease-in-out 1.6s infinite;
+.brand-mark {
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 6px 14px rgb(21 128 61 / 0.35));
 }
-:is(a, button):hover .cos-logo-animated .cos-logo-bar {
-  animation: cos-logo-bounce 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  animation-delay: calc(var(--i, 0) * 0.07s);
+.brand-logo-os {
+  background: linear-gradient(100deg, #16a34a, #10b981, #84cc16, #16a34a);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: brand-os 8s linear infinite;
 }
-@keyframes cos-logo-draw {
-  from {
-    stroke-dashoffset: 100;
-  }
+@keyframes brand-draw {
   to {
     stroke-dashoffset: 0;
   }
 }
-@keyframes cos-logo-rise {
+@keyframes brand-drop {
   from {
-    transform: scaleY(0);
+    opacity: 0;
+    transform: translateY(-6px);
   }
   to {
-    transform: scaleY(1);
+    opacity: 1;
+    transform: none;
   }
 }
-@keyframes cos-logo-bounce {
+@keyframes brand-swing {
   0%,
   100% {
-    transform: scaleY(1);
+    transform: rotate(0deg);
   }
-  40% {
-    transform: scaleY(0.55);
+  25% {
+    transform: rotate(6deg);
   }
   75% {
-    transform: scaleY(1.12);
+    transform: rotate(-6deg);
   }
 }
-@keyframes cos-logo-sweep {
+@keyframes brand-sheen {
   0%,
-  70% {
-    opacity: 0;
-    transform: translateX(0);
-  }
-  72% {
+  100% {
     opacity: 1;
   }
-  90%,
-  100% {
-    opacity: 0;
-    transform: translateX(64px);
+  50% {
+    opacity: 0.55;
+  }
+}
+@keyframes brand-os {
+  to {
+    background-position: 300% 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cos-logo-animated .cos-logo-sweep {
-    animation: none !important;
+  .brand-mark .brand-mark-draw,
+  .brand-mark .brand-mark-load,
+  .brand-mark .brand-mark-sheen,
+  .brand-logo-os {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
   }
+}
+.brand-mark-still .brand-mark-draw,
+.brand-mark-still .brand-mark-load {
+  animation: none;
+  stroke-dashoffset: 0;
+  opacity: 1;
 }

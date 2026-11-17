@@ -23,12 +23,12 @@ davvero.
 
 ## Palette, marchio e contatti
 
-- **Palette bianca e verde** (richiesta del committente, 17/11/2026), sempre chiara: i token di
-  `globals.css` sono sostituiti solo sul sito con `html:has(.site)` in `site.css`, più le luci
-  `--site-glow-1/2/3` e l'ombra `--site-shadow`. Il gestionale ha il suo tema.
-- **Marchio** in SVG: `components/brand/logo.tsx` (`LogoMark`, `Logo`). Con `animated` la "C" si traccia,
-  gli edifici salgono e un riflesso passa sulla tessera; al passaggio del puntatore gli edifici
-  rimbalzano. Animazioni in `globals.css` (`.cos-logo`), così il gestionale può usarlo.
+- **Palette bianca e verde** (richiesta del committente, 17/11/2026), la stessa del tema chiaro del
+  gestionale ma sempre chiara sul sito (`html:has(.site)` in `site.css`), più le luci
+  `--site-glow-1/2/3` e l'ombra `--site-shadow`.
+- **Marchio**: lo stesso del gestionale, la gru su tessera verde in SVG (`components/brand-logo.tsx`,
+  `BrandMark` e `BrandLogo`): le linee si tracciano, il carico oscilla sul gancio, "OS" ha un gradiente
+  che scorre. Animazioni in `globals.css` (`.brand-mark`).
 - **WhatsApp**: pulsante fisso animato su tutte le pagine (`components/site/whatsapp.tsx`), numero e
   messaggio in `CONTACT` di `content.ts`. Il simbolo di WhatsApp è l'unico marchio di terzi ammesso,
   solo per indicare il canale di contatto (citato nelle note legali).

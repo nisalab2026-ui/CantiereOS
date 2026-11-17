@@ -1,7 +1,7 @@
 import { ArrowRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/cn";
-import { Logo } from "@/components/brand/logo";
+import { BrandLogo } from "@/components/brand-logo";
 import { CONTACT, SITE_CREDIT } from "@/app/(marketing)/content";
 import { LEGAL_LINKS } from "@/app/(marketing)/legal-content";
 import { SplitWords } from "./split-words";
@@ -202,7 +202,7 @@ export function SiteFooter({ contactEmail }: { contactEmail: string | null }) {
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
         <div>
           <Link href="/" aria-label="CantiereOS, pagina iniziale" className="inline-flex">
-            <Logo animated />
+            <BrandLogo />
           </Link>
           <p className="mt-4 max-w-xs text-sm text-muted-foreground">
             Il gestionale per imprese edili e di servizi tecnici. Scadenze, moduli, documenti e

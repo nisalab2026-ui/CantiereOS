@@ -81,6 +81,15 @@ const REF_TARGETS: Record<string, { sql: string }> = {
   leader_employee_id: {
     sql: "select id, concat_ws(' ', first_name, last_name) as name from public.employees where tenant_id = $1 and id = any($2)",
   },
+  manager_employee_id: {
+    sql: "select id, concat_ws(' ', first_name, last_name) as name from public.employees where tenant_id = $1 and id = any($2)",
+  },
+  customer_site_id: {
+    sql: "select id, name from public.customer_sites where tenant_id = $1 and id = any($2)",
+  },
+  project_id: {
+    sql: "select id, concat_ws(' ', code, name) as name from public.projects where tenant_id = $1 and id = any($2)",
+  },
   team_id: { sql: "select id, name from public.teams where tenant_id = $1 and id = any($2)" },
   assignee_user_id: {
     sql: "select id, coalesce(full_name, email) as name from public.users where $1::uuid is not null and id = any($2)",
@@ -113,9 +122,12 @@ const HREF_TABLES = new Set([
   "communications",
   "form_submissions",
   "form_templates",
+  "projects",
 ]);
 /** Tabelle il cui link punta al documento padre (document_id) invece che al record. */
 const DOC_CHILD_TABLES = new Set(["document_versions", "document_downloads"]);
+/** Cantieri e importi puntano alla commessa (project_id). */
+const PROJECT_CHILD_TABLES = new Set(["project_sites", "project_financials"]);
 
 /** La creazione di una versione "in attesa" è un dettaglio tecnico: conta il caricamento verificato. */
 const isVisibleEvent = (r: AuditRow) =>
@@ -225,9 +237,11 @@ async function buildEvents(
           : recordTitle(table, r.new_data ?? r.old_data),
       href: DOC_CHILD_TABLES.has(table)
         ? `/app/documenti/${String((r.new_data ?? r.old_data)?.document_id ?? "")}`
-        : meta?.href && r.record_id && HREF_TABLES.has(table) && verb !== "deleted"
-          ? `${meta.href}/${r.record_id}`
-          : (meta?.href ?? null),
+        : PROJECT_CHILD_TABLES.has(table)
+          ? `/app/commesse/${String((r.new_data ?? r.old_data)?.project_id ?? "")}`
+          : meta?.href && r.record_id && HREF_TABLES.has(table) && verb !== "deleted"
+            ? `${meta.href}/${r.record_id}`
+            : (meta?.href ?? null),
       changes,
     };
   });
@@ -245,6 +259,7 @@ export const HISTORY_TABLES = [
   "communications",
   "form_submissions",
   "form_templates",
+  "projects",
 ] as const;
 export type HistoryTable = (typeof HISTORY_TABLES)[number];
 

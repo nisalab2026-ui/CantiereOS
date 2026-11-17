@@ -1,4 +1,4 @@
-import { LogoMark } from "@/components/brand/logo";
+import { BrandMark } from "@/components/brand-logo";
 
 /** Sigillo circolare con il marchio al centro: il testo gira con lo scorrimento della pagina. */
 export function Seal({ text, className }: { text: string; className?: string }) {
@@ -15,7 +15,7 @@ export function Seal({ text, className }: { text: string; className?: string }) 
             </textPath>
           </text>
         </svg>
-        <LogoMark animated className="size-11" />
+        <BrandMark className="size-11" />
       </div>
     </div>
   );

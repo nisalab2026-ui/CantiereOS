@@ -12,31 +12,31 @@
   --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
 }
 
-/* Palette del sito: bianco e verde, sempre chiara (richiesta del committente del 17/11/2026).
- * Sostituisce i token di globals.css solo dove c'è il sito pubblico. */
+/* Palette del sito: bianco e verde come il tema chiaro del gestionale (richiesta del committente del
+ * 17/11/2026), ma sempre chiara anche se il gestionale è in scuro, più luci e ombre proprie del sito. */
 html:has(.site) {
   scroll-behavior: smooth;
   --background: #ffffff;
   --card: rgb(255 255 255 / 0.62);
   --popover: #ffffff;
-  --foreground: #0b1f17;
+  --foreground: #0f2a1d;
   --muted-foreground: #4f6158;
   --border: #dfe9e3;
   --input: #cfdfd6;
-  --primary: #047857;
+  --primary: #15803d;
   --primary-foreground: #ffffff;
   --cyan: #0d9488;
-  --navy: #0b1f17;
-  --navy-foreground: #e8f3ee;
-  --navy-muted: #9bb5a8;
-  --navy-accent: #143528;
-  --accent: #ecf7f1;
-  --success: #047857;
+  --navy: #0f2a1d;
+  --navy-foreground: #e8f3ec;
+  --navy-muted: #a3c2b0;
+  --navy-accent: #1a3d2b;
+  --accent: #ecf7ef;
+  --success: #0f7a4a;
   --info: #0f766e;
-  --ring: #059669;
+  --ring: #15803d;
   --glass-blur: 26px;
-  --primary-gradient: linear-gradient(135deg, #059669 0%, #0f766e 100%);
-  --primary-glow: 0 8px 22px -8px rgb(4 120 87 / 0.55);
+  --primary-gradient: linear-gradient(135deg, #16a34a 0%, #059669 100%);
+  --primary-glow: 0 8px 22px -8px rgb(21 128 61 / 0.55);
   --card-glow:
     inset 0 1px 0 rgb(255 255 255 / 0.95), 0 1px 2px rgb(11 31 23 / 0.04),
     0 22px 44px -30px rgb(4 120 87 / 0.35);
@@ -51,7 +51,7 @@ html:has(.site) {
   --site-glow-1: rgb(16 185 129 / 0.26);
   --site-glow-2: rgb(45 212 191 / 0.22);
   --site-glow-3: rgb(132 204 22 / 0.16);
-  --site-shadow: rgb(4 120 87 / 0.42);
+  --site-shadow: rgb(21 128 61 / 0.42);
   color-scheme: light;
 }
 html[data-smooth] {
