@@ -56,23 +56,27 @@ export async function AppShell({
   const activeTenantId = access?.tenantId ?? null;
   return (
     <div className="flex min-h-dvh">
-      <Sidebar
-        companies={companies}
-        activeTenantId={activeTenantId}
-        permissions={permissions}
-        initialCollapsed={collapsed}
-      />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Header
+      <div className="contents print:hidden">
+        <Sidebar
           companies={companies}
           activeTenantId={activeTenantId}
           permissions={permissions}
-          email={session.email}
-          fullName={fullName}
-          theme={theme}
-          unread={unread}
+          initialCollapsed={collapsed}
         />
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 lg:px-8 lg:py-8">
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="contents print:hidden">
+          <Header
+            companies={companies}
+            activeTenantId={activeTenantId}
+            permissions={permissions}
+            email={session.email}
+            fullName={fullName}
+            theme={theme}
+            unread={unread}
+          />
+        </div>
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 lg:px-8 lg:py-8 print:max-w-none print:p-0">
           {children}
         </main>
       </div>

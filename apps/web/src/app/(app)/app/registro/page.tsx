@@ -26,6 +26,8 @@ const SECTIONS = [
   "comments",
   "payments",
   "communications",
+  "form_submissions",
+  "form_templates",
   "memberships",
   "invitations",
   "roles",

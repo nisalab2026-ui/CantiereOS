@@ -204,6 +204,22 @@ Le email di autenticazione le invia Supabase Auth con il proprio SMTP.
   del cliente o del fornitore collegato.
 - Il calendario mostra pagamenti e richiami solo a chi ha il relativo permesso di lettura.
 
+### Moduli compilabili (ADR-013)
+
+- Permessi distinti: `forms.read`, `forms.write` (compilare), `forms.manage` (modelli e riapertura,
+  con MFA), `forms.delete` (con MFA). Chi ha solo lettura non vede l'editor né i pulsanti.
+- Le versioni pubblicate di un modello sono **immutabili** (trigger `app.form_version_immutable`):
+  un modulo compilato resta legato alla definizione con cui è nato.
+- Un modulo chiuso non si modifica: il trigger `app.form_submission_guard` rifiuta ogni cambio di
+  dati, titolo, impianto, cliente o sede; solo chi ha `forms.manage` può riaprirlo. Data e autore
+  della chiusura li scrive il database, non il browser.
+- Il server rivalida i dati contro la definizione (tipi, opzioni ammesse, obbligatori alla
+  chiusura) e ricalcola i campi automatici; i valori automatici inviati dal browser sono ignorati.
+- Le firme sono immagini PNG in data URL con dimensione massima; nessun servizio di firma
+  qualificata è configurato: la firma sul display è una firma semplice.
+- La copia locale della bozza resta solo nel browser del dispositivo e si cancella al salvataggio.
+- L'importazione automatica da PDF o foto (OCR/AI) **non è configurata** e non viene simulata.
+
 ## 6. File (archivio documentale)
 
 - Bucket privato (Supabase Storage), nessun URL pubblico permanente. La chiave del file è una

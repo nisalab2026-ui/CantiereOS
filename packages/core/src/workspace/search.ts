@@ -10,7 +10,8 @@ export type SearchKind =
   | "document"
   | "task"
   | "payment"
-  | "communication";
+  | "communication"
+  | "form";
 
 export interface SearchResult {
   kind: SearchKind;
@@ -135,6 +136,21 @@ export async function globalSearch(
         where tenant_id = $1 and deleted_at is null
           and lower(concat_ws(' ', subject, contact_name)) like $2
         order by occurred_at desc limit $3`,
+      [t, pattern, limit],
+    );
+    results.push(...rows);
+  }
+  if (hasPermission(access, "forms.read")) {
+    const { rows } = await tx.query<SearchResult>(
+      `select 'form' as kind, x.id, x.title,
+              concat_ws(' · ', t.name, x.subject_code, c.display_name,
+                        case x.status when 'completed' then 'Chiuso' else 'In compilazione' end) as subtitle
+         from public.form_submissions x
+         join public.form_templates t on t.tenant_id = x.tenant_id and t.id = x.template_id
+         left join public.customers c on c.tenant_id = x.tenant_id and c.id = x.customer_id
+        where x.tenant_id = $1 and x.deleted_at is null
+          and lower(concat_ws(' ', x.title, x.subject_code, c.display_name)) like $2
+        order by x.updated_at desc limit $3`,
       [t, pattern, limit],
     );
     results.push(...rows);

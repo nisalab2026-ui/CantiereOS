@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Casi d'uso di dominio condivisi da web e worker: sessione verificata, autorizzazione, accesso dati con RLS",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./forms": "./src/operations/form-definition.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

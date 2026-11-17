@@ -205,6 +205,47 @@ chi li gestisce non può concedere permessi che non possiede.
 Tutte le funzioni `SECURITY DEFINER` hanno `search_path = ''`; nessuna è eseguibile da `PUBLIC` o
 `anon` (verificato dai test).
 
+### Moduli compilabili (migrazione `20261117180000_forms`)
+
+**ADR-013 — Moduli compilabili al posto del cartaceo.** Decisione presa prima
+dell'implementazione, su richiesta del titolare (17/11/2026), partendo dal modulo cartaceo
+"Ispezione linea vita — UNI 11560:2022 Appendice C".
+
+- **Problema.** Verbali, checklist e ispezioni oggi sono fogli stampati, compilati a mano e poi
+  ricopiati. Ogni azienda ha i propri moduli: servono modelli definiti dall'azienda, non moduli
+  scritti nel codice.
+- **Modello = definizione JSON versionata.** `form_templates` contiene nome, categoria e la
+  **bozza** della definizione (`draft_definition`), modificabile nell'editor. "Pubblica" copia la
+  bozza in `form_template_versions` (versione 1, 2, …), che il database rende **immutabile**
+  (trigger). Ogni compilazione punta alla versione con cui è nata: modificare un modello non
+  altera mai i moduli già compilati, che restano leggibili e stampabili com'erano.
+- **Definizione.** Sezioni con campi tipizzati: testo, testo lungo, numero (con unità), data,
+  Sì/No (con nota facoltativa), scelta singola o multipla, **tabella di controlli** (righe ×
+  esiti, es. Positivo/Negativo, con nota per riga), firma, e **campi automatici** (cliente,
+  indirizzo, sede, azienda, compilatore, data, data dell'ultima compilazione dello stesso
+  impianto). La struttura è validata dal server (zod) prima di salvare; limiti di dimensione
+  anche nel database.
+- **Compilazioni.** `form_submissions`: modello, versione, titolo, cliente e sede (la sede deve
+  appartenere al cliente, lo verifica il database), identificativo dell'impianto/oggetto
+  ispezionato (`subject_code`, per ritrovare l'ultima ispezione), valori (`data` jsonb, validati
+  dal server rispetto alla versione), stato `draft` o `completed`. I campi automatici li calcola
+  il server a ogni salvataggio della bozza e si congelano alla chiusura.
+- **Modulo chiuso = bloccato.** Chi chiude e quando lo scrive il database. Un modulo chiuso non si
+  può più modificare (trigger, non solo interfaccia); riaprirlo richiede `forms.manage` e resta
+  nel registro attività con i valori prima e dopo.
+- **Permessi.** `forms.read`, `forms.write` (compilare), `forms.manage` (modelli e riapertura,
+  MFA), `forms.delete` (MFA, eliminazione logica). Titolare e amministratore tutto; responsabile
+  operativo e ufficio leggono, compilano e gestiscono i modelli; capocantiere e tecnico leggono e
+  compilano (i moduli si compilano sul campo); il lettore legge; il cliente esterno no.
+- **Modelli pronti.** Una piccola libreria nel codice (non dati nel database) offre modelli di
+  partenza, il primo è l'ispezione della linea vita. "Usa questo modello" ne crea una copia
+  modificabile nell'azienda.
+- **Stampa e PDF.** Pagina di stampa dedicata (A4) da salvare in PDF dal browser. La generazione
+  del PDF lato server e l'archiviazione automatica nell'archivio documenti arrivano dopo.
+- **Cosa non fa (ancora).** Convertire da solo un PDF o una foto in modulo richiederebbe un
+  servizio OCR/IA, oggi **non configurato**: non viene simulato. Il PDF originale si può caricare
+  nell'archivio documenti come riferimento.
+
 ### Pagamenti attesi e comunicazioni (migrazione `20261117170000_payments_communications`)
 
 **ADR-012 — Scadenziario dei pagamenti e registro delle comunicazioni.** Decisione presa prima

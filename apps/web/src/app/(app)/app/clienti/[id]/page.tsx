@@ -9,6 +9,9 @@ import {
   listDocuments,
   listFolders,
   listSubjectOptions,
+  listFormSubmissions,
+  listFormTemplates,
+  listFormCustomerOptions,
 } from "@cantiereos/core";
 import { Mail, MapPin, Phone } from "lucide-react";
 import type { Metadata } from "next";
@@ -30,6 +33,8 @@ import { CommunicationDialog } from "../../comunicazioni/communication-form";
 import { CommunicationMiniList } from "../../comunicazioni/communication-mini-list";
 import { PaymentDialog } from "../../pagamenti/payment-form";
 import { PaymentMiniList } from "../../pagamenti/payment-mini-list";
+import { FormMiniList } from "../../moduli/form-mini-list";
+import { NewSubmissionDialog } from "../../moduli/new-submission";
 import { formatDateTime, romeLocalDateTime } from "@/lib/format";
 import { sectionGate } from "@/lib/permissions";
 import { fileStorage } from "@/lib/storage";
@@ -72,6 +77,8 @@ export default async function CustomerPage({
   const canWritePayments = access.permissions.has("payments.write");
   const canComms = access.permissions.has("communications.read");
   const canWriteComms = access.permissions.has("communications.write");
+  const canForms = access.permissions.has("forms.read");
+  const canWriteForms = access.permissions.has("forms.write");
 
   const data = await asCurrentUser(async (tx) => {
     const c = await getCustomer(tx, access, id);
@@ -115,6 +122,22 @@ export default async function CustomerPage({
         canComms && tab === "panoramica"
           ? await listCommunications(tx, access, { customerId: id, pageSize: 5 })
           : null,
+      forms:
+        canForms && tab === "panoramica"
+          ? await listFormSubmissions(tx, access, { customerId: id, pageSize: 5 })
+          : null,
+      formOptions:
+        canWriteForms && tab === "panoramica"
+          ? {
+              templates: (await listFormTemplates(tx, access, { onlyPublished: true })).map(
+                (t) => ({
+                  id: t.id,
+                  name: t.name,
+                }),
+              ),
+              customers: await listFormCustomerOptions(tx, access),
+            }
+          : null,
       options:
         canWriteDeadlines || canWriteTasks || canWritePayments || canWriteComms
           ? await loadDeadlineOptions(tx, access)
@@ -129,6 +152,8 @@ export default async function CustomerPage({
     openTasks,
     openPayments,
     comms,
+    forms,
+    formOptions,
     history,
     options,
     docs,
@@ -397,6 +422,30 @@ export default async function CustomerPage({
                   <CommunicationMiniList
                     rows={comms.rows}
                     emptyText="Nessuna telefonata, email o incontro registrato con questo cliente."
+                  />
+                </CardBody>
+              </Card>
+            )}
+            {forms && (
+              <Card>
+                <CardHeader
+                  title="Moduli"
+                  actions={
+                    formOptions && formOptions.templates.length > 0 ? (
+                      <NewSubmissionDialog
+                        templates={formOptions.templates}
+                        customers={formOptions.customers}
+                        defaults={{ customerId: c.id }}
+                        triggerLabel="Compila"
+                        variant="secondary"
+                      />
+                    ) : undefined
+                  }
+                />
+                <CardBody>
+                  <FormMiniList
+                    rows={forms.rows}
+                    emptyText="Nessun verbale, checklist o ispezione per questo cliente."
                   />
                 </CardBody>
               </Card>

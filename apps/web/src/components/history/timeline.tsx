@@ -13,6 +13,7 @@ import {
   Plus,
   RotateCcw,
   Trash2,
+  Upload,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -32,6 +33,7 @@ const VERBS: Record<HistoryVerb, { label: string; icon: LucideIcon; tone: string
     icon: CheckCircle2,
     tone: "text-success bg-success/12",
   },
+  published: { label: "ha pubblicato", icon: Upload, tone: "text-primary bg-primary/12" },
   reopened: { label: "ha riaperto", icon: RotateCcw, tone: "text-info bg-info/12" },
   cancelled: { label: "ha annullato", icon: CircleSlash, tone: "text-muted-foreground bg-accent" },
   exported: { label: "ha esportato", icon: Download, tone: "text-primary bg-primary/12" },

@@ -72,6 +72,10 @@
 - [x] Scadenziario dei pagamenti attesi (da incassare / da pagare, saldo con data, importo
       effettivo e autore, totali, CSV) e registro delle comunicazioni (telefonate, email, PEC,
       incontri) con richiami, nel calendario, nella ricerca e nelle schede (ADR-012)
+- [x] Moduli compilabili al posto del cartaceo: modelli per azienda con editor e versioni
+      immutabili, modello pronto "Ispezione linea vita" (UNI 11560), dati automatici da cliente,
+      sede, azienda e ispezione precedente, firma sul display, chiusura definitiva, stampa/PDF,
+      CSV, ricerca e scheda cliente (ADR-013)
 - [ ] Conferma ADR-006 (Kysely) e ADR-007 (BullMQ)
 
 ## Fase 3 — Operatività di campo
