@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Notice } from "@/components/ui";
-import { getMfaStatus, requireSession } from "@/lib/auth";
+import { getRecoveryStatus } from "@cantiereos/core";
+import { asCurrentUser, getMfaStatus, requireSession } from "@/lib/auth";
+import { authAdminConfigured } from "@/lib/auth-admin";
+import { formatDate } from "@/lib/format";
 import { removeMfaFactor } from "../../actions";
 import { MfaEnrollment } from "./enroll";
+import { RecoveryCodes } from "./recovery-codes";
 
 export const metadata: Metadata = { title: "Sicurezza" };
 
@@ -14,11 +18,20 @@ export default async function SecurityPage({
 }) {
   const session = await requireSession();
   const mfa = await getMfaStatus(session);
-  const mandatory = (await searchParams).obbligatoria === "1";
+  const sp = await searchParams;
+  const mandatory = sp.obbligatoria === "1";
+  const recovered = sp.recupero === "1";
+  const recovery = mfa.verifiedFactors.length > 0 ? await asCurrentUser(getRecoveryStatus) : null;
   return (
     <div className="max-w-2xl space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">Sicurezza dell&apos;account</h1>
-      {mandatory && mfa.verifiedFactors.length === 0 && (
+      {recovered && mfa.verifiedFactors.length === 0 && (
+        <Notice tone="warning">
+          Codice di recupero accettato: l&apos;app di autenticazione è stata scollegata e gli altri
+          dispositivi disconnessi. Configurala di nuovo qui sotto.
+        </Notice>
+      )}
+      {mandatory && !recovered && mfa.verifiedFactors.length === 0 && (
         <Notice tone="warning">
           Il tuo ruolo gestisce dati e utenti dell&apos;azienda: per continuare attiva la verifica
           in due passaggi.
@@ -63,6 +76,27 @@ export default async function SecurityPage({
           qualificata.
         </p>
       </section>
+
+      {recovery && (
+        <section className="space-y-3 rounded-xl border border-line bg-surface p-5">
+          <h2 className="font-medium">Codici di recupero</h2>
+          <p className="text-sm text-muted" data-testid="recovery-status">
+            {recovery.remaining > 0
+              ? `${recovery.remaining} codici disponibili${recovery.generatedAt ? `, generati il ${formatDate(recovery.generatedAt)}` : ""}.`
+              : "Nessun codice disponibile."}{" "}
+            Servono se perdi il telefono: ognuno vale una sola volta.
+          </p>
+          {!authAdminConfigured() ? (
+            <p className="text-sm text-muted">
+              Recupero non configurato su questo ambiente (manca la chiave di servizio di Supabase).
+            </p>
+          ) : session.aal === "aal2" ? (
+            <RecoveryCodes hasCodes={recovery.remaining > 0} />
+          ) : (
+            <p className="text-sm text-muted">Verifica il secondo fattore per generarli.</p>
+          )}
+        </section>
+      )}
 
       <section className="space-y-3 rounded-xl border border-line bg-surface p-5">
         <h2 className="font-medium">Sessioni</h2>

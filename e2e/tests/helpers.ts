@@ -105,7 +105,7 @@ export async function signUpAndConfirm(
 export async function enrollMfa(page: Page): Promise<string> {
   await page.getByRole("button", { name: "Configura app di autenticazione" }).click();
   const secret = (await page.getByTestId("totp-secret").textContent())!.trim();
-  await page.getByLabel("Codice").fill(await freshTotp(secret));
+  await page.getByLabel("Codice", { exact: true }).fill(await freshTotp(secret));
   await page.getByRole("button", { name: "Attiva", exact: true }).click();
   await expect(page.getByTestId("mfa-active")).toContainText("Sessione corrente: verificata");
   return secret;
@@ -120,7 +120,7 @@ export async function signIn(page: Page, email: string, password = PASSWORD): Pr
 
 export async function verifyMfa(page: Page, secret: string): Promise<void> {
   await expect(page).toHaveURL(/\/mfa/);
-  await page.getByLabel("Codice").fill(await freshTotp(secret));
+  await page.getByLabel("Codice", { exact: true }).fill(await freshTotp(secret));
   await page.getByRole("button", { name: "Verifica" }).click();
   await expect(page).not.toHaveURL(/\/mfa/);
 }

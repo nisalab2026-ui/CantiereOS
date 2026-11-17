@@ -57,6 +57,31 @@ login, registrazione, MFA e logout passano da Server Actions e route handler di 
 | Sessioni              | cookie **httpOnly**, `SameSite=Lax`, `Secure` in produzione; rinnovo del token nel proxy Next.js; "Esci da tutti i dispositivi" (`signOut global`)                                                                                                                                          |
 | Revoca immediata      | a ogni transazione `app.current_session_active()` verifica che la sessione del JWT (`session_id`) esista ancora in `auth.sessions`: logout ovunque e cambio password valgono **subito**, non alla scadenza del JWT; la sospensione di una membership toglie l'accesso alla query successiva |
 
+**Limite ai tentativi** (`app.rate_limits`, `packages/core/src/auth/rate-limit.ts`). Si aggiunge
+ai limiti di Supabase Auth, con messaggi in italiano ("Troppi tentativi. Riprova tra N minuti").
+Finestra fissa in PostgreSQL (niente Redis), usata solo dal server con `service_role`; nessun
+client legge i contatori; le chiavi sono hash SHA-256, mai email o IP in chiaro.
+
+| Operazione        | Limite                                                               |
+| ----------------- | -------------------------------------------------------------------- |
+| Accesso           | 8 tentativi per email e 30 per IP ogni 15 minuti; azzerato se riesce |
+| Codice MFA        | 6 tentativi per utente ogni 5 minuti (anche codici di recupero)      |
+| Recupero password | 3 per email e 10 per IP all'ora                                      |
+| Registrazione     | 10 per IP all'ora                                                    |
+
+L'IP si legge solo da `x-real-ip`, impostato dalla piattaforma (Vercel); `x-forwarded-for` non è
+affidabile (lo può scrivere il client, e in locale lo aggiunge Next.js). Senza IP vale il limite
+per account.
+
+**Codici di recupero MFA** (`app.mfa_recovery_codes`). Supabase Auth non li prevede, quindi:
+10 codici da 60 bit generati sul server **solo con sessione aal2**, mostrati una volta (copia o
+download .txt), salvati come `sha256(utente:codice)`; una nuova serie annulla la precedente.
+Chi perde il telefono accede con la password (aal1) e inserisce un codice: se valido e non usato,
+il server lo segna come usato, rimuove i fattori TOTP con l'API amministrativa di Supabase Auth
+(`SUPABASE_SERVICE_ROLE_KEY`, solo server), chiude le altre sessioni e porta l'utente a
+configurare di nuovo l'app. Senza la chiave di servizio la funzione è dichiarata "non
+configurata". I tentativi rientrano nel limite MFA.
+
 **Verifica del token** (`packages/core/src/auth/session.ts`): firma (HS256 con il JWT secret, oppure
 ES256/RS256 tramite JWKS), emittente, audience `authenticated`, scadenza, `role = authenticated`,
 `session_id` e `sub` UUID, niente sessioni anonime. Algoritmi fissati: `alg: none` e confusione
@@ -72,10 +97,9 @@ Le email di autenticazione le invia Supabase Auth con il proprio SMTP.
 - template email di Supabase Auth in italiano e SMTP di produzione;
 - password: minimo 10 caratteri impostato; attivare il controllo password compromesse e la
   lunghezza minima 12 nella configurazione del progetto Supabase;
-- rate limiting applicativo (Redis) su inviti e accettazione inviti; per login/recupero valgono i
-  limiti di Supabase Auth;
-- Content-Security-Policy con nonce (gli altri header di sicurezza sono già attivi);
-- codici di recupero / secondo fattore di riserva per la MFA e procedura di reset assistito;
+- limite ai tentativi anche su creazione e accettazione inviti (accesso, MFA, recupero password
+  e registrazione sono già coperti, vedi sotto);
+- procedura di reset MFA assistito dall'amministratore (per chi perde telefono e codici);
 - testo dell'informativa privacy fornito dal titolare del trattamento.
 
 **Test** (eseguiti davvero, vedi PR):
@@ -120,6 +144,12 @@ Le email di autenticazione le invia Supabase Auth con il proprio SMTP.
   dello schema.
 - Le esportazioni sono registrate in `data_exports` (append-only), che passa dal trigger di audit:
   nel registro compaiono come "ha esportato" con sezione, filtri e numero di righe.
+- **Catena di hash** (ADR-010 in `DATABASE.md`): ogni riga porta `prev_hash` e
+  `row_hash = sha256(prev_hash || contenuto canonico)` per azienda, calcolati da un trigger.
+  Il pulsante "Verifica integrità" del registro ricalcola la catena nel database
+  (`app.verify_audit_chain`, `audit.read`) e indica la prima voce alterata o mancante. Limite: chi
+  controlla il database può ricalcolare tutta la catena; l'ancoraggio esterno periodico
+  dell'ultimo hash arriverà con il worker.
 - Download e anteprime dei documenti sono registrati in `document_downloads` (append-only,
   inserimento solo per versioni pronte e visibili): nello storico compaiono come "ha scaricato" /
   "ha visualizzato". Login e impersonazione restano da aggiungere con `action` dedicate.
@@ -198,6 +228,12 @@ Le email di autenticazione le invia Supabase Auth con il proprio SMTP.
 ## 11. Sviluppo sicuro
 
 - Dipendenze bloccate (`pnpm-lock.yaml`), aggiornamenti controllati, audit in CI.
-- Header di sicurezza: CSP rigorosa, HSTS, `frame-ancestors 'none'`, `Referrer-Policy`.
+- Header di sicurezza (attivi): Content-Security-Policy con **nonce per richiesta** e
+  `strict-dynamic` (in `src/proxy.ts`: solo gli script di Next.js con il nonce vengono eseguiti;
+  l'unica origine esterna è lo storage dei documenti per caricamento diretto e anteprime;
+  `frame-ancestors 'none'`, `object-src 'none'`, `form-action 'self'`), HSTS due anni,
+  `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, COOP. Gli stili
+  inline restano ammessi (variabili CSS delle animazioni). Verificati dal test E2E
+  `security.spec.ts`, che controlla anche l'assenza di violazioni nelle pagine principali.
 - Nessun dato reale nei test e negli ambienti di sviluppo; nessun dato fittizio in produzione.
 - Nessuna operazione distruttiva (drop, delete massivi, reset) senza autorizzazione esplicita.

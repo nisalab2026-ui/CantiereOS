@@ -17,12 +17,52 @@ const PUBLIC_PATHS = [
   "/esci",
 ];
 
+/**
+ * Content Security Policy con nonce per richiesta: solo gli script emessi da
+ * Next.js con quel nonce vengono eseguiti (niente script iniettati). Lo storage
+ * dei documenti è l'unica origine esterna: caricamento diretto firmato (connect),
+ * anteprime di immagini e PDF (img, frame).
+ */
+function contentSecurityPolicy(nonce: string): string {
+  const dev = process.env.NODE_ENV !== "production";
+  let storage = "";
+  try {
+    storage = process.env.SUPABASE_URL ? new URL(process.env.SUPABASE_URL).origin : "";
+  } catch {
+    storage = "";
+  }
+  const https = process.env.APP_URL?.startsWith("https://") ?? false;
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ""}`,
+    // style inline: variabili CSS per le animazioni (style="--i: 2") e Tailwind
+    "style-src 'self' 'unsafe-inline'",
+    `img-src 'self' data: blob: ${storage}`.trim(),
+    "font-src 'self' data:",
+    `connect-src 'self' ${storage}`.trim(),
+    `frame-src 'self' ${storage}`.trim(),
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "worker-src 'self' blob:",
+    "manifest-src 'self'",
+    ...(https ? ["upgrade-insecure-requests"] : []),
+  ].join("; ");
+}
+
 export async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   const requestId = crypto.randomUUID();
   requestHeaders.set("x-request-id", requestId);
+  const nonce = btoa(crypto.randomUUID());
+  const csp = contentSecurityPolicy(nonce);
+  // Next.js legge il nonce dall'intestazione della richiesta e lo applica ai suoi script.
+  requestHeaders.set("content-security-policy", csp);
+  requestHeaders.set("x-nonce", nonce);
 
   let response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set("content-security-policy", csp);
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_ANON_KEY;
   if (!url || !key) return response; // la pagina mostrerà l'errore di configurazione
@@ -36,6 +76,7 @@ export async function proxy(request: NextRequest) {
       setAll: (toSet) => {
         for (const { name, value } of toSet) request.cookies.set(name, value);
         response = NextResponse.next({ request: { headers: requestHeaders } });
+        response.headers.set("content-security-policy", csp);
         for (const { name, value, options } of toSet) {
           response.cookies.set(name, value, {
             ...options,

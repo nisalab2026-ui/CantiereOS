@@ -49,7 +49,7 @@ test("login: password errata con messaggio generico; il titolare deve verificare
   // Senza MFA l'area applicativa resta chiusa.
   await page.goto("/app/membri");
   await expect(page).toHaveURL(/\/mfa/);
-  await page.getByLabel("Codice").fill("000000");
+  await page.getByLabel("Codice", { exact: true }).fill("000000");
   await page.getByRole("button", { name: "Verifica" }).click();
   await expect(page.getByTestId("form-error")).toHaveText("Codice non valido o scaduto.");
   await verifyMfa(page, owner.secret);

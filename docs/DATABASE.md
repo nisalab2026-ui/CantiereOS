@@ -205,6 +205,45 @@ chi li gestisce non può concedere permessi che non possiede.
 Tutte le funzioni `SECURITY DEFINER` hanno `search_path = ''`; nessuna è eseguibile da `PUBLIC` o
 `anon` (verificato dai test).
 
+### Integrità del registro attività (migrazione `20261117130000_audit_hash_chain`)
+
+**ADR-010 — Catena di hash sul registro attività.** Decisione presa prima dell'implementazione
+(passo H del piano in `AUDIT.md`: registro protetto da manomissioni).
+
+- **Perché.** `audit_log` è già append-only per tutti i ruoli applicativi, ma chi ha accesso
+  diretto al database come proprietario (o un backup ripristinato male) potrebbe alterare o
+  togliere righe senza lasciare traccia. La catena rende ogni alterazione **rilevabile**.
+- **Come.** Ogni riga ha `prev_hash` (hash della riga precedente della **stessa azienda**) e
+  `row_hash = sha256(prev_hash || contenuto canonico)`. Il contenuto canonico è un `jsonb` con
+  id, azienda, autore, azione, tabella, record, dati prima/dopo, campi modificati, request id e
+  data in UTC (indipendente dal fuso della sessione). Li calcola un trigger `BEFORE INSERT`: il
+  chiamante non può impostarli.
+- **Concorrenza.** Le insert della stessa azienda si mettono in fila con un lock consultivo di
+  transazione, così due transazioni non agganciano la stessa riga precedente (niente biforcazioni).
+  Costo: le scritture contemporanee **della stessa azienda** si serializzano fino al commit; per
+  un gestionale di PMI è accettabile, aziende diverse non si bloccano tra loro.
+- **Verifica.** `app.verify_audit_chain(tenant)` ripercorre la catena e restituisce la prima riga
+  non coerente (o nessuna). È esposta a chi ha `audit.read` e mostrata nel registro attività.
+- **Righe esistenti.** La migrazione calcola gli hash delle righe già presenti in ordine di id,
+  disattivando per la sola durata della migrazione il trigger di immutabilità. Il contenuto delle
+  righe non cambia (si aggiungono solo le due colonne): operazione additiva, nessun dato perso.
+- **Limite dichiarato.** La catena rileva modifiche e cancellazioni in mezzo; chi controlla il
+  database potrebbe ricalcolare l'intera catena. Contro questo serve un ancoraggio esterno
+  periodico dell'ultimo hash (es. email o storage WORM): previsto con il worker, non ancora attivo.
+
+### Tabelle di sicurezza nello schema privato `app`
+
+Migrazioni `20261117140000_rate_limits` e `20261117150000_mfa_recovery_codes`. Stanno in `app`
+(non in `public`) perché non sono dati aziendali e nessun client deve leggerle: RLS attiva senza
+policy, nessun grant sulle tabelle, accesso solo tramite funzioni `SECURITY DEFINER`.
+
+- `app.rate_limits` — contatori a finestra fissa `(bucket, key_hash)`; `app.rate_limit_hit` e
+  `app.rate_limit_reset` eseguibili solo da `service_role`. Le finestre scadute da oltre un giorno
+  si cancellano da sole (1% delle chiamate).
+- `app.mfa_recovery_codes` — solo hash, `used_at` / `revoked_at` (mai cancellati);
+  `app.mfa_recovery_generate` (richiede `aal2`), `app.mfa_recovery_consume`,
+  `app.mfa_recovery_status` (quanti ne restano), tutte per l'utente del JWT.
+
 ### Archivio documentale (migrazione `20261117120000_documents`)
 
 **ADR-009 — Archivio documentale su storage privato con versioni immutabili.** Decisione presa

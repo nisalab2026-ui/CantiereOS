@@ -3,6 +3,8 @@ export * from "./auth/session";
 export * from "./auth/access";
 export * from "./auth/invitations";
 export * from "./auth/companies";
+export * from "./auth/rate-limit";
+export * from "./auth/mfa-recovery";
 export * from "./db/transaction";
 export * from "./workspace/notifications";
 export * from "./workspace/search";

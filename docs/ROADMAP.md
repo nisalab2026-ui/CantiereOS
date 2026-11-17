@@ -62,6 +62,9 @@
       reale, versioni immutabili, anteprima, download tracciato, scadenza con promemoria nello
       scadenziario, collegamento a clienti/personale/fornitori/squadre, documenti riservati,
       ricerca ed esportazione CSV (storage privato Supabase, URL firmati)
+- [x] Sicurezza: catena di hash verificabile sul registro attività, limite ai tentativi (accesso,
+      MFA, recupero password, registrazione), Content Security Policy con nonce e HSTS, codici di
+      recupero MFA
 - [ ] Conferma ADR-006 (Kysely) e ADR-007 (BullMQ)
 
 ## Fase 3 — Operatività di campo

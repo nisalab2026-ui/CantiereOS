@@ -1,11 +1,17 @@
 "use server";
 
-import { createInvitation, resolveActiveTenant, revokeInvitation } from "@cantiereos/core";
+import {
+  createInvitation,
+  generateRecoveryCodes,
+  resolveActiveTenant,
+  revokeInvitation,
+} from "@cantiereos/core";
 import { revalidatePath } from "next/cache";
-import { asCurrentUser } from "@/lib/auth";
+import { asCurrentUser, requireSession } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { sendMail } from "@/lib/mail";
 import { userMessage, type FormState } from "@/lib/messages";
+import { checkRateLimits, clearRateLimit } from "@/lib/rate-limit";
 import { createSupabaseServerClient } from "@/lib/supabase";
 
 const ROLE_KEYS = new Set([
@@ -98,9 +104,13 @@ export async function confirmMfaEnrollment(_: EnrollState, form: FormData): Prom
   const factorId = String(form.get("factorId") ?? "");
   if (!factorId) return { error: "Avvia di nuovo la configurazione." };
   if (!/^\d{6}$/.test(code)) return { error: "Inserisci il codice a 6 cifre." };
+  const session = await requireSession();
+  const limited = await checkRateLimits([["mfa_user", session.userId]]);
+  if (limited) return { error: limited };
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code });
   if (error) return { error: "Codice non valido. Controlla l'ora del telefono e riprova." };
+  await clearRateLimit("mfa_user", session.userId);
   revalidatePath("/account/sicurezza");
   return { message: "Verifica in due passaggi attivata." };
 }
@@ -111,4 +121,19 @@ export async function removeMfaFactor(form: FormData): Promise<void> {
   // Supabase Auth richiede una sessione aal2 per rimuovere un fattore verificato.
   await supabase.auth.mfa.unenroll({ factorId });
   revalidatePath("/account/sicurezza");
+}
+
+export type RecoveryCodesResult = { codes: string[] } | { error: string };
+
+/** Nuova serie di codici di recupero MFA (richiede sessione verificata MFA: lo controlla il DB). */
+export async function generateRecoveryCodesAction(): Promise<RecoveryCodesResult> {
+  const session = await requireSession();
+  if (session.aal !== "aal2") return { error: "Verifica prima il secondo fattore." };
+  try {
+    const codes = await asCurrentUser((tx) => generateRecoveryCodes(tx));
+    revalidatePath("/account/sicurezza");
+    return { codes };
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
 }
