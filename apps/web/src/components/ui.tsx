@@ -62,10 +62,10 @@ export function AuthShell({
 }) {
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-      <aside className="relative hidden overflow-hidden bg-[#050B1A] lg:flex lg:flex-col lg:justify-between lg:p-12">
+      <aside className="relative hidden overflow-hidden bg-[#04140c] lg:flex lg:flex-col lg:justify-between lg:p-12">
         <div
           aria-hidden
-          className="cos-glow pointer-events-none absolute -right-1/4 -bottom-1/4 size-[80%] rounded-full bg-[radial-gradient(circle,rgba(36,86,230,0.45),transparent_65%)]"
+          className="cos-glow pointer-events-none absolute -right-1/4 -bottom-1/4 size-[80%] rounded-full bg-[radial-gradient(circle,rgba(21,128,61,0.45),transparent_65%)]"
         />
         <div
           aria-hidden
@@ -84,20 +84,20 @@ export function AuthShell({
         <div className="relative flex flex-1 items-center justify-center py-8">
           <div className="cos-float">
             <Tilt max={14} className="rounded-3xl">
-              <div className="cos-depth rounded-3xl border border-white/10 bg-white/[0.04] p-10 shadow-[0_30px_80px_-20px_rgba(36,86,230,0.55)] backdrop-blur-sm">
+              <div className="cos-depth rounded-3xl border border-white/10 bg-white/[0.04] p-10 shadow-[0_30px_80px_-20px_rgba(21,128,61,0.55)] backdrop-blur-sm">
                 <Image
                   src="/brand/logo-mark.png"
                   alt=""
                   width={268}
                   height={256}
-                  className="h-40 w-auto drop-shadow-[0_18px_30px_rgba(36,86,230,0.45)] xl:h-48"
+                  className="h-40 w-auto drop-shadow-[0_18px_30px_rgba(21,128,61,0.45)] xl:h-48"
                 />
               </div>
             </Tilt>
           </div>
         </div>
         <p
-          className="cos-enter relative max-w-sm text-sm leading-relaxed text-[#98A1B3]"
+          className="cos-enter relative max-w-sm text-sm leading-relaxed text-[#a3c2b0]"
           style={{ "--i": 2 } as React.CSSProperties}
         >
           Cantieri, squadre, rapportini e documenti della tua impresa in un unico posto, con i dati
