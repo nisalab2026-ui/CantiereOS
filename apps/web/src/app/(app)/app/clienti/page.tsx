@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Notice } from "@/components/ui";
 import { Badge } from "@/components/ui/badge";
+import { ExportButton } from "@/components/export-button";
 import { Card } from "@/components/ui/card";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { FilterBar } from "@/components/ui/filter-bar";
@@ -111,7 +112,12 @@ export default async function CustomersPage({
       <PageHeader
         title="Clienti"
         description="Anagrafica dei clienti dell'azienda attiva."
-        actions={canWrite ? <NewCustomerDialog /> : undefined}
+        actions={
+          <>
+            <ExportButton section="customers" params={sp} />
+            {canWrite && <NewCustomerDialog />}
+          </>
+        }
       />
       {creato === "1" && id && <Notice>Cliente creato.</Notice>}
       <Card className="mt-4 overflow-hidden">

@@ -2,6 +2,7 @@ import { listSuppliers, SUPPLIER_SORTS, type SupplierRow } from "@cantiereos/cor
 import { Truck } from "lucide-react";
 import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
+import { ExportButton } from "@/components/export-button";
 import { Card } from "@/components/ui/card";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { FilterBar } from "@/components/ui/filter-bar";
@@ -85,7 +86,11 @@ export default async function SuppliersPage({
 
   return (
     <div>
-      <PageHeader title="Fornitori" description="Anagrafica dei fornitori dell'azienda attiva." />
+      <PageHeader
+        title="Fornitori"
+        description="Anagrafica dei fornitori dell'azienda attiva."
+        actions={<ExportButton section="suppliers" params={sp} />}
+      />
       <Card className="overflow-hidden">
         <FilterBar
           pathname={PATH}

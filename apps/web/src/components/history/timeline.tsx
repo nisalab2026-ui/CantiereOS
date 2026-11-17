@@ -4,6 +4,7 @@ import {
   ArchiveRestore,
   CheckCircle2,
   CircleSlash,
+  Download,
   History,
   Pencil,
   Plus,
@@ -25,6 +26,7 @@ const VERBS: Record<HistoryVerb, { label: string; icon: LucideIcon; tone: string
   completed: { label: "ha completato", icon: CheckCircle2, tone: "text-success bg-success/12" },
   reopened: { label: "ha riaperto", icon: RotateCcw, tone: "text-info bg-info/12" },
   cancelled: { label: "ha annullato", icon: CircleSlash, tone: "text-muted-foreground bg-accent" },
+  exported: { label: "ha esportato", icon: Download, tone: "text-primary bg-primary/12" },
 };
 
 const dayFmt = new Intl.DateTimeFormat("it-IT", {
@@ -90,8 +92,10 @@ export function Timeline({
                   <p className="text-sm">
                     <span className="font-medium">{e.actorName ?? "Sistema"}</span>{" "}
                     <span className="text-muted-foreground">{v.label}</span>{" "}
-                    <span className="text-muted-foreground lowercase">{e.tableLabel}</span>
-                    {record && e.recordTitle && (
+                    {e.verb !== "exported" && (
+                      <span className="text-muted-foreground lowercase">{e.tableLabel}</span>
+                    )}
+                    {(record || e.verb === "exported") && e.recordTitle && (
                       <>
                         {" "}
                         {e.href && e.verb !== "deleted" ? (
@@ -111,7 +115,14 @@ export function Timeline({
                       {timeFmt.format(new Date(e.at))}
                     </time>
                   </p>
-                  {e.verb !== "created" && e.changes.length > 0 && <ChangeList event={e} />}
+                  {e.verb !== "created" && e.verb !== "exported" && e.changes.length > 0 && (
+                    <ChangeList event={e} />
+                  )}
+                  {e.verb === "exported" && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Filtri: {e.changes.find((c) => c.field === "filters")?.after ?? "nessuno"}
+                    </p>
+                  )}
                   {e.verb === "created" && e.changes.length > 0 && (
                     <details className="mt-1 text-xs text-muted-foreground">
                       <summary className="cursor-pointer select-none hover:text-foreground">

@@ -118,8 +118,20 @@ Le email di autenticazione le invia Supabase Auth con il proprio SMTP.
 - Immutabile per tutti i ruoli applicativi, compreso `service_role`. La pulizia per
   conservazione richiederà una procedura dedicata e documentata, eseguita dal proprietario
   dello schema.
-- Eventi applicativi non legati a righe (login, export, download documenti, impersonazione) da
+- Le esportazioni sono registrate in `data_exports` (append-only), che passa dal trigger di audit:
+  nel registro compaiono come "ha esportato" con sezione, filtri e numero di righe.
+- Eventi applicativi non legati a righe (login, download documenti, impersonazione) da
   aggiungere in fase 2 con `action` dedicate (es. `auth.login`, `file.download`).
+
+### Esportazioni CSV
+
+- Solo `POST /app/esporta` dalla stessa origine (niente prefetch o link esterni che scaricano o
+  registrano esportazioni); permessi e azienda dal server, dati letti con RLS.
+- Si esporta solo ciò che si può leggere: stesso permesso della lista (`*.read`, `audit.read` con
+  MFA per il registro). La policy di `data_exports` lo ricontrolla nel database.
+- Filtri e ordinamenti passano dalle stesse whitelist delle liste; massimo 10.000 righe per file.
+- Protezione dalla CSV injection: i testi che iniziano con `= + - @` (o tab/CR) sono preceduti da
+  un apostrofo, così Excel non li esegue come formule.
 
 ### Storico per elemento e scadenze
 

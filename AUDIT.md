@@ -156,7 +156,7 @@ manutenzioni, documenti, pagamenti, comunicazioni, attività) non esistono ancor
 | C     | Scheda di dettaglio e modifica per clienti e personale, con breadcrumb e storico                                       | ✅ clienti e personale (PR #5); fornitori e squadre da fare |
 | D     | Scadenziario unico (certificazioni, manutenzioni, controlli, pagamenti, documenti) con stati, responsabili, ricorrenza | ✅ (PR #5)                                                  |
 | E     | Notifiche scadenze senza duplicati + dashboard "Priorità"                                                              | ✅ (PR #5); job pianificato da fare                         |
-| F     | Esportazione CSV con registrazione nello storico                                                                       | da fare                                                     |
+| F     | Esportazione CSV con registrazione nello storico                                                                       | ✅ (PR #6)                                                  |
 | G     | Archivio documentale con storage privato e versioni                                                                    | da fare                                                     |
 | H     | Catena di hash sull'audit log, rate limiting, CSP, codici MFA                                                          | da fare                                                     |
 | I     | Calendario, attività, commenti, pagamenti, comunicazioni                                                               | da fare                                                     |

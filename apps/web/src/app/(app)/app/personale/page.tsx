@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Notice } from "@/components/ui";
 import { EmployeeDialog } from "./employee-form";
 import { Badge } from "@/components/ui/badge";
+import { ExportButton } from "@/components/export-button";
 import { Card } from "@/components/ui/card";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { FilterBar } from "@/components/ui/filter-bar";
@@ -113,7 +114,10 @@ export default async function EmployeesPage({
         title="Personale"
         description="Dipendenti e collaboratori dell'azienda attiva."
         actions={
-          access.permissions.has("employees.write") ? <EmployeeDialog mode="create" /> : undefined
+          <>
+            <ExportButton section="employees" params={sp} />
+            {access.permissions.has("employees.write") && <EmployeeDialog mode="create" />}
+          </>
         }
       />
       {creato === "1" && <Notice>Persona aggiunta.</Notice>}

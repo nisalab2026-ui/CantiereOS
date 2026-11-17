@@ -4,7 +4,7 @@ import { AuthError, pgCode } from "../auth/errors";
 import type { UserTx } from "../db/transaction";
 import { likePattern } from "../workspace/search";
 import { optional, parseInput, ValidationError } from "../validation";
-import type { Page } from "../directory/lists";
+import type { ListOptions, Page } from "../directory/lists";
 
 /**
  * Scadenziario unico: certificazioni, manutenzioni, controlli periodici,
@@ -125,9 +125,10 @@ export async function listDeadlines(
   tx: UserTx,
   access: TenantAccess,
   q: DeadlineQuery,
+  opts: ListOptions = {},
 ): Promise<Page<DeadlineRow>> {
   requirePermission(access, "deadlines.read");
-  const pageSize = Math.min(Math.max(q.pageSize ?? 25, 1), 100);
+  const pageSize = Math.min(Math.max(q.pageSize ?? 25, 1), opts.maxPageSize ?? 100);
   const page = Math.min(Math.max(q.page ?? 1, 1), 10_000);
   const params: unknown[] = [access.tenantId];
   const where = ["x.tenant_id = $1", "x.deleted_at is null"];

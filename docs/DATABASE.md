@@ -205,6 +205,14 @@ chi li gestisce non può concedere permessi che non possiede.
 Tutte le funzioni `SECURITY DEFINER` hanno `search_path = ''`; nessuna è eseguibile da `PUBLIC` o
 `anon` (verificato dai test).
 
+### Registro delle esportazioni (migrazione `20261117110000_data_exports`)
+
+- `data_exports`: sezione, formato, filtri (jsonb, max 4 KB), righe, autore (dal trigger
+  `set_created_by`), data. **Append-only**: nessuna policy né privilegio di update/delete.
+- Inserimento consentito solo a chi ha il permesso di lettura della sezione
+  (`app.export_section_permission`); lettura con `audit.read`. Il trigger di audit la porta nel
+  registro attività, dove l'operazione è mostrata come "Esportazione".
+
 ### Scadenziario e storico (migrazione `20261117100000_deadlines_history`)
 
 **ADR-008 — Scadenziario unico.** Certificazioni, manutenzioni, controlli periodici, scadenze di

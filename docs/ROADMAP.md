@@ -56,6 +56,8 @@
       con ricorrenza, responsabile, completamento, avvisi senza duplicati
 - [x] Dashboard "Richiede attenzione" con grafici collegati alle liste filtrate
 - [x] AUDIT.md con priorità e piano di lavoro
+- [x] Esportazione CSV (compatibile Excel) di clienti, fornitori, personale, squadre, scadenze e
+      registro, con i filtri della pagina e registrazione nello storico
 - [ ] Conferma ADR-006 (Kysely) e ADR-007 (BullMQ)
 
 ## Fase 3 — Operatività di campo
