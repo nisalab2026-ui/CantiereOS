@@ -110,6 +110,14 @@
 - Fatture e pagamenti, scadenzario; fatturazione elettronica SDI con intermediario
 - Manutenzioni programmate, Sicurezza e certificazioni
 
+## Sito pubblico ✅ (in revisione)
+
+- [x] Home, funzionalità, chi siamo / come lavoriamo, prezzi, guida pubblica (`docs/SITO_PUBBLICO.md`)
+- [x] Movimento allo scorrimento come il sito Lume Studio, stile liquid, tema chiaro e scuro
+- [x] Piani e prezzi proposti con analisi di mercato (`docs/PREZZI.md`)
+- [ ] Informativa privacy e termini, dominio, indicizzazione (oggi `noindex`)
+- [ ] Pagamenti e limiti dei piani applicati (fase 7)
+
 ## Fase 7 — SaaS
 
 - Portale cliente

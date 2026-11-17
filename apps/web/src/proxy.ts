@@ -8,6 +8,11 @@ import { NextResponse, type NextRequest } from "next/server";
  * server, e il database con RLS.
  */
 const PUBLIC_PATHS = [
+  // sito pubblico (app/(marketing)); "/" è gestita a parte
+  "/funzionalita",
+  "/chi-siamo",
+  "/prezzi",
+  "/guida",
   "/accedi",
   "/registrati",
   "/password-dimenticata",
