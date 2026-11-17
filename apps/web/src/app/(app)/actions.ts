@@ -2,10 +2,11 @@
 
 import { createInvitation, resolveActiveTenant, revokeInvitation } from "@cantiereos/core";
 import { revalidatePath } from "next/cache";
-import { asCurrentUser } from "@/lib/auth";
+import { asCurrentUser, requireSession } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { sendMail } from "@/lib/mail";
 import { userMessage, type FormState } from "@/lib/messages";
+import { checkRateLimits, clearRateLimit } from "@/lib/rate-limit";
 import { createSupabaseServerClient } from "@/lib/supabase";
 
 const ROLE_KEYS = new Set([
@@ -98,9 +99,13 @@ export async function confirmMfaEnrollment(_: EnrollState, form: FormData): Prom
   const factorId = String(form.get("factorId") ?? "");
   if (!factorId) return { error: "Avvia di nuovo la configurazione." };
   if (!/^\d{6}$/.test(code)) return { error: "Inserisci il codice a 6 cifre." };
+  const session = await requireSession();
+  const limited = await checkRateLimits([["mfa_user", session.userId]]);
+  if (limited) return { error: limited };
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code });
   if (error) return { error: "Codice non valido. Controlla l'ora del telefono e riprova." };
+  await clearRateLimit("mfa_user", session.userId);
   revalidatePath("/account/sicurezza");
   return { message: "Verifica in due passaggi attivata." };
 }

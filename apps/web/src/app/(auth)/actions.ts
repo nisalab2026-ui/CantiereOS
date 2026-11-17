@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { env } from "@/lib/env";
 import type { FormState } from "@/lib/messages";
+import { checkRateLimits, clearRateLimit, clientIp } from "@/lib/rate-limit";
+import { getVerifiedSession } from "@/lib/auth";
 import { safeNext } from "@/lib/redirects";
 import { createSupabaseServerClient } from "@/lib/supabase";
 
@@ -25,6 +27,12 @@ export async function signIn(_: FormState, form: FormData): Promise<FormState> {
     .safeParse({ email: form.get("email"), password: form.get("password") });
   if (!parsed.success) return { error: "Inserisci email e password." };
 
+  const limited = await checkRateLimits([
+    ["login_ip", await clientIp()],
+    ["login_email", parsed.data.email],
+  ]);
+  if (limited) return { error: limited };
+
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) {
@@ -34,6 +42,7 @@ export async function signIn(_: FormState, form: FormData): Promise<FormState> {
     // Messaggio unico: non rivela se l'email esiste.
     return { error: "Email o password non corretti." };
   }
+  await clearRateLimit("login_email", parsed.data.email);
   redirect(safeNext(form.get("next"), "/app"));
 }
 
@@ -59,6 +68,9 @@ export async function signUp(_: FormState, form: FormData): Promise<FormState> {
       error: "Per registrarti devi prendere visione dell'informativa sul trattamento dei dati.",
     };
   }
+
+  const limited = await checkRateLimits([["signup_ip", await clientIp()]]);
+  if (limited) return { error: limited };
 
   const supabase = await createSupabaseServerClient();
   const next = safeNext(form.get("next"), "/benvenuto");
@@ -87,6 +99,11 @@ export async function signUp(_: FormState, form: FormData): Promise<FormState> {
 export async function requestPasswordReset(_: FormState, form: FormData): Promise<FormState> {
   const parsed = email.safeParse(form.get("email"));
   if (!parsed.success) return { error: "Inserisci un indirizzo email valido." };
+  const limited = await checkRateLimits([
+    ["reset_ip", await clientIp()],
+    ["reset_email", parsed.data],
+  ]);
+  if (limited) return { error: limited };
   const supabase = await createSupabaseServerClient();
   await supabase.auth.resetPasswordForEmail(parsed.data, {
     redirectTo: callbackUrl("/reimposta-password"),
@@ -126,6 +143,10 @@ const totpCode = z.string().regex(/^\d{6}$/, "Inserisci il codice a 6 cifre.");
 export async function verifyMfa(_: FormState, form: FormData): Promise<FormState> {
   const parsed = totpCode.safeParse(String(form.get("code") ?? "").replace(/\s/g, ""));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Codice non valido." };
+  const session = await getVerifiedSession();
+  if (!session) return { error: "Sessione non valida. Accedi di nuovo." };
+  const limited = await checkRateLimits([["mfa_user", session.userId]]);
+  if (limited) return { error: limited };
   const supabase = await createSupabaseServerClient();
   const { data: factors, error } = await supabase.auth.mfa.listFactors();
   if (error) return { error: "Sessione non valida. Accedi di nuovo." };
@@ -136,5 +157,6 @@ export async function verifyMfa(_: FormState, form: FormData): Promise<FormState
     code: parsed.data,
   });
   if (result.error) return { error: "Codice non valido o scaduto." };
+  await clearRateLimit("mfa_user", session.userId);
   redirect(safeNext(form.get("next"), "/app"));
 }
