@@ -231,6 +231,19 @@ Tutte le funzioni `SECURITY DEFINER` hanno `search_path = ''`; nessuna è esegui
   database potrebbe ricalcolare l'intera catena. Contro questo serve un ancoraggio esterno
   periodico dell'ultimo hash (es. email o storage WORM): previsto con il worker, non ancora attivo.
 
+### Tabelle di sicurezza nello schema privato `app`
+
+Migrazioni `20261117140000_rate_limits` e `20261117150000_mfa_recovery_codes`. Stanno in `app`
+(non in `public`) perché non sono dati aziendali e nessun client deve leggerle: RLS attiva senza
+policy, nessun grant sulle tabelle, accesso solo tramite funzioni `SECURITY DEFINER`.
+
+- `app.rate_limits` — contatori a finestra fissa `(bucket, key_hash)`; `app.rate_limit_hit` e
+  `app.rate_limit_reset` eseguibili solo da `service_role`. Le finestre scadute da oltre un giorno
+  si cancellano da sole (1% delle chiamate).
+- `app.mfa_recovery_codes` — solo hash, `used_at` / `revoked_at` (mai cancellati);
+  `app.mfa_recovery_generate` (richiede `aal2`), `app.mfa_recovery_consume`,
+  `app.mfa_recovery_status` (quanti ne restano), tutte per l'utente del JWT.
+
 ### Archivio documentale (migrazione `20261117120000_documents`)
 
 **ADR-009 — Archivio documentale su storage privato con versioni immutabili.** Decisione presa

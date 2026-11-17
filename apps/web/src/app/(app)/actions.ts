@@ -1,6 +1,11 @@
 "use server";
 
-import { createInvitation, resolveActiveTenant, revokeInvitation } from "@cantiereos/core";
+import {
+  createInvitation,
+  generateRecoveryCodes,
+  resolveActiveTenant,
+  revokeInvitation,
+} from "@cantiereos/core";
 import { revalidatePath } from "next/cache";
 import { asCurrentUser, requireSession } from "@/lib/auth";
 import { env } from "@/lib/env";
@@ -116,4 +121,19 @@ export async function removeMfaFactor(form: FormData): Promise<void> {
   // Supabase Auth richiede una sessione aal2 per rimuovere un fattore verificato.
   await supabase.auth.mfa.unenroll({ factorId });
   revalidatePath("/account/sicurezza");
+}
+
+export type RecoveryCodesResult = { codes: string[] } | { error: string };
+
+/** Nuova serie di codici di recupero MFA (richiede sessione verificata MFA: lo controlla il DB). */
+export async function generateRecoveryCodesAction(): Promise<RecoveryCodesResult> {
+  const session = await requireSession();
+  if (session.aal !== "aal2") return { error: "Verifica prima il secondo fattore." };
+  try {
+    const codes = await asCurrentUser((tx) => generateRecoveryCodes(tx));
+    revalidatePath("/account/sicurezza");
+    return { codes };
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
 }

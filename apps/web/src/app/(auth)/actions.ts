@@ -5,7 +5,9 @@ import { z } from "zod";
 import { env } from "@/lib/env";
 import type { FormState } from "@/lib/messages";
 import { checkRateLimits, clearRateLimit, clientIp } from "@/lib/rate-limit";
-import { getVerifiedSession } from "@/lib/auth";
+import { consumeRecoveryCode } from "@cantiereos/core";
+import { asCurrentUser, getVerifiedSession } from "@/lib/auth";
+import { authAdminConfigured, deleteMfaFactors } from "@/lib/auth-admin";
 import { safeNext } from "@/lib/redirects";
 import { createSupabaseServerClient } from "@/lib/supabase";
 
@@ -159,4 +161,33 @@ export async function verifyMfa(_: FormState, form: FormData): Promise<FormState
   if (result.error) return { error: "Codice non valido o scaduto." };
   await clearRateLimit("mfa_user", session.userId);
   redirect(safeNext(form.get("next"), "/app"));
+}
+
+/**
+ * Codice di recupero (telefono perso): con la sola password (aal1) e un codice
+ * valido non ancora usato, il server rimuove i fattori TOTP con l'API
+ * amministrativa e chiude le altre sessioni; l'utente configura di nuovo l'app.
+ */
+export async function redeemRecoveryCode(_: FormState, form: FormData): Promise<FormState> {
+  const session = await getVerifiedSession();
+  if (!session) return { error: "Sessione non valida. Accedi di nuovo." };
+  if (!authAdminConfigured()) {
+    return { error: "Recupero non configurato su questo ambiente: contatta l'amministratore." };
+  }
+  const limited = await checkRateLimits([["mfa_user", session.userId]]);
+  if (limited) return { error: limited };
+  const supabase = await createSupabaseServerClient();
+  const { data: factors, error } = await supabase.auth.mfa.listFactors();
+  if (error) return { error: "Sessione non valida. Accedi di nuovo." };
+  const ok = await asCurrentUser((tx) => consumeRecoveryCode(tx, String(form.get("code") ?? "")));
+  if (!ok) return { error: "Codice di recupero non valido o già usato." };
+  const removed = await deleteMfaFactors(
+    session.userId,
+    factors.all.map((f) => f.id),
+  );
+  if (!removed)
+    return { error: "Codice accettato, ma la rimozione del fattore non è riuscita. Riprova." };
+  await clearRateLimit("mfa_user", session.userId);
+  await supabase.auth.signOut({ scope: "others" });
+  redirect("/account/sicurezza?recupero=1");
 }

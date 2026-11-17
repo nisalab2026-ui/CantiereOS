@@ -62,3 +62,33 @@ test("intestazioni di sicurezza e CSP con nonce, senza violazioni nelle pagine p
   await expect(page.getByPlaceholder(/Cerca clienti/)).toBeVisible();
   expect(violations).toEqual([]);
 });
+
+test("codici di recupero: generati una volta, usati al posto del telefono, una sola volta", async ({
+  page,
+}) => {
+  const owner = await createOwner(page, "rec", `E2E Recupero ${Date.now().toString(36)}`);
+  await page.goto("/account/sicurezza");
+  await expect(page.getByTestId("recovery-status")).toContainText("Nessun codice disponibile");
+  await page.getByRole("button", { name: "Genera i codici di recupero" }).click();
+  const list = page.getByTestId("recovery-codes");
+  await expect(list.locator("li")).toHaveCount(10);
+  const code = (await list.locator("li").nth(2).textContent())!.trim();
+  expect(code).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/);
+  await page.reload();
+  await expect(page.getByTestId("recovery-status")).toContainText("10 codici disponibili");
+  await expect(page.getByTestId("recovery-codes")).toHaveCount(0); // mai più mostrati
+
+  // telefono perso: password + codice di recupero
+  await page.context().clearCookies();
+  await signIn(page, owner.email);
+  await expect(page).toHaveURL(/\/mfa/);
+  await page.getByText("Non hai il telefono?").click();
+  await page.getByLabel("Codice di recupero").fill("AAAA-BBBB-CCCC");
+  await page.getByRole("button", { name: "Usa il codice" }).click();
+  await expect(page.getByText("Codice di recupero non valido o già usato.")).toBeVisible();
+  await page.getByLabel("Codice di recupero").fill(code.toLowerCase());
+  await page.getByRole("button", { name: "Usa il codice" }).click();
+  await expect(page).toHaveURL(/\/account\/sicurezza\?recupero=1/);
+  await expect(page.getByText("Codice di recupero accettato")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Configura app di autenticazione" })).toBeVisible();
+});

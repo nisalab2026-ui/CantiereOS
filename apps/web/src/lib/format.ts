@@ -1,9 +1,12 @@
+// Sempre ora italiana, sul server e nel browser (come il registro attività).
 const dateFmt = new Intl.DateTimeFormat("it-IT", {
+  timeZone: "Europe/Rome",
   day: "2-digit",
   month: "2-digit",
   year: "numeric",
 });
 const dateTimeFmt = new Intl.DateTimeFormat("it-IT", {
+  timeZone: "Europe/Rome",
   day: "2-digit",
   month: "2-digit",
   year: "numeric",

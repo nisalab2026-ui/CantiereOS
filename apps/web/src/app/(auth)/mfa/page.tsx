@@ -4,7 +4,7 @@ import { ActionForm, SubmitButton } from "@/components/forms";
 import { AuthShell, Field } from "@/components/ui";
 import { getMfaStatus, requireSession } from "@/lib/auth";
 import { safeNext } from "@/lib/redirects";
-import { verifyMfa } from "../actions";
+import { redeemRecoveryCode, verifyMfa } from "../actions";
 
 export const metadata: Metadata = { title: "Verifica in due passaggi" };
 
@@ -40,6 +40,25 @@ export default async function MfaPage({
         />
         <SubmitButton>Verifica</SubmitButton>
       </ActionForm>
+      <details className="mt-6 border-t border-border pt-4 text-sm">
+        <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+          Non hai il telefono? Usa un codice di recupero
+        </summary>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Il codice vale una sola volta. Dopo l&apos;uso l&apos;app di autenticazione viene
+          scollegata, gli altri dispositivi vengono disconnessi e dovrai configurarla di nuovo.
+        </p>
+        <ActionForm action={redeemRecoveryCode} className="mt-3 space-y-3">
+          <Field
+            label="Codice di recupero"
+            name="code"
+            autoComplete="off"
+            hint="Formato XXXX-XXXX-XXXX"
+            maxLength={20}
+          />
+          <SubmitButton>Usa il codice</SubmitButton>
+        </ActionForm>
+      </details>
     </AuthShell>
   );
 }

@@ -74,13 +74,9 @@ export default async function ActivityPage({
       <PageHeader
         title="Registro attività"
         description="Ogni creazione, modifica ed eliminazione dell'azienda, con autore, data e valori prima e dopo. Il registro non è modificabile da nessun utente."
-        actions={
-          <>
-            <IntegrityCheck />
-            <ExportButton section="audit" params={sp} />
-          </>
-        }
+        actions={<ExportButton section="audit" params={sp} />}
       />
+      <IntegrityCheck />
       <Card className="overflow-hidden">
         <FilterBar
           pathname={PATH}
