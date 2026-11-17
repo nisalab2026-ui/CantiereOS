@@ -205,6 +205,33 @@ chi li gestisce non può concedere permessi che non possiede.
 Tutte le funzioni `SECURITY DEFINER` hanno `search_path = ''`; nessuna è eseguibile da `PUBLIC` o
 `anon` (verificato dai test).
 
+### Pagamenti attesi e comunicazioni (migrazione `20261117170000_payments_communications`)
+
+**ADR-012 — Scadenziario dei pagamenti e registro delle comunicazioni.** Decisione presa prima
+dell'implementazione (passo I del piano in `AUDIT.md`, seconda parte).
+
+- **Cosa non è.** Non è contabilità né fatturazione elettronica: nessun movimento bancario, nessun
+  invio allo SDI, nessun incasso online. Nessun provider di pagamento o di posta è configurato e
+  nessuno viene simulato: si registra ciò che l'azienda si aspetta di incassare o pagare e ciò
+  che è stato detto o scritto.
+- **`payments`.** Direzione `incoming` (da incassare, controparte cliente) o `outgoing` (da pagare,
+  controparte fornitore), descrizione, riferimento (n. fattura), importo in **centesimi interi**
+  (`bigint`, mai `float`), valuta `EUR` (unica ammessa per ora), data prevista, stato (`open`,
+  `paid`, `cancelled`), data e importo effettivi, modalità. "In ritardo" si ricava dalla data.
+  Chi registra il pagamento e quando lo stabilisce un trigger; l'importo pagato, se non
+  indicato, è quello previsto.
+- **Permessi.** `payments.read`, `payments.write`, `payments.delete` (MFA). Dati economici: li
+  vedono solo titolare, amministratore, ufficio (lettura e scrittura) e responsabile operativo
+  (lettura). Tecnici, capocantiere, lettori e clienti esterni no.
+- **`communications`.** Registro di telefonate, email, PEC, incontri, lettere e messaggi: canale,
+  direzione (ricevuta/inviata), data e ora, oggetto, testo, referente e collegamento ad al massimo
+  un soggetto (cliente, fornitore, dipendente). Un "richiamo" opzionale (`follow_up_date`,
+  `follow_up_done`) compare nel calendario. Permessi `communications.read/write/delete` (MFA):
+  ufficio, responsabili e capocantiere scrivono, il lettore legge, il tecnico no.
+- **Cronologia ed esportazioni.** Entrambe le tabelle passano dal registro attività (catena di
+  hash), compaiono nella cronologia della scheda del soggetto (con il permesso della tabella) e
+  sono esportabili in CSV.
+
 ### Attività e commenti (migrazione `20261117160000_tasks_comments`)
 
 **ADR-011 — Attività assegnabili e commenti interni su qualsiasi elemento.** Decisione presa prima
