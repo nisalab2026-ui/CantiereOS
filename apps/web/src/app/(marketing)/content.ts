@@ -9,7 +9,20 @@ export const NAV = [
   { href: "/chi-siamo", label: "Chi siamo" },
   { href: "/prezzi", label: "Prezzi" },
   { href: "/guida", label: "Guida" },
+  { href: "/contatti", label: "Contatti" },
 ] as const;
+
+/** Contatto diretto per informazioni (WhatsApp e telefono). */
+export const CONTACT = {
+  phoneDisplay: "327 392 8101",
+  phoneE164: "+393273928101",
+  whatsapp: `https://wa.me/393273928101?text=${encodeURIComponent(
+    "Ciao, vorrei maggiori informazioni su CantiereOS.",
+  )}`,
+};
+
+/** Chi ha realizzato il sito pubblico (firma nel piè di pagina). */
+export const SITE_CREDIT = "Lume Studio";
 
 /** Mestieri a cui è rivolto il prodotto (non clienti: nessun logo o nome di terzi). */
 export const TRADES = [
@@ -78,7 +91,7 @@ export const FEATURES: Feature[] = [
     text: "Certificati, contratti, schede tecniche e foto in un archivio privato, collegati al cliente, alla persona o alla scadenza a cui servono. Ogni nuova versione conserva la precedente.",
     points: [
       "Anteprima di PDF e immagini senza scaricare",
-      "Versioni: si vede sempre quale è valida",
+      "Versioni: si vede sempre qual è quella valida",
       "Accesso secondo il ruolo, mai link pubblici",
     ],
   },
@@ -176,7 +189,7 @@ export const PRINCIPLES = [
   },
   {
     title: "Pensato per chi lavora fuori",
-    text: "Bersagli grandi, testi chiari, tutto usabile dal telefono con i guanti e con il sole in faccia.",
+    text: "Pulsanti grandi, testi chiari, tutto usabile dal telefono con i guanti e con il sole in faccia.",
   },
   {
     title: "In italiano, per le imprese italiane",
@@ -186,7 +199,10 @@ export const PRINCIPLES = [
 
 /** In sviluppo: mai presentato come disponibile. Ordine da docs/ROADMAP.md. */
 export const COMING_SOON = [
-  { title: "Cantieri", text: "Scheda del cantiere con squadre, documenti, avanzamento e diario." },
+  {
+    title: "Diario di cantiere",
+    text: "Avanzamento, foto e note di ogni giornata sulla scheda del cantiere.",
+  },
   {
     title: "Rapportini giornalieri",
     text: "Ore, materiali e foto inviati dal cantiere in un minuto.",

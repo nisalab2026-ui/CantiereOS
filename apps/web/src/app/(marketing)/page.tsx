@@ -243,7 +243,7 @@ export default async function HomePage() {
             <SectionHeading
               eyebrow="In cantiere"
               title="Il telefono diventa il quaderno del tecnico."
-              lead="Agenda del giorno, moduli da compilare, documenti da mostrare al cliente. Bersagli grandi e testi chiari, pensati per chi lavora con i guanti."
+              lead="Agenda del giorno, moduli da compilare, documenti da mostrare al cliente. Pulsanti grandi e testi chiari, pensati per chi lavora con i guanti."
             />
             <ul className="mt-8 grid gap-3 sm:grid-cols-2">
               {[

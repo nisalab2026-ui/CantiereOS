@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, Menu, Moon, Sun, X } from "lucide-react";
-import Image from "next/image";
+import { BrandMark } from "@/components/brand-logo";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -55,15 +55,10 @@ export function SiteHeader({ nav, signedIn }: { nav: readonly NavItem[]; signedI
           className="flex items-center gap-2.5 font-semibold tracking-tight"
           aria-label="CantiereOS, home"
         >
-          <Image
-            src="/brand/logo-mark.png"
-            alt=""
-            width={32}
-            height={31}
-            className="size-8"
-            priority
-          />
-          <span className="text-[1.05rem]">CantiereOS</span>
+          <BrandMark className="size-8" />
+          <span className="text-[1.05rem]">
+            Cantiere<span className="brand-logo-os">OS</span>
+          </span>
         </Link>
 
         <nav aria-label="Principale" className="ml-6 hidden md:block">
