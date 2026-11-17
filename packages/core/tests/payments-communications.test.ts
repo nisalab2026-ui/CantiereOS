@@ -284,7 +284,7 @@ describe("Registro comunicazioni", () => {
     const s = await createSession(pool, office);
     const err = await run(s, async (tx) =>
       createCommunication(tx, await resolveActiveTenant(tx), {
-        channel: "fax",
+        channel: "fax" as "phone", // valore non ammesso, come da un modulo manomesso
         direction: "inbound",
         occurredAt: "ieri",
         subject: "",
