@@ -10,12 +10,14 @@ import {
   Smartphone,
 } from "lucide-react";
 import Link from "next/link";
-import { FEATURE_ICONS } from "@/components/site/icons";
+import { FEATURE_ICONS, TRADE_ICONS } from "@/components/site/icons";
 import { CtaBand, FaqList, SectionHeading } from "@/components/site/blocks";
+import { Seal, StatsStrip } from "@/components/site/extras";
 import { AppWindow, DashboardMock, FeatureMock, PhoneMock } from "@/components/site/mockups";
 import { ScrubText, SplitWords } from "@/components/site/split-words";
 import { getVerifiedSession } from "@/lib/auth";
 import { COMING_SOON, FEATURES, HOME_FAQ, PLANS, SECURITY_POINTS, STEPS, TRADES } from "./content";
+import { TRADE_PAGES } from "./trades-content";
 
 export default async function HomePage() {
   const signedIn = await getVerifiedSession()
@@ -31,7 +33,7 @@ export default async function HomePage() {
         <div
           aria-hidden
           data-parallax="-0.3"
-          className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[40rem] w-[64rem] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(76_151_255/0.35),transparent)]"
+          className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[40rem] w-[64rem] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,var(--site-glow-1),transparent)]"
         />
         <div className="mx-auto max-w-6xl px-4 text-center sm:px-6">
           <p className="site-in mx-auto mb-7 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground">
@@ -74,6 +76,12 @@ export default async function HomePage() {
 
         {/* La finestra dell'app si raddrizza mentre si scende; le bolle di stato fluttuano a profondità diverse */}
         <div className="relative mx-auto mt-16 max-w-6xl px-4 sm:mt-20 sm:px-6" data-progress>
+          <div
+            data-parallax="-0.12"
+            className="absolute -top-16 right-2 z-10 hidden md:block lg:-right-6"
+          >
+            <Seal text="Prova gratis · 30 giorni · Senza carta · " />
+          </div>
           <div className="site-tilt-in relative">
             <AppWindow label="Illustrazione: la panoramica di CantiereOS con le scadenze da gestire">
               <DashboardMock />
@@ -150,6 +158,65 @@ export default async function HomePage() {
             glow={["scade,", "cosa", "documenti.", "cantiere."]}
           />
         </p>
+      </section>
+
+      {/* --- Numeri che contano --------------------------------------------------------------- */}
+      <StatsStrip
+        stats={[
+          { value: 6, label: "strumenti in un solo gestionale" },
+          { value: 30, label: "giorni di prova gratuita, senza carta di credito" },
+          { value: 39, suffix: " €", label: "al mese per iniziare, IVA esclusa" },
+          { value: 0, label: "programmi da installare: basta il browser" },
+        ]}
+      />
+
+      {/* --- Per ogni mestiere ------------------------------------------------------------------ */}
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <SectionHeading
+            eyebrow="Mestieri"
+            title="Idraulici, elettricisti, tetti, cantieri."
+            lead="Ogni mestiere ha le sue scadenze e i suoi moduli. Scopri come CantiereOS lavora con il tuo."
+          />
+          <Link
+            href="/mestieri"
+            data-reveal
+            className="group inline-flex items-center gap-1.5 text-sm font-medium text-primary"
+          >
+            Tutti i mestieri
+            <ArrowRight
+              className="size-4 transition-transform group-hover:translate-x-1"
+              aria-hidden
+            />
+          </Link>
+        </div>
+        <ul className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {TRADE_PAGES.map((t, i) => {
+            const Icon = TRADE_ICONS[t.icon];
+            return (
+              <li key={t.id} data-reveal style={{ "--reveal-i": i % 4 } as React.CSSProperties}>
+                <Link
+                  href={`/mestieri#${t.id}`}
+                  data-cursor="APRI"
+                  className="site-spot trade-tile group flex h-full flex-col rounded-3xl border border-border bg-card p-6"
+                >
+                  <span className="trade-tile-icon grid size-11 place-items-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                    <Icon className="size-5" aria-hidden />
+                  </span>
+                  <span className="mt-5 text-lg font-semibold tracking-tight">{t.name}</span>
+                  <span className="mt-1.5 text-sm text-muted-foreground">{t.who}</span>
+                  <span className="mt-auto flex items-center gap-1 pt-5 text-sm font-medium text-primary opacity-70 transition-opacity group-hover:opacity-100">
+                    Scopri
+                    <ArrowRight
+                      className="size-3.5 transition-transform group-hover:translate-x-1"
+                      aria-hidden
+                    />
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
       {/* --- Capitolo laterale: le funzioni ------------------------------------------------------ */}
@@ -235,7 +302,7 @@ export default async function HomePage() {
       <section className="relative isolate overflow-clip py-24 sm:py-32">
         <div
           aria-hidden
-          className="pointer-events-none absolute top-1/2 right-0 -z-10 size-[40rem] -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(140_92_255/0.22),transparent)]"
+          className="pointer-events-none absolute top-1/2 right-0 -z-10 size-[40rem] -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,var(--site-glow-3),transparent)]"
           data-parallax="-0.2"
         />
         <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-2">
@@ -243,7 +310,7 @@ export default async function HomePage() {
             <SectionHeading
               eyebrow="In cantiere"
               title="Il telefono diventa il quaderno del tecnico."
-              lead="Agenda del giorno, moduli da compilare, documenti da mostrare al cliente. Bersagli grandi e testi chiari, pensati per chi lavora con i guanti."
+              lead="Agenda del giorno, moduli da compilare, documenti da mostrare al cliente. Pulsanti grandi e testi chiari, pensati per chi lavora con i guanti."
             />
             <ul className="mt-8 grid gap-3 sm:grid-cols-2">
               {[

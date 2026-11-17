@@ -24,9 +24,11 @@ test("la home pubblica si apre senza accesso e porta alle pagine del sito", asyn
   const nav = page.getByRole("navigation", { name: "Principale" });
   for (const [label, path, heading] of [
     ["Funzionalità", "/funzionalita", "Tutto quello che serve"],
+    ["Mestieri", "/mestieri", "Un gestionale,"],
     ["Chi siamo", "/chi-siamo", "Software serio"],
     ["Prezzi", "/prezzi", "Paghi per l'impresa"],
     ["Guida", "/guida", "Come si usa"],
+    ["Contatti", "/contatti", "Parliamo del tuo"],
   ] as const) {
     await nav.getByRole("link", { name: label }).click();
     await expect(page).toHaveURL(new RegExp(`${path}$`));
@@ -74,4 +76,28 @@ test("il menu del telefono si apre e si chiude", async ({ browser }) => {
   await expect(page).toHaveURL(/\/prezzi$/);
   await expect(menu).toBeHidden();
   await ctx.close();
+});
+
+test("WhatsApp e note legali sono raggiungibili da ogni pagina", async ({ page }) => {
+  await page.goto("/");
+  const whatsapp = page.getByRole("link", { name: /Scrivici su WhatsApp, \+39 327 392 8101/ });
+  await expect(whatsapp).toHaveAttribute("href", /^https:\/\/wa\.me\/393273928101\?text=/);
+  await expect(whatsapp).toHaveAttribute("target", "_blank");
+
+  const footer = page.getByRole("contentinfo");
+  await expect(
+    footer.getByRole("link", { name: /Sito realizzato da\s*Lume Studio/ }),
+  ).toBeVisible();
+  for (const [label, path, heading] of [
+    ["Privacy", "/privacy", "Come trattiamo i tuoi dati"],
+    ["Cookie", "/cookie", "Solo i cookie che servono"],
+    ["Termini di servizio", "/termini", "Le regole del servizio"],
+    ["Note legali", "/note-legali", "Chi c'è dietro CantiereOS"],
+  ] as const) {
+    await page.getByRole("contentinfo").getByRole("link", { name: label, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${path}$`));
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(heading);
+  }
+  // i dati aziendali mancanti si vedono, non vengono inventati
+  await expect(page.getByText(/ragione sociale \(da completare\)/).first()).toBeVisible();
 });

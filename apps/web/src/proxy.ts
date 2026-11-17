@@ -10,9 +10,15 @@ import { NextResponse, type NextRequest } from "next/server";
 const PUBLIC_PATHS = [
   // sito pubblico (app/(marketing)); "/" è gestita a parte
   "/funzionalita",
+  "/mestieri",
   "/chi-siamo",
   "/prezzi",
   "/guida",
+  "/contatti",
+  "/privacy",
+  "/cookie",
+  "/termini",
+  "/note-legali",
   "/accedi",
   "/registrati",
   "/password-dimenticata",

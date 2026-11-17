@@ -6,10 +6,26 @@
 
 export const NAV = [
   { href: "/funzionalita", label: "Funzionalità" },
+  { href: "/mestieri", label: "Mestieri" },
   { href: "/chi-siamo", label: "Chi siamo" },
   { href: "/prezzi", label: "Prezzi" },
   { href: "/guida", label: "Guida" },
+  { href: "/contatti", label: "Contatti" },
 ] as const;
+
+/** Contatti pubblici forniti dal committente (17/11/2026). */
+export const CONTACT = {
+  /** Numero WhatsApp in formato internazionale senza "+" (wa.me) */
+  whatsapp: "393273928101",
+  whatsappDisplay: "+39 327 392 8101",
+  whatsappMessage: "Buongiorno, vorrei avere maggiori informazioni su CantiereOS.",
+} as const;
+
+/** Chi ha realizzato il sito (riga in fondo a ogni pagina). */
+export const SITE_CREDIT = {
+  name: "Lume Studio",
+  href: "https://lume-os-gilt.vercel.app",
+} as const;
 
 /** Mestieri a cui è rivolto il prodotto (non clienti: nessun logo o nome di terzi). */
 export const TRADES = [
@@ -78,7 +94,7 @@ export const FEATURES: Feature[] = [
     text: "Certificati, contratti, schede tecniche e foto in un archivio privato, collegati al cliente, alla persona o alla scadenza a cui servono. Ogni nuova versione conserva la precedente.",
     points: [
       "Anteprima di PDF e immagini senza scaricare",
-      "Versioni: si vede sempre quale è valida",
+      "Versioni: si vede sempre qual è quella valida",
       "Accesso secondo il ruolo, mai link pubblici",
     ],
   },
@@ -89,7 +105,7 @@ export const FEATURES: Feature[] = [
     short: "Chi fa cosa e quando, con commenti sulla scheda.",
     text: "Assegna attività al personale, con data e priorità, e vedile nel calendario insieme alle scadenze. Ogni scheda ha i suoi commenti, così le decisioni non si perdono nelle chat.",
     points: [
-      "Agenda del giorno anche da telefono",
+      "Agenda del giorno anche dal telefono",
       "Commenti su clienti, persone, scadenze e attività",
       "Notifiche nell'app per ciò che ti riguarda",
     ],
@@ -176,7 +192,7 @@ export const PRINCIPLES = [
   },
   {
     title: "Pensato per chi lavora fuori",
-    text: "Bersagli grandi, testi chiari, tutto usabile dal telefono con i guanti e con il sole in faccia.",
+    text: "Pulsanti grandi, testi chiari, tutto usabile dal telefono con i guanti e con il sole in faccia.",
   },
   {
     title: "In italiano, per le imprese italiane",
@@ -324,10 +340,10 @@ export const HOME_FAQ: Faq[] = [
   },
   {
     q: "Posso gestire più aziende?",
-    a: "Sì. Con un solo accesso passi da un'azienda all'altra, e ogni azienda resta separata.",
+    a: "Sì. Con un solo accesso passi da un'azienda all'altra e ogni azienda resta separata.",
   },
   {
     q: "Fa anche la fatturazione elettronica?",
-    a: "Non ancora. La contabilità resta nel vostro programma attuale; il collegamento ai gestionali è in sviluppo.",
+    a: "Non ancora. La contabilità resta nel tuo programma attuale; il collegamento ai gestionali è in sviluppo.",
   },
 ];

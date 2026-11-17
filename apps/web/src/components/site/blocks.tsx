@@ -1,8 +1,12 @@
 import { ArrowRight, Plus } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/cn";
+import { Logo } from "@/components/brand/logo";
+import { CONTACT, SITE_CREDIT } from "@/app/(marketing)/content";
+import { LEGAL_LINKS } from "@/app/(marketing)/legal-content";
 import { SplitWords } from "./split-words";
+import { FooterWord } from "./extras";
+import { WhatsAppIcon, whatsappHref } from "./whatsapp";
 
 /** Apertura delle pagine interne: occhiello con riga che si disegna, titolo a parole, bagliore in parallasse. */
 export function PageIntro({
@@ -25,7 +29,7 @@ export function PageIntro({
       <div
         aria-hidden
         data-parallax="-0.25"
-        className="pointer-events-none absolute -top-48 left-1/2 -z-10 h-[34rem] w-[52rem] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(76_151_255/0.32),transparent)]"
+        className="pointer-events-none absolute -top-48 left-1/2 -z-10 h-[34rem] w-[52rem] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,var(--site-glow-1),transparent)]"
       />
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <p className="site-in mb-8 flex items-center gap-3 font-mono text-[11px] tracking-[0.3em] text-muted-foreground uppercase">
@@ -69,7 +73,7 @@ export function SectionHeading({
   center?: boolean;
 }) {
   return (
-    <div className={cn("max-w-3xl", center && "mx-auto text-center")}>
+    <div className={cn("max-w-3xl", center && "mx-auto text-center")} data-progress>
       <p
         data-reveal
         className={cn(
@@ -77,7 +81,7 @@ export function SectionHeading({
           center && "justify-center",
         )}
       >
-        <span className="h-px w-8 bg-primary" aria-hidden /> {eyebrow}
+        <span className="site-eyebrow-line h-px w-8 bg-primary" aria-hidden /> {eyebrow}
       </p>
       <h2
         data-reveal
@@ -131,7 +135,7 @@ export function CtaBand({ signedIn }: { signedIn: boolean }) {
     <section className="relative isolate overflow-clip py-28 sm:py-40" data-progress>
       <div
         aria-hidden
-        className="cos-glow pointer-events-none absolute top-1/2 left-1/2 -z-10 size-[44rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(34_195_255/0.28),transparent)]"
+        className="cos-glow pointer-events-none absolute top-1/2 left-1/2 -z-10 size-[44rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,var(--site-glow-2),transparent)]"
       />
       <div className="site-grid" aria-hidden />
       <div className="mx-auto max-w-5xl px-4 text-center sm:px-6">
@@ -171,6 +175,7 @@ export function SiteFooter({ contactEmail }: { contactEmail: string | null }) {
       title: "Prodotto",
       links: [
         ["/funzionalita", "Funzionalità"],
+        ["/mestieri", "Mestieri"],
         ["/prezzi", "Prezzi"],
         ["/guida", "Guida all'uso"],
       ],
@@ -180,7 +185,7 @@ export function SiteFooter({ contactEmail }: { contactEmail: string | null }) {
       links: [
         ["/chi-siamo", "Chi siamo"],
         ["/chi-siamo#come-lavoriamo", "Come lavoriamo"],
-        ["/chi-siamo#contatti", "Contatti"],
+        ["/contatti", "Contatti"],
       ],
     },
     {
@@ -190,23 +195,33 @@ export function SiteFooter({ contactEmail }: { contactEmail: string | null }) {
         ["/registrati", "Registra l'azienda"],
       ],
     },
+    { title: "Note legali", links: LEGAL_LINKS.map((l) => [l.href, l.label] as const) },
   ] as const;
   return (
-    <footer className="relative border-t border-border">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_repeat(3,1fr)]">
+    <footer className="relative border-t border-border" data-progress>
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
         <div>
-          <Link href="/" className="flex items-center gap-2.5 font-semibold">
-            <Image src="/brand/logo-mark.png" alt="" width={32} height={31} className="size-8" />
-            CantiereOS
+          <Link href="/" aria-label="CantiereOS, pagina iniziale" className="inline-flex">
+            <Logo animated />
           </Link>
           <p className="mt-4 max-w-xs text-sm text-muted-foreground">
             Il gestionale per imprese edili e di servizi tecnici. Scadenze, moduli, documenti e
             squadre in un solo posto.
           </p>
+          <a
+            href={whatsappHref()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
+          >
+            <WhatsAppIcon className="size-4 text-[#25d366]" />
+            WhatsApp {CONTACT.whatsappDisplay}
+            <span className="sr-only"> (si apre in una nuova scheda)</span>
+          </a>
           {contactEmail && (
             <a
               href={`mailto:${contactEmail}`}
-              className="mt-4 inline-block text-sm text-primary hover:underline"
+              className="mt-2 block text-sm text-primary hover:underline"
             >
               {contactEmail}
             </a>
@@ -228,9 +243,22 @@ export function SiteFooter({ contactEmail }: { contactEmail: string | null }) {
         ))}
       </div>
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-6 text-xs text-muted-foreground sm:px-6">
-        <p>© {new Date().getFullYear()} CantiereOS. Prezzi IVA esclusa.</p>
-        <p>Informativa privacy e termini di servizio in preparazione.</p>
+        <p>
+          © {new Date().getFullYear()} CantiereOS. Tutti i diritti riservati. Prezzi IVA esclusa.
+        </p>
+        <a
+          href={SITE_CREDIT.href}
+          target="_blank"
+          rel="noopener"
+          className="site-credit group inline-flex items-center gap-2 hover:text-foreground"
+        >
+          Sito realizzato da
+          <span className="site-credit-name font-semibold text-foreground">{SITE_CREDIT.name}</span>
+          <span className="site-credit-dot size-1.5 rounded-full bg-primary" aria-hidden />
+          <span className="sr-only"> (si apre in una nuova scheda)</span>
+        </a>
       </div>
+      <FooterWord />
     </footer>
   );
 }

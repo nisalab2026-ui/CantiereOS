@@ -59,7 +59,7 @@ export const GUIDE: GuideTopic[] = [
           "- Inserisci i clienti (e le loro sedi) in «Clienti».",
           "- Aggiungi personale e squadre, poi invita i colleghi da «Utenti e accessi».",
           "- Carica scadenze e documenti, così la Panoramica ti avvisa per tempo.",
-          "- Se usate moduli cartacei, trasformali in modelli in «Moduli» → «Modelli».",
+          "- Se usi moduli cartacei, trasformali in modelli in «Moduli» → «Modelli».",
         ],
       },
       {

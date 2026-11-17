@@ -86,6 +86,66 @@ export function MotionRoot() {
     return () => io.disconnect();
   }, [pathname]);
 
+  // Numeri con data-count: contano da 0 al valore quando entrano nello schermo (il valore vero è già
+  // scritto nel markup, quindi senza JavaScript o con "riduci movimento" si legge subito).
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const frames = new Set<number>();
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          io.unobserve(entry.target);
+          const el = entry.target as HTMLElement;
+          const to = Number(el.dataset.count);
+          if (!Number.isFinite(to) || to === 0) continue;
+          const start = performance.now();
+          const duration = 1400;
+          const tick = (now: number) => {
+            const t = Math.min(1, (now - start) / duration);
+            el.textContent = String(Math.round(to * (1 - Math.pow(1 - t, 4))));
+            if (t < 1) frames.add(requestAnimationFrame(tick));
+          };
+          el.textContent = "0";
+          frames.add(requestAnimationFrame(tick));
+        }
+      },
+      { threshold: 0.6 },
+    );
+    document.querySelectorAll("[data-count]").forEach((el) => io.observe(el));
+    return () => {
+      io.disconnect();
+      frames.forEach(cancelAnimationFrame);
+    };
+  }, [pathname]);
+
+  // Indice con data-scrollspy: si accende la voce della sezione che si sta leggendo.
+  useEffect(() => {
+    const nav = document.querySelector<HTMLElement>("[data-scrollspy]");
+    if (!nav) return;
+    const links = Array.from(nav.querySelectorAll<HTMLAnchorElement>('a[href^="#"]'));
+    const sections = links
+      .map((a) => document.getElementById(decodeURIComponent(a.hash.slice(1))))
+      .filter((el): el is HTMLElement => el !== null);
+    const mark = (id: string) =>
+      links.forEach((a) =>
+        a.hash === `#${id}`
+          ? a.setAttribute("aria-current", "true")
+          : a.removeAttribute("aria-current"),
+      );
+    const io = new IntersectionObserver(
+      (entries) => {
+        const hit = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (hit) mark(hit.target.id);
+      },
+      { rootMargin: "-20% 0px -65% 0px" },
+    );
+    sections.forEach((s) => io.observe(s));
+    return () => io.disconnect();
+  }, [pathname]);
+
   // I controlli con data-magnetic si avvicinano di qualche pixel al puntatore del mouse.
   useEffect(() => {
     if (

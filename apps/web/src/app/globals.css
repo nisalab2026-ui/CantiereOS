@@ -442,3 +442,80 @@ body::before {
     animation: none !important;
   }
 }
+
+/* --- Marchio (components/brand/logo.tsx) --------------------------------------------------------
+ * Con .cos-logo-animated: la "C" si traccia, gli edifici salgono uno dopo l'altro, un riflesso passa
+ * ogni tanto sulla tessera; al passaggio del puntatore gli edifici rimbalzano. */
+.cos-logo {
+  overflow: visible;
+}
+.cos-logo-bar {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+.cos-logo-sweep {
+  opacity: 0;
+}
+.cos-logo-animated .cos-logo-arc {
+  stroke-dasharray: 100;
+  animation: cos-logo-draw 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+.cos-logo-animated .cos-logo-bar {
+  animation: cos-logo-rise 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: calc(0.45s + var(--i, 0) * 0.13s);
+}
+.cos-logo-animated .cos-logo-sweep {
+  animation: cos-logo-sweep 6s ease-in-out 1.6s infinite;
+}
+:is(a, button):hover .cos-logo-animated .cos-logo-bar {
+  animation: cos-logo-bounce 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: calc(var(--i, 0) * 0.07s);
+}
+@keyframes cos-logo-draw {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes cos-logo-rise {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes cos-logo-bounce {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  40% {
+    transform: scaleY(0.55);
+  }
+  75% {
+    transform: scaleY(1.12);
+  }
+}
+@keyframes cos-logo-sweep {
+  0%,
+  70% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  72% {
+    opacity: 1;
+  }
+  90%,
+  100% {
+    opacity: 0;
+    transform: translateX(64px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cos-logo-animated .cos-logo-sweep {
+    animation: none !important;
+  }
+}

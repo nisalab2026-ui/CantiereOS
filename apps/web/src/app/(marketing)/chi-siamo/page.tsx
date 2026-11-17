@@ -1,6 +1,7 @@
 import { ArrowRight, Mail } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { WhatsAppLink } from "@/components/site/whatsapp";
 import { CtaBand, PageIntro, SectionHeading } from "@/components/site/blocks";
 import { ScrubText } from "@/components/site/split-words";
 import { getVerifiedSession } from "@/lib/auth";
@@ -21,7 +22,7 @@ const METHOD = [
   {
     n: "02",
     title: "Portiamo la carta nel gestionale",
-    text: "I vostri moduli diventano modelli da compilare sul telefono, con i dati di cliente e cantiere già inseriti.",
+    text: "I tuoi moduli diventano modelli da compilare sul telefono, con i dati di cliente e cantiere già inseriti.",
   },
   {
     n: "03",
@@ -31,7 +32,7 @@ const METHOD = [
   {
     n: "04",
     title: "Restiamo raggiungibili",
-    text: "Guida in ogni sezione, risposte in italiano e miglioramenti continui in base a quello che ci segnalate.",
+    text: "Guida in ogni sezione, risposte in italiano e miglioramenti continui in base a quello che ci segnali.",
   },
 ];
 
@@ -121,8 +122,8 @@ export default async function AboutPage() {
               Vuoi vedere CantiereOS sui tuoi dati?
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Registra l&apos;azienda e prova con la tua squadra, oppure scrivici per un avvio
-              guidato.
+              Registra l&apos;azienda e prova con la tua squadra, oppure scrivici su WhatsApp per
+              maggiori informazioni o per un avvio guidato.
             </p>
           </div>
           <div className="flex flex-col gap-3">
@@ -134,6 +135,7 @@ export default async function AboutPage() {
               {signedIn ? "Apri il gestionale" : "Registra la tua azienda"}
               <ArrowRight className="size-4" aria-hidden />
             </Link>
+            <WhatsAppLink className="justify-center" />
             {contactEmail && (
               <a
                 href={`mailto:${contactEmail}`}

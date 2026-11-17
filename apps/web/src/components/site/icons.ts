@@ -1,8 +1,14 @@
 import {
+  Building,
   CalendarClock,
   ClipboardCheck,
+  DoorOpen,
   Download,
+  Droplets,
+  FireExtinguisher,
   FolderOpen,
+  HardHat,
+  House,
   ListTodo,
   type LucideIcon,
   Search,
@@ -10,8 +16,11 @@ import {
   Smartphone,
   Users,
   Wallet,
+  Wrench,
+  Zap,
 } from "lucide-react";
 import type { FeatureIcon } from "@/app/(marketing)/content";
+import type { TradeIcon } from "@/app/(marketing)/trades-content";
 
 export const FEATURE_ICONS: Record<FeatureIcon, LucideIcon> = {
   deadlines: CalendarClock,
@@ -24,4 +33,15 @@ export const FEATURE_ICONS: Record<FeatureIcon, LucideIcon> = {
   export: Download,
   search: Search,
   phone: Smartphone,
+};
+
+export const TRADE_ICONS: Record<TradeIcon, LucideIcon> = {
+  edili: HardHat,
+  elettrici: Zap,
+  idraulici: Droplets,
+  coperture: House,
+  manutenzioni: Wrench,
+  antincendio: FireExtinguisher,
+  serramenti: DoorOpen,
+  facility: Building,
 };

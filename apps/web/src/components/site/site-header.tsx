@@ -1,18 +1,17 @@
 "use client";
 
-import { ArrowRight, Menu, Moon, Sun, X } from "lucide-react";
-import Image from "next/image";
+import { ArrowRight, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
-import { setTheme } from "@/app/(app)/shell-actions";
+import { useEffect, useState } from "react";
+import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/cn";
 
 type NavItem = { href: string; label: string };
 
 /**
  * Intestazione del sito pubblico: un'isola di vetro che si riempie appena si scorre, menu a tutto schermo
- * sul telefono, tema chiaro/scuro (stesso cookie del gestionale) e accesso al gestionale.
+ * sul telefono, marchio animato e accesso al gestionale. Il sito è sempre chiaro (palette bianca e verde).
  */
 export function SiteHeader({ nav, signedIn }: { nav: readonly NavItem[]; signedIn: boolean }) {
   const pathname = usePathname();
@@ -50,20 +49,8 @@ export function SiteHeader({ nav, signedIn }: { nav: readonly NavItem[]; signedI
       data-open={open || undefined}
     >
       <div className="site-header-bar mx-auto flex h-14 max-w-6xl items-center gap-2 rounded-2xl pr-2 pl-3 sm:pl-4">
-        <Link
-          href="/"
-          className="flex items-center gap-2.5 font-semibold tracking-tight"
-          aria-label="CantiereOS, home"
-        >
-          <Image
-            src="/brand/logo-mark.png"
-            alt=""
-            width={32}
-            height={31}
-            className="size-8"
-            priority
-          />
-          <span className="text-[1.05rem]">CantiereOS</span>
+        <Link href="/" aria-label="CantiereOS, pagina iniziale" className="text-[1.05rem]">
+          <Logo animated />
         </Link>
 
         <nav aria-label="Principale" className="ml-6 hidden md:block">
@@ -83,7 +70,6 @@ export function SiteHeader({ nav, signedIn }: { nav: readonly NavItem[]; signedI
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5">
-          <ThemeToggle />
           {!signedIn && (
             <Link
               href="/accedi"
@@ -162,43 +148,5 @@ export function SiteHeader({ nav, signedIn }: { nav: readonly NavItem[]; signedI
         </div>
       </div>
     </header>
-  );
-}
-
-/** Chiaro/scuro: aggiorna subito la classe su <html> e salva la scelta nel cookie del gestionale. */
-function ThemeToggle() {
-  const [dark, setDark] = useState<boolean | null>(null);
-  const [, start] = useTransition();
-  useEffect(() => {
-    const root = document.documentElement;
-    const isDark = root.classList.contains("dark")
-      ? true
-      : root.classList.contains("light")
-        ? false
-        : !window.matchMedia("(prefers-color-scheme: light)").matches;
-    setDark(isDark);
-  }, []);
-  const toggle = () => {
-    const next = !dark;
-    setDark(next);
-    const root = document.documentElement;
-    root.classList.remove("dark", "light", "system");
-    root.classList.add(next ? "dark" : "light");
-    start(() => setTheme(next ? "dark" : "light"));
-  };
-  return (
-    <button
-      type="button"
-      onClick={toggle}
-      className="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-      aria-label={dark ? "Passa al tema chiaro" : "Passa al tema scuro"}
-      title={dark ? "Tema chiaro" : "Tema scuro"}
-    >
-      {dark === false ? (
-        <Moon className="size-4" aria-hidden />
-      ) : (
-        <Sun className="size-4" aria-hidden />
-      )}
-    </button>
   );
 }

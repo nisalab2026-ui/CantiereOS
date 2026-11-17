@@ -35,7 +35,7 @@ export function AppWindow({
       role="img"
       aria-label={label}
       className={cn(
-        "overflow-hidden rounded-2xl border border-border bg-card shadow-[0_40px_120px_-40px_rgb(36_86_230/0.55)]",
+        "overflow-hidden rounded-2xl border border-border bg-card shadow-[0_40px_120px_-40px_var(--site-shadow)]",
         className,
       )}
     >
@@ -333,7 +333,7 @@ function MiniCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card text-left shadow-[0_30px_80px_-40px_rgb(36_86_230/0.5)]">
+    <div className="overflow-hidden rounded-xl border border-border bg-card text-left shadow-[0_30px_80px_-40px_var(--site-shadow)]">
       <div className="flex items-center gap-2 border-b border-border px-3 py-2.5">
         <Icon className="size-3.5 text-primary" />
         <span className="text-xs font-semibold">{title}</span>
@@ -375,7 +375,7 @@ export function PhoneMock({ className }: { className?: string }) {
       role="img"
       aria-label="Illustrazione: l'agenda del tecnico sul telefono"
       className={cn(
-        "relative mx-auto w-[260px] rounded-[2.4rem] border border-border bg-card p-2.5 shadow-[0_40px_120px_-30px_rgb(36_86_230/0.6)]",
+        "relative mx-auto w-[260px] rounded-[2.4rem] border border-border bg-card p-2.5 shadow-[0_40px_120px_-30px_var(--site-shadow)]",
         className,
       )}
     >

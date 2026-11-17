@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { SiteFooter } from "@/components/site/blocks";
 import { MotionRoot, MOTION_BOOT_SCRIPT } from "@/components/site/motion/motion-root";
 import { SiteHeader } from "@/components/site/site-header";
+import { WhatsAppButton } from "@/components/site/whatsapp";
 import { getVerifiedSession } from "@/lib/auth";
 import { NAV } from "./content";
 import "./site.css";
@@ -38,6 +39,7 @@ export default async function MarketingLayout({ children }: { children: React.Re
       <SiteHeader nav={NAV} signedIn={signedIn} />
       <main id="contenuto">{children}</main>
       <SiteFooter contactEmail={contactEmail} />
+      <WhatsAppButton />
       <MotionRoot />
     </div>
   );
