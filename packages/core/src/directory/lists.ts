@@ -3,6 +3,7 @@ import { requirePermission, type TenantAccess } from "../auth/access";
 import { AuthError, pgCode } from "../auth/errors";
 import type { UserTx } from "../db/transaction";
 import { likePattern } from "../workspace/search";
+import { optional, parseInput, ValidationError } from "../validation";
 
 /**
  * Liste delle anagrafiche (clienti, fornitori, personale, squadre) con
@@ -244,12 +245,6 @@ export function listTeams(tx: UserTx, access: TenantAccess, q: ListQuery): Promi
 
 // --- Creazione cliente ---------------------------------------------------------
 
-const optional = <T extends z.ZodType>(schema: T) =>
-  z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    schema.optional(),
-  );
-
 export const createCustomerInput = z.object({
   displayName: z.string().trim().min(1, "Inserisci il nome").max(300),
   partyType: z.enum(["company", "individual", "public_entity"]),
@@ -280,13 +275,6 @@ export const createCustomerInput = z.object({
 
 export type CreateCustomerInput = z.input<typeof createCustomerInput>;
 
-export class ValidationError extends Error {
-  override readonly name = "ValidationError";
-  constructor(readonly fieldErrors: Record<string, string>) {
-    super("dati non validi");
-  }
-}
-
 /** Crea un cliente nell'azienda attiva (tenant dal server, mai dal modulo). */
 export async function createCustomer(
   tx: UserTx,
@@ -294,16 +282,7 @@ export async function createCustomer(
   input: CreateCustomerInput,
 ): Promise<{ id: string }> {
   requirePermission(access, "customers.write");
-  const parsed = createCustomerInput.safeParse(input);
-  if (!parsed.success) {
-    const fieldErrors: Record<string, string> = {};
-    for (const issue of parsed.error.issues) {
-      const key = String(issue.path[0] ?? "form");
-      fieldErrors[key] ??= issue.message;
-    }
-    throw new ValidationError(fieldErrors);
-  }
-  const d = parsed.data;
+  const d = parseInput(createCustomerInput, input);
   await tx.query("savepoint create_customer");
   try {
     const { rows } = await tx.query<{ id: string }>(

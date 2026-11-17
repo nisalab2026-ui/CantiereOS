@@ -205,6 +205,32 @@ chi li gestisce non può concedere permessi che non possiede.
 Tutte le funzioni `SECURITY DEFINER` hanno `search_path = ''`; nessuna è eseguibile da `PUBLIC` o
 `anon` (verificato dai test).
 
+### Scadenziario e storico (migrazione `20261117100000_deadlines_history`)
+
+**ADR-008 — Scadenziario unico.** Certificazioni, manutenzioni, controlli periodici, scadenze di
+documenti, pagamenti e contratti stanno in **una sola tabella `deadlines`** con `kind`. Motivo:
+sono la stessa cosa (una data, un responsabile, uno stato, un preavviso, un'eventuale ricorrenza)
+e un'unica tabella dà uno scadenziario, una dashboard e un sistema di avvisi coerenti. Campi
+specifici di un tipo, se serviranno, andranno in tabelle collegate 1:1, non in colonne generiche.
+
+- Collegamento al massimo a **un** soggetto con FK composte esplicite (`customer_id`,
+  `supplier_id`, `employee_id`, `team_id` + `check num_nonnulls(...) <= 1`): niente coppie
+  polimorfiche `entity_type/entity_id` senza integrità.
+- `responsible_user_id` → FK composta su `memberships (tenant_id, user_id)`.
+- Lo stato "in ritardo / in scadenza" **non si salva**: si calcola da `due_date` e
+  `remind_days_before`, quindi non può mai essere disallineato.
+- `completed_at` / `completed_by` li decide il trigger `deadline_completion_guard`, non il client.
+- Completare una scadenza ricorrente crea la successiva con `previous_deadline_id` (indice univoco:
+  al massimo una successiva): la catena delle ricorrenze resta consultabile.
+- Permessi `deadlines.read|write|delete` (delete con MFA). Ruolo di sistema **Sola consultazione**
+  (`viewer`) reintrodotto con soli permessi di lettura.
+- `notifications.dedupe_key` + indice univoco `(tenant_id, user_id, dedupe_key)`: lo stesso evento
+  non genera mai due notifiche. `app.generate_deadline_notifications(tenant)` è idempotente; oggi
+  la richiama l'app a ogni caricamento della shell, in seguito un job pianificato.
+- `app.record_history(tabella, id)`: cronologia di un elemento (e delle scadenze collegate) per chi
+  può **leggere quell'elemento**, senza dover avere `audit.read` (che resta per il registro completo).
+  Tabelle ammesse in whitelist; per un elemento di un'altra azienda restituisce zero righe.
+
 ## 4. Strategia multi-tenant
 
 1. **Identità verificata:** `auth.uid()` deriva dal JWT firmato da Supabase Auth.

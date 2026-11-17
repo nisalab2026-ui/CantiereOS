@@ -4,6 +4,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Command } from "cmdk";
 import {
   Building2,
+  CalendarClock,
   CornerDownLeft,
   HardHat,
   Search,
@@ -19,10 +20,11 @@ import { visibleNav } from "./navigation";
 
 const KIND: Record<SearchKind, { label: string; icon: LucideIcon; href: (id: string) => string }> =
   {
-    customer: { label: "Clienti", icon: Building2, href: (id) => `/app/clienti?id=${id}` },
+    customer: { label: "Clienti", icon: Building2, href: (id) => `/app/clienti/${id}` },
     supplier: { label: "Fornitori", icon: Truck, href: (id) => `/app/fornitori?id=${id}` },
-    employee: { label: "Personale", icon: HardHat, href: (id) => `/app/personale?id=${id}` },
+    employee: { label: "Personale", icon: HardHat, href: (id) => `/app/personale/${id}` },
     team: { label: "Squadre", icon: UsersRound, href: (id) => `/app/squadre?id=${id}` },
+    deadline: { label: "Scadenze", icon: CalendarClock, href: (id) => `/app/scadenze/${id}` },
   };
 
 /**

@@ -8,3 +8,8 @@ export * from "./workspace/notifications";
 export * from "./workspace/search";
 export * from "./workspace/dashboard";
 export * from "./directory/lists";
+export * from "./validation";
+export * from "./history/labels";
+export * from "./history/history";
+export * from "./operations/deadlines";
+export * from "./directory/records";

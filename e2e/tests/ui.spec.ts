@@ -62,8 +62,8 @@ test("ricerca globale con Ctrl K porta al cliente", async ({ page }) => {
   const result = page.getByTestId("search-result").filter({ hasText: "Bianchi Costruzioni Srl" });
   await expect(result).toBeVisible();
   await result.click();
-  await expect(page).toHaveURL(/\/app\/clienti\?id=[0-9a-f-]{36}$/);
-  await expect(page.getByTestId("data-table")).toContainText("Bianchi Costruzioni Srl");
+  await expect(page).toHaveURL(/\/app\/clienti\/[0-9a-f-]{36}$/);
+  await expect(page.getByTestId("customer-title")).toHaveText("Bianchi Costruzioni Srl");
 });
 
 test("tema scuro e menu compresso restano dopo il ricaricamento", async ({ page }) => {

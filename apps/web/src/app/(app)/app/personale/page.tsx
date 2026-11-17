@@ -1,6 +1,9 @@
 import { EMPLOYEE_SORTS, listEmployees, type EmployeeRow } from "@cantiereos/core";
 import { HardHat } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Notice } from "@/components/ui";
+import { EmployeeDialog } from "./employee-form";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -25,7 +28,7 @@ export default async function EmployeesPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const sp = await searchParams;
+  const { creato, ...sp } = await searchParams;
   const { access } = await getAppContext();
   const gate = sectionGate(access, "employees.read");
   if (gate !== "ok") return <ForbiddenState needsMfa={gate === "mfa"} />;
@@ -57,9 +60,13 @@ export default async function EmployeesPage({
       sortKey: "name",
       render: (r) => (
         <div>
-          <p className="font-medium">
+          <Link
+            href={`${PATH}/${r.id}`}
+            className="font-medium hover:underline"
+            data-testid="employee-link"
+          >
             {r.lastName} {r.firstName}
-          </p>
+          </Link>
           {r.code && <p className="font-mono text-xs text-muted-foreground">{r.code}</p>}
         </div>
       ),
@@ -102,7 +109,14 @@ export default async function EmployeesPage({
 
   return (
     <div>
-      <PageHeader title="Personale" description="Dipendenti e collaboratori dell'azienda attiva." />
+      <PageHeader
+        title="Personale"
+        description="Dipendenti e collaboratori dell'azienda attiva."
+        actions={
+          access.permissions.has("employees.write") ? <EmployeeDialog mode="create" /> : undefined
+        }
+      />
+      {creato === "1" && <Notice>Persona aggiunta.</Notice>}
       <Card className="overflow-hidden">
         <FilterBar
           pathname={PATH}

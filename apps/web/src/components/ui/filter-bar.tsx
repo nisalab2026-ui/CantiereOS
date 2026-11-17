@@ -8,6 +8,8 @@ export interface FilterDef {
   name: string;
   label: string;
   options: { value: string; label: string }[];
+  /** Testo dell'opzione vuota (default "<etichetta>: tutti"). */
+  emptyLabel?: string;
 }
 
 /**
@@ -20,15 +22,19 @@ export function FilterBar({
   filters = [],
   values = {},
   placeholder = "Cerca…",
+  dateRange,
 }: {
   pathname: string;
   q: string;
   filters?: FilterDef[];
   values?: Record<string, string | undefined>;
   placeholder?: string;
+  /** Intervallo di date (parametri from/to nell'URL). */
+  dateRange?: { label: string; from?: string | undefined; to?: string | undefined };
 }) {
   const form = useRef<HTMLFormElement>(null);
-  const active = q !== "" || Object.values(values).some(Boolean);
+  const active =
+    q !== "" || Object.values(values).some(Boolean) || Boolean(dateRange?.from || dateRange?.to);
   return (
     <form
       ref={form}
@@ -61,7 +67,7 @@ export function FilterBar({
           onChange={() => form.current?.requestSubmit()}
           className="h-9 rounded-sm border border-input bg-card px-2 text-sm focus-visible:border-primary focus-visible:outline-none"
         >
-          <option value="">{f.label}: tutti</option>
+          <option value="">{f.emptyLabel ?? `${f.label}: tutti`}</option>
           {f.options.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
@@ -69,6 +75,29 @@ export function FilterBar({
           ))}
         </select>
       ))}
+      {dateRange && (
+        <fieldset className="flex w-full min-w-0 items-center gap-1.5 text-sm text-muted-foreground sm:w-auto">
+          <legend className="sr-only">{dateRange.label}</legend>
+          <span aria-hidden>{dateRange.label}</span>
+          <input
+            type="date"
+            name="from"
+            defaultValue={dateRange.from ?? ""}
+            aria-label={`${dateRange.label}: dal`}
+            onChange={() => form.current?.requestSubmit()}
+            className="h-9 min-w-0 flex-1 rounded-sm border border-input bg-card px-2 text-sm text-foreground focus-visible:border-primary focus-visible:outline-none sm:flex-none"
+          />
+          <span aria-hidden>–</span>
+          <input
+            type="date"
+            name="to"
+            defaultValue={dateRange.to ?? ""}
+            aria-label={`${dateRange.label}: al`}
+            onChange={() => form.current?.requestSubmit()}
+            className="h-9 min-w-0 flex-1 rounded-sm border border-input bg-card px-2 text-sm text-foreground focus-visible:border-primary focus-visible:outline-none sm:flex-none"
+          />
+        </fieldset>
+      )}
       {active && (
         <Link
           href={pathname}

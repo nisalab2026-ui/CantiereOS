@@ -157,6 +157,7 @@ describe("Ruoli iniziali", () => {
       back_office: "Amministrazione",
       technician: "Tecnico",
       external_client: "Cliente esterno",
+      viewer: "Sola consultazione",
     });
   });
 

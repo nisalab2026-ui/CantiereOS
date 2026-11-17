@@ -1,6 +1,7 @@
 import { CUSTOMER_SORTS, listCustomers, type CustomerRow } from "@cantiereos/core";
 import { Building2 } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Notice } from "@/components/ui";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -60,7 +61,13 @@ export default async function CustomersPage({
       sortKey: "name",
       render: (r) => (
         <div>
-          <p className="font-medium">{r.displayName}</p>
+          <Link
+            href={`${PATH}/${r.id}`}
+            className="font-medium hover:underline"
+            data-testid="customer-link"
+          >
+            {r.displayName}
+          </Link>
           {r.vatNumber && <p className="font-mono text-xs text-muted-foreground">{r.vatNumber}</p>}
         </div>
       ),

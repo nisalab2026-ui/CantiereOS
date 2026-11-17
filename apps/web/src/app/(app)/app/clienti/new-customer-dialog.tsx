@@ -3,7 +3,7 @@
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
-import { SubmitButton } from "@/components/forms";
+import { KeepValuesForm, SubmitButton } from "@/components/forms";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { FormField, Input, Select } from "@/components/ui/input";
@@ -39,7 +39,7 @@ export function NewCustomerDialog() {
 
 function CustomerForm({ onDone }: { onDone: () => void }) {
   const router = useRouter();
-  const [state, action] = useActionState<FormState, FormData>(createCustomerAction, {});
+  const [state, action, pending] = useActionState<FormState, FormData>(createCustomerAction, {});
   useEffect(() => {
     if (state.createdId) {
       onDone();
@@ -54,7 +54,7 @@ function CustomerForm({ onDone }: { onDone: () => void }) {
     "aria-describedby": err[name] ? `c-${name}-error` : undefined,
   });
   return (
-    <form action={action} className="space-y-4" noValidate>
+    <KeepValuesForm dispatch={action} className="space-y-4">
       <FormField
         id="c-displayName"
         label="Nome o ragione sociale"
@@ -120,8 +120,8 @@ function CustomerForm({ onDone }: { onDone: () => void }) {
             Annulla
           </Button>
         </DialogClose>
-        <SubmitButton>Crea cliente</SubmitButton>
+        <SubmitButton pending={pending}>Crea cliente</SubmitButton>
       </div>
-    </form>
+    </KeepValuesForm>
   );
 }

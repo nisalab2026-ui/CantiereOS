@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import type { FormState } from "@/lib/messages";
@@ -51,15 +51,49 @@ export function SubmitButton({
   children,
   variant = "primary",
   className,
+  pending: pendingProp,
 }: {
   children: React.ReactNode;
   variant?: "primary" | "secondary" | "danger";
   className?: string;
+  /** Stato di invio esplicito (per KeepValuesForm, dove useFormStatus non vale). */
+  pending?: boolean;
 }) {
-  const { pending } = useFormStatus();
+  const status = useFormStatus();
+  const pending = pendingProp ?? status.pending;
   return (
     <Button type="submit" variant={variant} loading={pending} className={className}>
       {children}
     </Button>
+  );
+}
+
+/**
+ * Modulo che NON svuota i campi dopo l'invio: se il server segnala un errore,
+ * l'utente ritrova tutto ciò che aveva scritto. (Con `action={…}` React
+ * azzera il modulo a ogni invio.) `dispatch` è il secondo valore di useActionState.
+ */
+export function KeepValuesForm({
+  dispatch,
+  className,
+  children,
+}: {
+  dispatch: (form: FormData) => void;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const [, start] = useTransition();
+  return (
+    <form
+      noValidate
+      className={className}
+      onSubmit={(e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        start(() => dispatch(data));
+      }}
+    >
+      {children}
+    </form>
   );
 }
