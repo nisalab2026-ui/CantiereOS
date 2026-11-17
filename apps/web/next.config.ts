@@ -6,6 +6,9 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self)" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  // HTTPS obbligatorio per due anni sul dominio (ignorato dai browser su http/localhost).
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+  // La Content-Security-Policy con nonce per richiesta è impostata in src/proxy.ts.
 ];
 
 const config: NextConfig = {
