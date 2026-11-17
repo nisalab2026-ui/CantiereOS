@@ -22,6 +22,11 @@ const schema = z
       .string()
       .regex(/^[a-z0-9][a-z0-9-]{2,62}$/)
       .optional(),
+    /** Bucket privato delle foto dei moduli (separato dall'archivio documentale). */
+    FORMS_BUCKET: z
+      .string()
+      .regex(/^[a-z0-9][a-z0-9-]{2,62}$/)
+      .optional(),
   })
   .refine((e) => Boolean(e.SUPABASE_JWT_SECRET) !== Boolean(e.SUPABASE_JWKS_URL), {
     message: "Imposta esattamente una tra SUPABASE_JWT_SECRET e SUPABASE_JWKS_URL",

@@ -25,7 +25,7 @@ export default async function FormTemplatePage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const { access } = await getAppContext();
+  const { access, company } = await getAppContext();
   const gate = sectionGate(access, "forms.read");
   if (gate !== "ok") return <ForbiddenState needsMfa={gate === "mfa"} />;
   const canManage = access.permissions.has("forms.manage");
@@ -86,6 +86,7 @@ export default async function FormTemplatePage({
             id={t.id}
             version={new Date(t.updatedAt).toISOString()}
             published={Boolean(t.currentVersion)}
+            companyName={company.name}
             initial={{
               name: t.name,
               description: t.description ?? "",
@@ -96,7 +97,17 @@ export default async function FormTemplatePage({
         ) : (
           <Card>
             <CardBody>
-              <FormDocument definition={t.draftDefinition} values={{}} />
+              <FormDocument
+                definition={t.draftDefinition}
+                values={{}}
+                blank
+                heading={{
+                  kicker: FORM_CATEGORY_LABELS[t.category],
+                  title: t.name,
+                  description: t.description ?? undefined,
+                  company: company.name,
+                }}
+              />
             </CardBody>
           </Card>
         )}

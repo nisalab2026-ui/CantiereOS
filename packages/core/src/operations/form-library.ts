@@ -181,6 +181,93 @@ const LIFELINE: FormLibraryEntry = {
   },
 };
 
-export const FORM_LIBRARY: readonly FormLibraryEntry[] = [LIFELINE];
+/** Rapportino di fine giornata dal cantiere: squadra, ore, lavori, materiali e foto. */
+const DAILY_REPORT: FormLibraryEntry = {
+  key: "rapportino-giornaliero",
+  name: "Rapportino giornaliero",
+  category: "report",
+  description:
+    "Il resoconto della giornata in cantiere, da compilare dal telefono: chi c'era e per quante ore, cosa è stato fatto, materiali, problemi e foto. Cliente, cantiere e data arrivano da soli.",
+  definition: {
+    sections: [
+      {
+        id: "cantiere",
+        title: "Cantiere",
+        description: "Compilati in automatico dal cliente e dalla sede scelti.",
+        fields: [
+          { id: "cliente", type: "auto", label: "Cliente", source: "customer.name" },
+          { id: "cantiere", type: "auto", label: "Cantiere", source: "site.name" },
+          { id: "indirizzo", type: "auto", label: "Indirizzo", source: "site.address" },
+          { id: "data", type: "auto", label: "Data", source: "today" },
+          { id: "compilato_da", type: "auto", label: "Compilato da", source: "user.name" },
+          {
+            id: "meteo",
+            type: "choice",
+            label: "Meteo",
+            options: ["Sereno", "Nuvoloso", "Pioggia", "Neve", "Vento forte"],
+          },
+        ],
+      },
+      {
+        id: "squadra",
+        title: "Squadra e ore",
+        fields: [
+          {
+            id: "presenti",
+            type: "textarea",
+            label: "Persone presenti e ore",
+            required: true,
+            help: "Una persona per riga, con le ore lavorate: es. Mario Rossi 8",
+          },
+          { id: "ore_totali", type: "number", label: "Ore totali", unit: "h", min: 0, max: 500 },
+        ],
+      },
+      {
+        id: "lavori",
+        title: "Lavori della giornata",
+        fields: [
+          { id: "lavori_eseguiti", type: "textarea", label: "Lavori eseguiti", required: true },
+          { id: "materiali", type: "textarea", label: "Materiali utilizzati" },
+          { id: "mezzi", type: "textarea", label: "Mezzi e attrezzature" },
+          {
+            id: "imprevisti",
+            type: "yes_no",
+            label: "Problemi o imprevisti",
+            withNote: true,
+          },
+          { id: "da_completare", type: "textarea", label: "Da completare nei prossimi giorni" },
+        ],
+      },
+      {
+        id: "foto",
+        title: "Foto",
+        fields: [
+          {
+            id: "foto_lavori",
+            type: "photo",
+            label: "Foto dei lavori",
+            maxPhotos: 10,
+            help: "Scatta prima, durante e dopo: le foto si riducono da sole prima dell'invio.",
+          },
+        ],
+      },
+      {
+        id: "firme",
+        title: "Firme",
+        fields: [
+          {
+            id: "firma_responsabile",
+            type: "signature",
+            label: "Firma del caposquadra",
+            required: true,
+          },
+          { id: "firma_cliente", type: "signature", label: "Firma del cliente per presa visione" },
+        ],
+      },
+    ],
+  },
+};
+
+export const FORM_LIBRARY: readonly FormLibraryEntry[] = [LIFELINE, DAILY_REPORT];
 
 export const findLibraryEntry = (key: string) => FORM_LIBRARY.find((e) => e.key === key) ?? null;

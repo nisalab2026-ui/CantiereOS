@@ -17,6 +17,7 @@ import { FormAlert } from "@/components/ui/form-alert";
 import { FormField as Field, Input, Select } from "@/components/ui/input";
 import { saveSubmissionAction } from "./actions";
 import { FormFields } from "./form-fields";
+import { FormPhotosProvider, type PhotoInfo } from "./photo-field";
 
 interface Draft {
   title: string;
@@ -36,12 +37,14 @@ export function FormFiller({
   definition,
   initial,
   customers,
+  photos,
 }: {
   id: string;
   version: string;
   definition: FormDefinition;
   initial: Draft;
   customers: FormCustomerOption[];
+  photos: Record<string, PhotoInfo>;
 }) {
   const router = useRouter();
   const storageKey = `cantiereos:modulo:${id}`;
@@ -246,7 +249,14 @@ export function FormFiller({
         </Field>
       </section>
 
-      <FormFields definition={definition} values={draft.data} onChange={setValue} errors={errors} />
+      <FormPhotosProvider submissionId={id} initial={photos}>
+        <FormFields
+          definition={definition}
+          values={draft.data}
+          onChange={setValue}
+          errors={errors}
+        />
+      </FormPhotosProvider>
 
       {/* barra delle azioni sempre a portata di pollice */}
       <div className="cos-glass sticky bottom-3 z-20 flex items-center gap-2 rounded-xl border border-border px-3 py-2 shadow-lg print:hidden sm:gap-3 sm:px-4 sm:py-3">

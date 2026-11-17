@@ -264,7 +264,9 @@ export const GUIDE: GuideTopic[] = [
         q: "Come trasformo un modulo cartaceo in digitale?",
         a: [
           "In «Moduli» → «Modelli» crea un nuovo modello, oppure parti da uno pronto (per esempio «Ispezione linea vita») con «Usa questo modello».",
-          "Aggiungi sezioni e campi: testo, numero, data, Sì/No, scelta, tabella di controlli (una riga per voce, con esito e nota), firma e dati automatici. A destra vedi l'anteprima.",
+          "A sinistra ci sono i componenti: tocca un componente per aggiungerlo alla sezione evidenziata, oppure trascinalo nel punto che preferisci. Sono disponibili testo, numero, data, Sì/No, scelta, tabella di controlli (una riga per voce, con esito e nota), firma e dati automatici.",
+          "Campi e sezioni si riordinano trascinandoli dalla maniglia, o con le frecce sul telefono, e si duplicano con un clic. «Annulla» e «Ripristina» (Ctrl Z, Ctrl Maiusc Z) correggono gli errori; Ctrl S salva la bozza.",
+          "A destra vedi il foglio A4 come verrà stampato, con caselle e righe vuote, oppure puoi provare a compilarlo.",
           "Quando è pronto, premi «Pubblica»: da quel momento si può compilare.",
         ],
       },
@@ -279,6 +281,14 @@ export const GUIDE: GuideTopic[] = [
         a: [
           "In «Moduli» premi «Compila un modulo», scegli il modello e il cliente. Puoi salvare la bozza e continuare dopo; se la pagina si chiude per sbaglio, al ritorno l'app propone di ripristinare quello che avevi scritto su quel dispositivo.",
           "La firma si fa con il dito o il mouse nel riquadro, poi «Conferma firma».",
+        ],
+      },
+      {
+        q: "Come mando il rapportino con le foto dal cantiere?",
+        a: [
+          "In «Moduli» → «Modelli» usa il modello pronto «Rapportino giornaliero» e pubblicalo una volta. Poi dal telefono: «Compila un modulo», scegli il rapportino e il cliente, scrivi chi c'era e cosa è stato fatto.",
+          "Nel campo «Foto» tocca «Scatta o scegli»: puoi scattare o prendere dalla galleria. Le foto si riducono da sole prima dell'invio; attendi la fine del caricamento, poi salva. Una foto si toglie con la X finché il modulo non è chiuso.",
+          "Nei tuoi modelli puoi aggiungere un campo «Foto» dalla tavolozza dell'editor e scegliere quante foto al massimo.",
         ],
       },
       {

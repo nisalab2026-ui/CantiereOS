@@ -1,4 +1,9 @@
-import { getFormSubmission, getRecordHistory, listFormCustomerOptions } from "@cantiereos/core";
+import {
+  getFormSubmission,
+  getRecordHistory,
+  listFormCustomerOptions,
+  listFormPhotos,
+} from "@cantiereos/core";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -11,6 +16,7 @@ import { ForbiddenState } from "@/components/ui/states";
 import { asCurrentUser, getAppContext } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
 import { sectionGate } from "@/lib/permissions";
+import { formFileStorage } from "@/lib/storage";
 import { FormStatusBadge } from "../form-bits";
 import { FormDocument } from "../form-document";
 import { FormFiller } from "../form-filler";
@@ -27,13 +33,14 @@ export default async function FormSubmissionPage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const { access } = await getAppContext();
+  const { access, company } = await getAppContext();
   const gate = sectionGate(access, "forms.read");
   if (gate !== "ok") return <ForbiddenState needsMfa={gate === "mfa"} />;
   const canWrite = access.permissions.has("forms.write");
   const canManage = access.permissions.has("forms.manage");
   const canDelete = access.permissions.has("forms.delete");
 
+  const storage = formFileStorage();
   const data = await asCurrentUser(async (tx) => {
     const s = await getFormSubmission(tx, access, id);
     if (!s) return null;
@@ -41,10 +48,11 @@ export default async function FormSubmissionPage({
       s,
       history: await getRecordHistory(tx, access, "form_submissions", id),
       customers: canWrite && s.status === "draft" ? await listFormCustomerOptions(tx, access) : [],
+      photos: storage ? await listFormPhotos(tx, access, storage, id) : {},
     };
   });
   if (!data) notFound();
-  const { s, history, customers } = data;
+  const { s, history, customers, photos } = data;
   const editing = canWrite && s.status === "draft";
   // il cliente collegato resta selezionabile anche se nel frattempo è stato archiviato
   if (editing && s.customer && !customers.some((c) => c.id === s.customer!.id)) {
@@ -112,6 +120,7 @@ export default async function FormSubmissionPage({
                 data: s.data,
               }}
               customers={customers}
+              photos={photos}
             />
           ) : (
             <Card className="print:border-0 print:shadow-none">
@@ -119,14 +128,12 @@ export default async function FormSubmissionPage({
                 <FormDocument
                   definition={s.definition}
                   values={s.data}
-                  header={
-                    <div className="hidden print:block">
-                      <p className="text-xs text-neutral-600">
-                        {s.templateName} · versione {s.version}
-                      </p>
-                      <h1 className="text-xl font-semibold">{s.title}</h1>
-                    </div>
-                  }
+                  photos={photos}
+                  heading={{
+                    kicker: `${s.templateName} · versione ${s.version}`,
+                    title: s.title,
+                    company: company.name,
+                  }}
                 />
                 <p className="mt-6 border-t border-border pt-3 text-xs text-muted-foreground print:text-neutral-600">
                   {s.status === "completed"

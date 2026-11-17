@@ -21,6 +21,7 @@ export * from "./operations/communications";
 export * from "./operations/form-definition";
 export * from "./operations/form-library";
 export * from "./operations/forms";
+export * from "./operations/form-photos";
 export * from "./directory/records";
 export * from "./exports/csv";
 export * from "./exports/exports";

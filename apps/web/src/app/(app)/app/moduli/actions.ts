@@ -5,11 +5,13 @@ import {
   createFormTemplate,
   deleteFormSubmission,
   deleteFormTemplate,
+  finishFormPhotoUpload,
   publishFormTemplate,
   reopenFormSubmission,
   resolveActiveTenant,
   saveFormSubmission,
   setFormTemplateArchived,
+  startFormPhotoUpload,
   updateFormTemplateDraft,
   ValidationError,
   type FormCategory,
@@ -17,6 +19,7 @@ import {
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { asCurrentUser } from "@/lib/auth";
+import { formFileStorage } from "@/lib/storage";
 import { formText } from "@/lib/form-helpers";
 import { UNEXPECTED_ERROR, userMessage, type FormState } from "@/lib/messages";
 
@@ -199,4 +202,46 @@ export async function deleteSubmissionAction(id: string): Promise<FormState> {
   }
   refresh();
   redirect("/app/moduli?eliminato=1");
+}
+
+// --- Foto nei moduli ---------------------------------------------------------------
+
+const PHOTOS_OFF = "Archiviazione foto non configurata: contatta l'amministratore.";
+
+export type PhotoStart =
+  { ok: true; fileId: string; uploadUrl: string } | { ok: false; error: string };
+
+/** Primo passo: scheda "in attesa" e URL firmato per caricare una sola foto. */
+export async function startPhotoUploadAction(
+  submissionId: string,
+  photo: { fieldId: string; name: string; size: number; type: string },
+): Promise<PhotoStart> {
+  const storage = formFileStorage();
+  if (!storage) return { ok: false, error: PHOTOS_OFF };
+  try {
+    const t = await asCurrentUser(async (tx) =>
+      startFormPhotoUpload(tx, await resolveActiveTenant(tx), storage, submissionId, photo),
+    );
+    return { ok: true, ...t };
+  } catch (error) {
+    const f = failure(error);
+    return { ok: false, error: Object.values(f.fieldErrors ?? {})[0] ?? f.error ?? "Errore" };
+  }
+}
+
+export type PhotoFinish = { ok: true; fileId: string; url: string } | { ok: false; error: string };
+
+/** Secondo passo: il server controlla dimensione e tipo reale del file arrivato. */
+export async function finishPhotoUploadAction(fileId: string): Promise<PhotoFinish> {
+  const storage = formFileStorage();
+  if (!storage) return { ok: false, error: PHOTOS_OFF };
+  try {
+    const r = await asCurrentUser(async (tx) =>
+      finishFormPhotoUpload(tx, await resolveActiveTenant(tx), storage, fileId),
+    );
+    return r.ok ? r : { ok: false, error: r.reason };
+  } catch (error) {
+    const f = failure(error);
+    return { ok: false, error: f.error ?? "Errore" };
+  }
 }

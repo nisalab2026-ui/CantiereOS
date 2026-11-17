@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
+import { PhotoField } from "./photo-field";
 
 /**
  * Campi di un modulo, compilabili da telefono e da PC. Usato dalla
@@ -76,6 +77,7 @@ const wide = (f: FormField) =>
   f.type === "textarea" ||
   f.type === "checklist" ||
   f.type === "signature" ||
+  f.type === "photo" ||
   (f.type === "choice" && f.options.length > 3) ||
   (f.type === "yes_no" && f.withNote);
 
@@ -140,6 +142,8 @@ function Field({
     "aria-describedby": describedBy(id, field, error),
   } as const;
   switch (field.type) {
+    case "photo":
+      return <PhotoField field={field} id={id} value={value} error={error} onChange={onChange} />;
     case "auto":
       return (
         <div>

@@ -219,6 +219,11 @@ Le email di autenticazione le invia Supabase Auth con il proprio SMTP.
   qualificata è configurato: la firma sul display è una firma semplice.
 - La copia locale della bozza resta solo nel browser del dispositivo e si cancella al salvataggio.
 - L'importazione automatica da PDF o foto (OCR/AI) **non è configurata** e non viene simulata.
+- Foto nei moduli: bucket privato separato, chiave generata dal database, URL firmato per un solo
+  file; il server verifica dimensione (≤ 10 MB) e tipo reale (JPEG/PNG/WebP dai magic bytes) prima
+  di accettarla. Nel modulo si salvano solo id di foto verificate dello stesso modulo e campo; con
+  il modulo chiuso il database rifiuta ogni cambio. Senza `SUPABASE_SERVICE_ROLE_KEY` il campo
+  mostra "Archiviazione foto non configurata".
 
 ## 6. File (archivio documentale)
 

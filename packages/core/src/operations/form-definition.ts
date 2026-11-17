@@ -24,6 +24,9 @@ export const FORM_CATEGORY_LABELS: Record<FormCategory, string> = {
   other: "Altro",
 };
 
+/** Foto per campo: abbastanza per un intervento, non un archivio. */
+export const MAX_PHOTOS = 20;
+
 export const FORM_FIELD_TYPES = [
   "text",
   "textarea",
@@ -33,6 +36,7 @@ export const FORM_FIELD_TYPES = [
   "choice",
   "checklist",
   "signature",
+  "photo",
   "auto",
 ] as const;
 export type FormFieldType = (typeof FORM_FIELD_TYPES)[number];
@@ -45,6 +49,7 @@ export const FORM_FIELD_TYPE_LABELS: Record<FormFieldType, string> = {
   choice: "Scelta",
   checklist: "Tabella di controlli",
   signature: "Firma",
+  photo: "Foto",
   auto: "Dato automatico",
 };
 
@@ -122,6 +127,11 @@ export const formFieldSchema = z.discriminatedUnion("type", [
     withNote: z.boolean().optional(),
   }),
   z.object({ ...base, type: z.literal("signature") }),
+  z.object({
+    ...base,
+    type: z.literal("photo"),
+    maxPhotos: z.number().int().min(1).max(MAX_PHOTOS).optional(),
+  }),
   z.object({ ...base, type: z.literal("auto"), source: z.enum(FORM_AUTO_SOURCES) }),
 ]);
 export type FormField = z.infer<typeof formFieldSchema>;
@@ -134,8 +144,102 @@ export const formSectionSchema = z.object({
 });
 export type FormSection = z.infer<typeof formSectionSchema>;
 
+// --- Aspetto del documento (logo, colori, caratteri) -------------------------
+
+/** Caratteri del documento: file inclusi nell'app, nessun servizio esterno. */
+export const FORM_FONTS = ["system", "inter", "plex", "condensed", "serif", "lora"] as const;
+export type FormFont = (typeof FORM_FONTS)[number];
+export const FORM_FONT_LABELS: Record<FormFont, string> = {
+  system: "Come l'app",
+  inter: "Moderno (Inter)",
+  plex: "Tecnico (IBM Plex Sans)",
+  condensed: "Compatto (Roboto Condensed)",
+  serif: "Classico (Source Serif)",
+  lora: "Elegante (Lora)",
+};
+export const FORM_HEADER_STYLES = ["band", "line", "minimal"] as const;
+export type FormHeaderStyle = (typeof FORM_HEADER_STYLES)[number];
+export const FORM_HEADER_STYLE_LABELS: Record<FormHeaderStyle, string> = {
+  band: "Fascia colorata",
+  line: "Linea sottile",
+  minimal: "Essenziale",
+};
+export const FORM_DENSITIES = ["compact", "normal", "large"] as const;
+export type FormDensity = (typeof FORM_DENSITIES)[number];
+export const FORM_DENSITY_LABELS: Record<FormDensity, string> = {
+  compact: "Compatto",
+  normal: "Normale",
+  large: "Grande",
+};
+export const FORM_LOGO_POSITIONS = ["left", "center", "right"] as const;
+export type FormLogoPosition = (typeof FORM_LOGO_POSITIONS)[number];
+/** Logo come data URL nella definizione: segue le versioni pubblicate (immutabili). */
+export const MAX_LOGO_CHARS = 140_000;
+const LOGO = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/;
+
+/** Il contenuto deve essere davvero un PNG, JPEG o WebP (niente SVG né altro). */
+export function isValidLogo(v: string): boolean {
+  const m = LOGO.exec(v);
+  if (!m || v.length > MAX_LOGO_CHARS) return false;
+  let head: string;
+  try {
+    head = atob(v.slice(v.indexOf(",") + 1, v.indexOf(",") + 17));
+  } catch {
+    return false;
+  }
+  const b = Array.from(head, (c) => c.charCodeAt(0));
+  if (m[1] === "png") return b[0] === 0x89 && head.slice(1, 4) === "PNG";
+  if (m[1] === "jpeg") return b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+  return head.slice(0, 4) === "RIFF" && head.slice(8, 12) === "WEBP";
+}
+
+export const formAppearanceSchema = z.object({
+  accent: z
+    .string()
+    .regex(/^#[0-9a-f]{6}$/i, "Colore non valido")
+    .optional(),
+  font: z.enum(FORM_FONTS).optional(),
+  headingFont: z.enum(FORM_FONTS).optional(),
+  density: z.enum(FORM_DENSITIES).optional(),
+  header: z.enum(FORM_HEADER_STYLES).optional(),
+  logo: z
+    .string()
+    .refine(isValidLogo, "Logo non valido: usa un PNG, JPEG o WebP fino a 100 KB")
+    .optional(),
+  logoPosition: z.enum(FORM_LOGO_POSITIONS).optional(),
+  showCompany: z.boolean().optional(),
+  code: z.string().trim().max(40).optional(),
+  revision: z.string().trim().max(20).optional(),
+  footer: z.string().trim().max(300).optional(),
+  numbered: z.boolean().optional(),
+});
+export type FormAppearance = z.infer<typeof formAppearanceSchema>;
+
+/** Aspetto predefinito: lo stesso dei moduli creati prima di questa funzione. */
+export interface AppearanceDefaults {
+  accent: string;
+  font: FormFont;
+  density: FormDensity;
+  header: FormHeaderStyle;
+  logoPosition: FormLogoPosition;
+  numbered: boolean;
+  showCompany: boolean;
+}
+export const DEFAULT_APPEARANCE: AppearanceDefaults = {
+  accent: "#1d4ed8",
+  font: "system",
+  density: "normal",
+  header: "line",
+  logoPosition: "left",
+  numbered: true,
+  showCompany: true,
+};
+
 export const formDefinitionSchema = z
-  .object({ sections: z.array(formSectionSchema).max(30, "Massimo 30 sezioni") })
+  .object({
+    sections: z.array(formSectionSchema).max(30, "Massimo 30 sezioni"),
+    appearance: formAppearanceSchema.optional(),
+  })
   .superRefine((def, ctx) => {
     const ids = new Set<string>();
     const sectionIds = new Set<string>();
@@ -240,6 +344,7 @@ export type FormValue =
 export type FormValues = Record<string, FormValue>;
 
 const MAX_TEXT = 4000;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const MAX_NOTE = 500;
 const MAX_SIGNATURE = 200_000; // caratteri del data URL (~150 KB)
 const SIGNATURE_PREFIX = "data:image/png;base64,";
@@ -343,6 +448,19 @@ export function validateFormData(
         else if (any) data[f.id] = { rows: out };
         break;
       }
+      case "photo": {
+        // id delle foto caricate; che esistano e siano verificate lo controlla il server
+        if (v === undefined || v === null) break;
+        const max = f.maxPhotos ?? MAX_PHOTOS;
+        if (!Array.isArray(v) || v.some((x) => typeof x !== "string" || !UUID.test(x))) {
+          err("Foto non valide");
+          break;
+        }
+        const ids = [...new Set(v as string[])];
+        if (ids.length > max) err(`Massimo ${max} foto`);
+        else if (ids.length) data[f.id] = ids;
+        break;
+      }
       case "signature": {
         if (v === undefined || v === null) break;
         const o = v as Partial<SignatureValue>;
@@ -413,6 +531,8 @@ export function formValueText(f: FormField, v: FormValue | undefined): string {
     }
     case "choice":
       return Array.isArray(v) ? v.join(", ") : String(v);
+    case "photo":
+      return Array.isArray(v) && v.length ? `${v.length} foto` : "";
     default:
       return String(v);
   }
