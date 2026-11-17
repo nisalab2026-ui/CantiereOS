@@ -393,7 +393,7 @@ function Pills({
 }
 
 /** Firma a mano sul dispositivo (dito, penna o mouse), salvata come PNG nel modulo. */
-function SignaturePad({
+export function SignaturePad({
   id,
   value,
   onChange,

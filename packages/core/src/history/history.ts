@@ -90,6 +90,9 @@ const REF_TARGETS: Record<string, { sql: string }> = {
   project_id: {
     sql: "select id, concat_ws(' ', code, name) as name from public.projects where tenant_id = $1 and id = any($2)",
   },
+  project_site_id: {
+    sql: "select id, name from public.project_sites where tenant_id = $1 and id = any($2)",
+  },
   team_id: { sql: "select id, name from public.teams where tenant_id = $1 and id = any($2)" },
   assignee_user_id: {
     sql: "select id, coalesce(full_name, email) as name from public.users where $1::uuid is not null and id = any($2)",
@@ -123,11 +126,18 @@ const HREF_TABLES = new Set([
   "form_submissions",
   "form_templates",
   "projects",
+  "work_reports",
 ]);
 /** Tabelle il cui link punta al documento padre (document_id) invece che al record. */
 const DOC_CHILD_TABLES = new Set(["document_versions", "document_downloads"]);
 /** Cantieri e importi puntano alla commessa (project_id). */
 const PROJECT_CHILD_TABLES = new Set(["project_sites", "project_financials"]);
+/** Ore, materiali e foto puntano al rapportino (report_id). */
+const REPORT_CHILD_TABLES = new Set([
+  "work_report_labor",
+  "work_report_items",
+  "work_report_files",
+]);
 
 /** La creazione di una versione "in attesa" è un dettaglio tecnico: conta il caricamento verificato. */
 const isVisibleEvent = (r: AuditRow) =>
@@ -239,9 +249,11 @@ async function buildEvents(
         ? `/app/documenti/${String((r.new_data ?? r.old_data)?.document_id ?? "")}`
         : PROJECT_CHILD_TABLES.has(table)
           ? `/app/commesse/${String((r.new_data ?? r.old_data)?.project_id ?? "")}`
-          : meta?.href && r.record_id && HREF_TABLES.has(table) && verb !== "deleted"
-            ? `${meta.href}/${r.record_id}`
-            : (meta?.href ?? null),
+          : REPORT_CHILD_TABLES.has(table)
+            ? `/app/rapportini/${String((r.new_data ?? r.old_data)?.report_id ?? "")}`
+            : meta?.href && r.record_id && HREF_TABLES.has(table) && verb !== "deleted"
+              ? `${meta.href}/${r.record_id}`
+              : (meta?.href ?? null),
       changes,
     };
   });
@@ -260,6 +272,7 @@ export const HISTORY_TABLES = [
   "form_submissions",
   "form_templates",
   "projects",
+  "work_reports",
 ] as const;
 export type HistoryTable = (typeof HISTORY_TABLES)[number];
 
