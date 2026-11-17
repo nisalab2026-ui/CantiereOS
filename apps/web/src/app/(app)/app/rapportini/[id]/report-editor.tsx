@@ -198,7 +198,8 @@ export function ReportEditor({
       setResult(r);
       if (!r.error) {
         setDirty(false);
-        router.refresh();
+        // l'editor si ricarica con i dati salvati: l'avviso lo mostra la pagina
+        router.replace(`/app/rapportini/${report.id}?salvato=1`, { scroll: false });
       }
     });
 
