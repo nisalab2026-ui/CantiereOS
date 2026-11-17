@@ -337,3 +337,38 @@ export async function listActivityActors(
   );
   return rows;
 }
+
+// --- Integrità del registro (ADR-010) ----------------------------------------------
+
+export interface AuditChainStatus {
+  valid: boolean;
+  /** Righe verificate (fino alla prima non coerente, esclusa). */
+  checked: number;
+  /** Prima riga non coerente, se la catena è interrotta. */
+  firstInvalidId: string | null;
+  /** Hash dell'ultima riga verificata (64 caratteri esadecimali), da annotare per confronti futuri. */
+  lastHash: string | null;
+  verifiedAt: Date;
+}
+
+/** Ricalcola nel database la catena di hash dell'azienda attiva. Richiede audit.read. */
+export async function verifyAuditChain(
+  tx: UserTx,
+  access: TenantAccess,
+): Promise<AuditChainStatus> {
+  requirePermission(access, "audit.read");
+  const { rows } = await tx.query<{
+    valid: boolean;
+    checked: string;
+    first_invalid_id: string | null;
+    last_hash: string | null;
+  }>("select * from app.verify_audit_chain($1)", [access.tenantId]);
+  const r = rows[0]!;
+  return {
+    valid: r.valid,
+    checked: Number(r.checked),
+    firstInvalidId: r.first_invalid_id,
+    lastHash: r.last_hash,
+    verifiedAt: new Date(),
+  };
+}

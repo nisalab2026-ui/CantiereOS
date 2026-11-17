@@ -11,6 +11,7 @@ import { ForbiddenState } from "@/components/ui/states";
 import { asCurrentUser, getAppContext } from "@/lib/auth";
 import { listHref, type SearchParams } from "@/lib/list-params";
 import { sectionGate } from "@/lib/permissions";
+import { IntegrityCheck } from "./integrity-check";
 
 export const metadata: Metadata = { title: "Registro attività" };
 
@@ -73,7 +74,12 @@ export default async function ActivityPage({
       <PageHeader
         title="Registro attività"
         description="Ogni creazione, modifica ed eliminazione dell'azienda, con autore, data e valori prima e dopo. Il registro non è modificabile da nessun utente."
-        actions={<ExportButton section="audit" params={sp} />}
+        actions={
+          <>
+            <IntegrityCheck />
+            <ExportButton section="audit" params={sp} />
+          </>
+        }
       />
       <Card className="overflow-hidden">
         <FilterBar

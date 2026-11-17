@@ -33,4 +33,10 @@ test("esporta i clienti filtrati in CSV e l'esportazione compare nel registro", 
   await expect(event).toContainText("ha esportato");
   await expect(event).toContainText("Clienti (1 riga)");
   await expect(event).toContainText("ricerca: verdi");
+
+  // Catena di hash del registro (ADR-010): verificata dal database su richiesta.
+  await page.getByRole("button", { name: "Verifica integrità" }).click();
+  await expect(page.getByTestId("integrity-result")).toContainText(
+    /Registro integro: \d+ voci verificate/,
+  );
 });
