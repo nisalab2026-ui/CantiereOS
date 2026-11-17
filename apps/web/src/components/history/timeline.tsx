@@ -27,6 +27,11 @@ const VERBS: Record<HistoryVerb, { label: string; icon: LucideIcon; tone: string
   archived: { label: "ha archiviato", icon: Archive, tone: "text-warning bg-warning/12" },
   restored: { label: "ha riattivato", icon: ArchiveRestore, tone: "text-success bg-success/12" },
   completed: { label: "ha completato", icon: CheckCircle2, tone: "text-success bg-success/12" },
+  paid: {
+    label: "ha registrato il saldo di",
+    icon: CheckCircle2,
+    tone: "text-success bg-success/12",
+  },
   reopened: { label: "ha riaperto", icon: RotateCcw, tone: "text-info bg-info/12" },
   cancelled: { label: "ha annullato", icon: CircleSlash, tone: "text-muted-foreground bg-accent" },
   exported: { label: "ha esportato", icon: Download, tone: "text-primary bg-primary/12" },
@@ -43,6 +48,7 @@ const NO_TABLE_LABEL = new Set<HistoryVerb>([
   "previewed",
   "uploaded",
   "rejected",
+  "paid",
 ]);
 
 const dayFmt = new Intl.DateTimeFormat("it-IT", {

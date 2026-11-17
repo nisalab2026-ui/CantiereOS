@@ -21,6 +21,18 @@ import {
   TASK_STATUS_LABELS,
   type TaskQuery,
 } from "../operations/tasks";
+import {
+  listPayments,
+  PAYMENT_DIRECTION_LABELS,
+  PAYMENT_METHOD_LABELS,
+  type PaymentQuery,
+} from "../operations/payments";
+import {
+  COMMUNICATION_CHANNEL_LABELS,
+  COMMUNICATION_DIRECTION_LABELS,
+  listCommunications,
+  type CommunicationQuery,
+} from "../operations/communications";
 import { toCsv, type CsvColumn } from "./csv";
 import {
   DOCUMENT_CATEGORY_LABELS,
@@ -43,6 +55,8 @@ export const EXPORT_SECTIONS = [
   "audit",
   "documents",
   "tasks",
+  "payments",
+  "communications",
 ] as const;
 export type ExportSection = (typeof EXPORT_SECTIONS)[number];
 
@@ -58,6 +72,8 @@ export const EXPORT_PERMISSION: Record<ExportSection, string> = {
   audit: "audit.read",
   documents: "documents.read",
   tasks: "tasks.read",
+  payments: "payments.read",
+  communications: "communications.read",
 };
 
 const FILE_PREFIX: Record<ExportSection, string> = {
@@ -69,6 +85,8 @@ const FILE_PREFIX: Record<ExportSection, string> = {
   audit: "registro-attivita",
   documents: "documenti",
   tasks: "attivita",
+  payments: "pagamenti",
+  communications: "comunicazioni",
 };
 
 export interface ExportResult {
@@ -243,6 +261,66 @@ export async function exportSection(
         { header: "Assegnata a", value: (x) => x.assigneeName },
         { header: "Collegata a", value: (x) => x.subject?.name ?? null },
         { header: "Ultima modifica", value: (x) => x.updatedAt },
+      ];
+      csv = toCsv(cols, r.rows);
+      [rows, total, filters] = [r.rows.length, r.total, q as Record<string, unknown>];
+      break;
+    }
+    case "payments": {
+      const q = compact({
+        q: str(params.q),
+        state: str(params.state, 20) ?? "open",
+        direction: str(params.direction, 20),
+        from: str(params.from, 10),
+        to: str(params.to, 10),
+        sort: str(params.sort, 20),
+        dir: dir(params.dir),
+      }) as PaymentQuery;
+      const r = await listPayments(tx, access, { ...q, ...page }, opts);
+      const euro = (c: number | null) =>
+        c == null ? null : (c / 100).toFixed(2).replace(".", ",");
+      const STATE: Record<string, string> = {
+        open: "Aperto",
+        overdue: "In ritardo",
+        paid: "Pagato",
+        cancelled: "Annullato",
+      };
+      const cols: CsvColumn<(typeof r.rows)[number]>[] = [
+        { header: "Data prevista", value: (x) => itDate(x.dueDate) },
+        { header: "Tipo", value: (x) => PAYMENT_DIRECTION_LABELS[x.direction] },
+        { header: "Descrizione", value: (x) => x.description },
+        { header: "Riferimento", value: (x) => x.referenceCode },
+        { header: "Controparte", value: (x) => x.counterparty?.name ?? null },
+        { header: "Importo (EUR)", value: (x) => euro(x.amountCents) },
+        { header: "Stato", value: (x) => STATE[x.state] },
+        { header: "Pagato il", value: (x) => itDate(x.paidOn) },
+        { header: "Importo pagato (EUR)", value: (x) => euro(x.paidAmountCents) },
+      ];
+      csv = toCsv(cols, r.rows);
+      [rows, total, filters] = [r.rows.length, r.total, q as Record<string, unknown>];
+      break;
+    }
+    case "communications": {
+      const q = compact({
+        q: str(params.q),
+        channel: str(params.channel, 20),
+        direction: str(params.direction, 20),
+        followUp: params.followUp === "pending" ? "pending" : undefined,
+        from: str(params.from, 10),
+        to: str(params.to, 10),
+        dir: dir(params.dir),
+      }) as CommunicationQuery;
+      const r = await listCommunications(tx, access, { ...q, ...page }, opts);
+      const cols: CsvColumn<(typeof r.rows)[number]>[] = [
+        { header: "Data e ora", value: (x) => x.occurredAt },
+        { header: "Canale", value: (x) => COMMUNICATION_CHANNEL_LABELS[x.channel] },
+        { header: "Direzione", value: (x) => COMMUNICATION_DIRECTION_LABELS[x.direction] },
+        { header: "Oggetto", value: (x) => x.subject },
+        { header: "Con", value: (x) => x.related?.name ?? null },
+        { header: "Referente", value: (x) => x.contactName },
+        { header: "Richiamare il", value: (x) => itDate(x.followUpDate) },
+        { header: "Richiamo fatto", value: (x) => (x.followUpDate ? x.followUpDone : null) },
+        { header: "Registrata da", value: (x) => x.createdByName },
       ];
       csv = toCsv(cols, r.rows);
       [rows, total, filters] = [r.rows.length, r.total, q as Record<string, unknown>];

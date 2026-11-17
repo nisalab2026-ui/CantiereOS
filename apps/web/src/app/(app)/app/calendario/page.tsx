@@ -1,5 +1,12 @@
 import { listCalendar, type CalendarItem } from "@cantiereos/core";
-import { CalendarClock, ChevronLeft, ChevronRight, ListTodo } from "lucide-react";
+import {
+  CalendarClock,
+  ChevronLeft,
+  ChevronRight,
+  ListTodo,
+  PhoneCall,
+  Wallet,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
@@ -7,6 +14,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { ForbiddenState } from "@/components/ui/states";
 import { asCurrentUser, getAppContext } from "@/lib/auth";
 import { cn } from "@/lib/cn";
+import { todayInRome } from "@/lib/format";
 import { sectionGate } from "@/lib/permissions";
 
 export const metadata: Metadata = { title: "Calendario" };
@@ -27,11 +35,6 @@ const MONTHS = [
   "novembre",
   "dicembre",
 ];
-
-/** Data di oggi nel fuso dell'azienda (Italia), come YYYY-MM-DD. */
-function todayInRome(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome" }).format(new Date());
-}
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const addDays = (d: Date, n: number) => new Date(d.getTime() + n * 86_400_000);
@@ -71,7 +74,9 @@ export default async function CalendarPage({
   const { access } = await getAppContext();
   const canTasks = access.permissions.has("tasks.read");
   const canDeadlines = access.permissions.has("deadlines.read");
-  if (!canTasks && !canDeadlines) {
+  const canPayments = access.permissions.has("payments.read");
+  const canComms = access.permissions.has("communications.read");
+  if (!canTasks && !canDeadlines && !canPayments && !canComms) {
     const gate = sectionGate(access, "tasks.read");
     return <ForbiddenState needsMfa={gate === "mfa"} />;
   }
@@ -100,13 +105,16 @@ export default async function CalendarPage({
     <div>
       <PageHeader
         title="Calendario"
-        description={
-          canTasks && canDeadlines
-            ? "Attività e scadenze del mese in un'unica vista."
-            : canTasks
-              ? "Le attività del mese."
-              : "Le scadenze del mese."
-        }
+        description={`${[
+          canTasks && "attività",
+          canDeadlines && "scadenze",
+          canPayments && "pagamenti attesi",
+          canComms && "richiami",
+        ]
+          .filter(Boolean)
+          .join(", ")
+          .replace(/^./, (c) => c.toUpperCase())
+          .replace(/, ([^,]*)$/, " e $1")} del mese in un'unica vista.`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <div
@@ -270,6 +278,16 @@ export default async function CalendarPage({
               <CalendarClock className="size-3.5" aria-hidden /> Scadenze
             </span>
           )}
+          {canPayments && (
+            <span className="inline-flex items-center gap-1">
+              <Wallet className="size-3.5" aria-hidden /> Pagamenti
+            </span>
+          )}
+          {canComms && (
+            <span className="inline-flex items-center gap-1">
+              <PhoneCall className="size-3.5" aria-hidden /> Richiami
+            </span>
+          )}
           <span className="inline-flex items-center gap-1">
             <span className="size-2 rounded-full bg-danger" aria-hidden /> In ritardo
           </span>
@@ -282,22 +300,32 @@ export default async function CalendarPage({
   );
 }
 
+const KIND = {
+  task: { icon: ListTodo, label: "Attività", tone: "border-primary bg-primary/6" },
+  deadline: { icon: CalendarClock, label: "Scadenza", tone: "border-info bg-info/8" },
+  payment: { icon: Wallet, label: "Pagamento", tone: "border-success bg-success/8" },
+  follow_up: { icon: PhoneCall, label: "Richiamo", tone: "border-warning bg-warning/8" },
+} as const;
+
+const DONE_LABEL: Record<CalendarItem["kind"], string> = {
+  task: "completata",
+  deadline: "completata",
+  payment: "saldato",
+  follow_up: "fatto",
+};
+
 function CalendarChip({ item, large = false }: { item: CalendarItem; large?: boolean }) {
-  const Icon = item.kind === "task" ? ListTodo : CalendarClock;
-  const state = item.done ? "completata" : item.overdue ? "in ritardo" : null;
+  const { icon: Icon, label, tone } = KIND[item.kind];
+  const state = item.done ? DONE_LABEL[item.kind] : item.overdue ? "in ritardo" : null;
   return (
     <Link
       href={item.href}
       data-testid="calendar-item"
-      title={`${item.kind === "task" ? "Attività" : "Scadenza"}: ${item.title}${item.ownerName ? ` · ${item.ownerName}` : ""}${state ? ` · ${state}` : ""}`}
+      title={`${label}: ${item.title}${item.ownerName ? ` · ${item.ownerName}` : ""}${state ? ` · ${state}` : ""}`}
       className={cn(
         "flex items-center gap-1 rounded-sm border-l-2 px-1.5 py-0.5 hover:bg-accent",
         large ? "text-sm" : "text-xs",
-        item.overdue
-          ? "border-danger bg-danger/8"
-          : item.kind === "task"
-            ? "border-primary bg-primary/6"
-            : "border-info bg-info/8",
+        item.overdue ? "border-danger bg-danger/8" : tone,
         item.done && "text-muted-foreground line-through",
       )}
     >

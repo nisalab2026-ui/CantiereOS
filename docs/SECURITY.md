@@ -189,6 +189,21 @@ Le email di autenticazione le invia Supabase Auth con il proprio SMTP.
 - Il calendario legge scadenze e attività ciascuna con il proprio permesso, per un massimo di 62
   giorni per richiesta.
 
+### Pagamenti attesi e comunicazioni (ADR-012)
+
+- Il modulo pagamenti **non muove denaro** e non si collega a banche: registra solo importi attesi
+  e saldi dichiarati da un utente. Nessuna integrazione di pagamento è configurata.
+- Lettura, scrittura ed eliminazione hanno permessi distinti (`payments.*`, `communications.*`);
+  l'eliminazione richiede MFA ed è logica. I tecnici non vedono i pagamenti.
+- Coerenza imposta dal database, non dal form: un incasso non può avere un fornitore (e viceversa),
+  "pagato" se e solo se data e importo del saldo sono presenti; chi ha segnato il saldo e quando lo
+  scrive il trigger `app.payment_status_guard`. Le date di saldo future sono rifiutate dal server.
+- Gli importi sono interi in centesimi (`bigint`), mai numeri a virgola mobile, con limiti di
+  valore nel database.
+- Ogni modifica finisce nel registro attività con i valori prima e dopo, anche nella cronologia
+  del cliente o del fornitore collegato.
+- Il calendario mostra pagamenti e richiami solo a chi ha il relativo permesso di lettura.
+
 ## 6. File (archivio documentale)
 
 - Bucket privato (Supabase Storage), nessun URL pubblico permanente. La chiave del file è una

@@ -6,11 +6,13 @@ import {
   History,
   HardHat,
   LayoutDashboard,
+  MessagesSquare,
   ListTodo,
   ShieldCheck,
   Truck,
   Users,
   UsersRound,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 
@@ -52,6 +54,20 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Documenti",
     icon: FolderOpen,
     permission: "documents.read",
+    group: "lavoro",
+  },
+  {
+    href: "/app/pagamenti",
+    label: "Pagamenti",
+    icon: Wallet,
+    permission: "payments.read",
+    group: "lavoro",
+  },
+  {
+    href: "/app/comunicazioni",
+    label: "Comunicazioni",
+    icon: MessagesSquare,
+    permission: "communications.read",
     group: "lavoro",
   },
   {

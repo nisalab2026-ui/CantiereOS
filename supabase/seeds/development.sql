@@ -146,3 +146,22 @@ insert into public.comments (id, tenant_id, subject_table, subject_id, body) val
   ('da000000-0000-4000-8000-000000000002', 'd1000000-0000-4000-8000-000000000001', 'customers', 'd2000000-0000-4000-8000-000000000001', 'DEMO Amministratore cambiato da gennaio: aggiornare i contatti.')
 on conflict (id) do nothing;
 do $$ begin perform set_config('app.actor_user_id', '', false); end $$;
+
+-- Pagamenti e comunicazioni DEMO (date relative a oggi), scritti a nome dell'ufficio
+do $$ begin perform set_config('app.actor_user_id', 'd0000000-0000-4000-8000-000000000002', false); end $$;
+insert into public.payments (id, tenant_id, direction, description, reference_code, amount_cents, due_date,
+                             method, customer_id, supplier_id) values
+  ('db000000-0000-4000-8000-000000000001', 'd1000000-0000-4000-8000-000000000001', 'incoming', 'DEMO SAL 1 lavori condominio', 'FT-2026/118', 1250000, current_date - 6,  'bank_transfer', 'd2000000-0000-4000-8000-000000000001', null),
+  ('db000000-0000-4000-8000-000000000002', 'd1000000-0000-4000-8000-000000000001', 'incoming', 'DEMO SAL 2 impianto elettrico scuola', 'SAL-2', 860000, current_date + 18, 'bank_transfer', 'd2000000-0000-4000-8000-000000000003', null),
+  ('db000000-0000-4000-8000-000000000003', 'd1000000-0000-4000-8000-000000000001', 'outgoing', 'DEMO Noleggio ponteggi ottobre', 'NP-5521', 184000, current_date + 4, 'riba', null, 'd3000000-0000-4000-8000-000000000002'),
+  ('db000000-0000-4000-8000-000000000004', 'd1000000-0000-4000-8000-000000000001', 'outgoing', 'DEMO Fornitura cemento e inerti', 'MEN-0907', 312050, current_date - 12, 'bank_transfer', null, 'd3000000-0000-4000-8000-000000000001')
+on conflict (id) do nothing;
+update public.payments set status = 'paid', paid_on = current_date - 10
+ where id = 'db000000-0000-4000-8000-000000000004' and status = 'open';
+
+insert into public.communications (id, tenant_id, channel, direction, occurred_at, subject, body, contact_name,
+                                   customer_id, supplier_id, follow_up_date) values
+  ('dc000000-0000-4000-8000-000000000001', 'd1000000-0000-4000-8000-000000000001', 'phone', 'inbound', now() - interval '2 days', 'DEMO Sollecito tempi fine lavori', 'L''amministratore chiede una data per la fine lavori della scala A.', 'Amministratore', 'd2000000-0000-4000-8000-000000000001', null, current_date + 2),
+  ('dc000000-0000-4000-8000-000000000002', 'd1000000-0000-4000-8000-000000000001', 'pec', 'outbound', now() - interval '5 days', 'DEMO Invio SAL 2 al Comune', null, 'Ufficio tecnico', 'd2000000-0000-4000-8000-000000000003', null, null)
+on conflict (id) do nothing;
+do $$ begin perform set_config('app.actor_user_id', '', false); end $$;

@@ -3,6 +3,9 @@ import {
   getRecordHistory,
   listDeadlines,
   listTasks,
+  listPayments,
+  listCommunications,
+  formatCents,
   listDocuments,
   listFolders,
   listSubjectOptions,
@@ -23,7 +26,11 @@ import { loadDeadlineOptions } from "@/lib/deadline-options";
 import { CommentsPanel } from "@/components/comments/comments-panel";
 import { TaskMiniList } from "../../attivita/task-mini-list";
 import { TaskDialog } from "../../attivita/task-form";
-import { formatDateTime } from "@/lib/format";
+import { CommunicationDialog } from "../../comunicazioni/communication-form";
+import { CommunicationMiniList } from "../../comunicazioni/communication-mini-list";
+import { PaymentDialog } from "../../pagamenti/payment-form";
+import { PaymentMiniList } from "../../pagamenti/payment-mini-list";
+import { formatDateTime, romeLocalDateTime } from "@/lib/format";
 import { sectionGate } from "@/lib/permissions";
 import { fileStorage } from "@/lib/storage";
 import { DocumentMiniList } from "../../documenti/document-mini-list";
@@ -61,6 +68,10 @@ export default async function CustomerPage({
   const canWriteDeadlines = access.permissions.has("deadlines.write");
   const canTasks = access.permissions.has("tasks.read");
   const canWriteTasks = access.permissions.has("tasks.write");
+  const canPayments = access.permissions.has("payments.read");
+  const canWritePayments = access.permissions.has("payments.write");
+  const canComms = access.permissions.has("communications.read");
+  const canWriteComms = access.permissions.has("communications.write");
 
   const data = await asCurrentUser(async (tx) => {
     const c = await getCustomer(tx, access, id);
@@ -96,11 +107,33 @@ export default async function CustomerPage({
         canTasks && tab === "panoramica"
           ? await listTasks(tx, access, { customerId: id, state: "open", pageSize: 6 })
           : null,
-      options: canWriteDeadlines || canWriteTasks ? await loadDeadlineOptions(tx, access) : null,
+      openPayments:
+        canPayments && tab === "panoramica"
+          ? await listPayments(tx, access, { customerId: id, state: "open", pageSize: 5 })
+          : null,
+      comms:
+        canComms && tab === "panoramica"
+          ? await listCommunications(tx, access, { customerId: id, pageSize: 5 })
+          : null,
+      options:
+        canWriteDeadlines || canWriteTasks || canWritePayments || canWriteComms
+          ? await loadDeadlineOptions(tx, access)
+          : null,
     };
   });
   if (!data) notFound();
-  const { c, openDeadlines, allDeadlines, openTasks, history, options, docs, docOptions } = data;
+  const {
+    c,
+    openDeadlines,
+    allDeadlines,
+    openTasks,
+    openPayments,
+    comms,
+    history,
+    options,
+    docs,
+    docOptions,
+  } = data;
   const base = `/app/clienti/${id}`;
   const overdue = openDeadlines?.rows.filter((r) => r.state === "overdue").length ?? 0;
   const address = [
@@ -308,6 +341,62 @@ export default async function CustomerPage({
                   <DeadlineMiniList
                     rows={openDeadlines.rows.slice(0, 5)}
                     emptyText="Nessuna scadenza aperta per questo cliente."
+                  />
+                </CardBody>
+              </Card>
+            )}
+            {openPayments && (
+              <Card>
+                <CardHeader
+                  title="Pagamenti aperti"
+                  {...(openPayments.total > 0
+                    ? {
+                        description: `Da incassare: ${formatCents(openPayments.totals.incomingCents)}`,
+                      }
+                    : {})}
+                  actions={
+                    canWritePayments && options ? (
+                      <PaymentDialog
+                        mode="create"
+                        customers={options.subjects.customer}
+                        suppliers={null}
+                        defaults={{ direction: "incoming", counterpartyId: c.id }}
+                        lockCounterparty
+                        triggerLabel="Nuovo incasso"
+                      />
+                    ) : undefined
+                  }
+                />
+                <CardBody>
+                  <PaymentMiniList
+                    rows={openPayments.rows}
+                    emptyText="Nessun incasso in attesa da questo cliente."
+                  />
+                </CardBody>
+              </Card>
+            )}
+            {comms && (
+              <Card>
+                <CardHeader
+                  title="Comunicazioni recenti"
+                  actions={
+                    canWriteComms && options ? (
+                      <CommunicationDialog
+                        mode="create"
+                        subjects={options.subjects}
+                        now={romeLocalDateTime()}
+                        defaults={{ related: `customer:${c.id}` }}
+                        lockRelated
+                        lockedName={c.displayName}
+                        triggerLabel="Registra"
+                      />
+                    ) : undefined
+                  }
+                />
+                <CardBody>
+                  <CommunicationMiniList
+                    rows={comms.rows}
+                    emptyText="Nessuna telefonata, email o incontro registrato con questo cliente."
                   />
                 </CardBody>
               </Card>

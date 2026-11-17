@@ -16,6 +16,8 @@ export * from "./history/history";
 export * from "./operations/deadlines";
 export * from "./operations/tasks";
 export * from "./operations/comments";
+export * from "./operations/payments";
+export * from "./operations/communications";
 export * from "./directory/records";
 export * from "./exports/csv";
 export * from "./exports/exports";

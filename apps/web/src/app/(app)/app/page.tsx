@@ -2,12 +2,14 @@ import {
   getDashboard,
   getDeadlineSummary,
   getDocumentExpirySummary,
+  getPaymentSummary,
   getTaskSummary,
   listActivity,
   listTasks,
   type DashboardData,
   type DeadlineSummary,
   type HistoryEvent,
+  type PaymentSummary,
   type TaskRow,
   type TaskSummary,
   type TeamSummary,
@@ -33,6 +35,7 @@ import { EmptyState } from "@/components/ui/states";
 import { asCurrentUser, getAppContext } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import { TaskMiniList } from "./attivita/task-mini-list";
+import { Money } from "./pagamenti/payment-bits";
 import { PrioritySection, RecentChanges } from "./priority";
 
 export const metadata: Metadata = { title: "Panoramica" };
@@ -54,7 +57,7 @@ export default async function DashboardPage({
     return sp[key!] === value;
   })?.[1];
   const { company, access } = await getAppContext();
-  const { data, deadlines, docs, activity, tasks } = await asCurrentUser(async (tx) => {
+  const { data, deadlines, docs, activity, tasks, payments } = await asCurrentUser(async (tx) => {
     const d = await getDashboard(tx, access);
     return {
       data: d,
@@ -66,6 +69,10 @@ export default async function DashboardPage({
       activity:
         d.kind === "admin" && access.permissions.has("audit.read")
           ? (await listActivity(tx, access, { limit: 8 })).events
+          : null,
+      payments:
+        (d.kind === "admin" || d.kind === "manager") && access.permissions.has("payments.read")
+          ? await getPaymentSummary(tx, access)
           : null,
       tasks:
         d.kind !== "portal" && access.permissions.has("tasks.read")
@@ -106,7 +113,12 @@ export default async function DashboardPage({
         deadlines={deadlines}
         docs={docs}
         activity={activity}
-        tasks={tasks ? <MyTasks {...tasks} /> : null}
+        tasks={
+          <>
+            {tasks && <MyTasks {...tasks} />}
+            {payments && <PaymentsOverview s={payments} />}
+          </>
+        }
       />
     </div>
   );
@@ -364,6 +376,56 @@ function MyTasks({ summary, mine }: { summary: TaskSummary; mine: TaskRow[] }) {
           <TaskMiniList rows={mine} emptyText="" />
         )}
       </CardBody>
+    </Card>
+  );
+}
+
+/** Pagamenti attesi: ogni numero porta alla lista già filtrata. */
+function PaymentsOverview({ s }: { s: PaymentSummary }) {
+  const stats = [
+    {
+      label: "Da incassare",
+      cents: s.incomingOpenCents,
+      href: "/app/pagamenti?direction=incoming",
+      note: null,
+    },
+    {
+      label: "Incassi in ritardo",
+      cents: s.incomingOverdueCents,
+      href: "/app/pagamenti?direction=incoming&state=overdue",
+      note: s.incomingOverdue > 0 ? `${s.incomingOverdue} da sollecitare` : null,
+      danger: s.incomingOverdue > 0,
+    },
+    {
+      label: "Da pagare entro 30 giorni",
+      cents: s.outgoingDueSoonCents,
+      href: "/app/pagamenti?direction=outgoing",
+      note: s.outgoingOverdue > 0 ? `${s.outgoingOverdue} già scaduti` : null,
+      danger: s.outgoingOverdue > 0,
+    },
+  ];
+  return (
+    <Card data-testid="payments-overview">
+      <CardHeader
+        title="Pagamenti attesi"
+        actions={
+          <Link href="/app/pagamenti" className="text-sm text-primary hover:underline">
+            Apri i pagamenti
+          </Link>
+        }
+      />
+      <div className="grid divide-y divide-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        {stats.map((x) => (
+          <Link key={x.label} href={x.href} className="px-5 py-4 hover:bg-accent/40">
+            <p className="text-xs text-muted-foreground">{x.label}</p>
+            <Money
+              cents={x.cents}
+              className={`text-xl font-semibold ${x.danger ? "text-danger" : ""}`}
+            />
+            {x.note && <p className="text-xs text-muted-foreground">{x.note}</p>}
+          </Link>
+        ))}
+      </div>
     </Card>
   );
 }
