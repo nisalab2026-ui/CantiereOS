@@ -52,7 +52,7 @@ export function SidebarNav({
                       )}
                     >
                       <i.icon
-                        className={cn("size-4 shrink-0", active && "text-[#8fb0ff]")}
+                        className={cn("size-4 shrink-0", active && "text-[#86efac]")}
                         aria-hidden
                       />
                       {collapsed ? <span className="sr-only">{i.label}</span> : i.label}
@@ -136,7 +136,7 @@ export function Logo({ className }: { className?: string }) {
 export function Wordmark({ className }: { className?: string }) {
   return (
     <span className={cn("text-[15px] font-semibold tracking-tight", className)}>
-      Cantiere<span className="text-[#3B9BFF]">OS</span>
+      Cantiere<span className="text-[#22c55e]">OS</span>
     </span>
   );
 }

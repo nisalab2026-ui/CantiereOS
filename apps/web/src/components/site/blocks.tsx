@@ -25,7 +25,7 @@ export function PageIntro({
       <div
         aria-hidden
         data-parallax="-0.25"
-        className="pointer-events-none absolute -top-48 left-1/2 -z-10 h-[34rem] w-[52rem] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(76_151_255/0.32),transparent)]"
+        className="pointer-events-none absolute -top-48 left-1/2 -z-10 h-[34rem] w-[52rem] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(34_197_94/0.32),transparent)]"
       />
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <p className="site-in mb-8 flex items-center gap-3 font-mono text-[11px] tracking-[0.3em] text-muted-foreground uppercase">
@@ -131,7 +131,7 @@ export function CtaBand({ signedIn }: { signedIn: boolean }) {
     <section className="relative isolate overflow-clip py-28 sm:py-40" data-progress>
       <div
         aria-hidden
-        className="cos-glow pointer-events-none absolute top-1/2 left-1/2 -z-10 size-[44rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(34_195_255/0.28),transparent)]"
+        className="cos-glow pointer-events-none absolute top-1/2 left-1/2 -z-10 size-[44rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(16_185_129/0.28),transparent)]"
       />
       <div className="site-grid" aria-hidden />
       <div className="mx-auto max-w-5xl px-4 text-center sm:px-6">

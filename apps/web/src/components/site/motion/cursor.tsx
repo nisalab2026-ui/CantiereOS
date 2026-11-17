@@ -69,10 +69,10 @@ export function Cursor() {
           "flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-[width,height,opacity,background-color,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
           visible ? "opacity-100" : "opacity-0",
           label
-            ? "h-9 w-auto bg-cyan px-4 text-[10px] font-semibold tracking-[0.22em] text-[#04101f] shadow-[0_0_34px_6px_rgb(34_195_255/0.4)]"
+            ? "h-9 w-auto bg-cyan px-4 text-[10px] font-semibold tracking-[0.22em] text-[#04140c] shadow-[0_0_34px_6px_rgb(16_185_129/0.4)]"
             : overLink
-              ? "size-10 bg-primary/10 shadow-[0_0_26px_4px_rgb(76_151_255/0.35)] ring-1 ring-primary"
-              : "size-2.5 bg-cyan shadow-[0_0_16px_4px_rgb(34_195_255/0.6),0_0_60px_16px_rgb(76_151_255/0.2)]",
+              ? "size-10 bg-primary/10 shadow-[0_0_26px_4px_rgb(34_197_94/0.35)] ring-1 ring-primary"
+              : "size-2.5 bg-cyan shadow-[0_0_16px_4px_rgb(16_185_129/0.6),0_0_60px_16px_rgb(34_197_94/0.2)]",
         )}
       >
         {label}

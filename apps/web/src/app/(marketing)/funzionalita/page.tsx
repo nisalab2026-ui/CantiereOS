@@ -93,7 +93,7 @@ export default async function FeaturesPage() {
                 </ul>
               </div>
               <div className={flip ? "lg:order-1" : undefined} data-progress>
-                <div className="reveal-media relative overflow-hidden rounded-3xl border border-border bg-[radial-gradient(circle_at_30%_20%,rgb(76_151_255/0.22),transparent_60%)] p-6 sm:p-12">
+                <div className="reveal-media relative overflow-hidden rounded-3xl border border-border bg-[radial-gradient(circle_at_30%_20%,rgb(34_197_94/0.22),transparent_60%)] p-6 sm:p-12">
                   <div className="mx-auto max-w-sm" data-parallax="0.06">
                     <FeatureMock id={f.id} />
                   </div>

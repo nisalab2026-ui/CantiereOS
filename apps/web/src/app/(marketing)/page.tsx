@@ -31,7 +31,7 @@ export default async function HomePage() {
         <div
           aria-hidden
           data-parallax="-0.3"
-          className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[40rem] w-[64rem] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(76_151_255/0.35),transparent)]"
+          className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[40rem] w-[64rem] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(34_197_94/0.35),transparent)]"
         />
         <div className="mx-auto max-w-6xl px-4 text-center sm:px-6">
           <p className="site-in mx-auto mb-7 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground">
@@ -235,7 +235,7 @@ export default async function HomePage() {
       <section className="relative isolate overflow-clip py-24 sm:py-32">
         <div
           aria-hidden
-          className="pointer-events-none absolute top-1/2 right-0 -z-10 size-[40rem] -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(140_92_255/0.22),transparent)]"
+          className="pointer-events-none absolute top-1/2 right-0 -z-10 size-[40rem] -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(132_204_22/0.22),transparent)]"
           data-parallax="-0.2"
         />
         <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-2">

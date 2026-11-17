@@ -27,27 +27,27 @@ ridefiniti su `.dark`. Tailwind li espone come classi (`bg-background`, `text-mu
 
 ### Colori
 
-Stile principale **"Cantiere digitale"** (scelto il 16/11/2026): scuro come identità, nato dal marchio
-(blu elettrico e ciano su navy). Fondo navy con griglia da progetto appena visibile e due bagliori
-blu, superfici in vetro satinato (`backdrop-filter`), bordi sottili luminosi, bottone primario con
-sfumatura blu → ciano. Il tema chiaro resta disponibile ed è quello precedente.
+Palette **bianca e verde** (scelta il 17/11/2026): il tema **Chiaro** è il predefinito, con fondo
+bianco, azioni e luci in verde e sidebar verde profondo. Lo stile **"Cantiere digitale"** (scelto il
+16/11/2026) resta disponibile come tema **Scuro**, ricolorato in verde profondo: superfici in vetro
+satinato (`backdrop-filter`), bordi sottili luminosi, bottone primario con sfumatura verde → smeraldo.
 
-| Token                   | Cantiere digitale (predefinito)   | Chiaro    | Uso                                         |
-| ----------------------- | --------------------------------- | --------- | ------------------------------------------- |
-| `background` / `canvas` | `#050B1A` + griglia e bagliori    | `#F6F7F9` | sfondo dell'app                             |
-| `card`                  | navy 78% + sfocatura 16 px        | `#FFFFFF` | pannelli, card, tabelle                     |
-| `popover`               | `#0C1530` (pieno)                 | `#FFFFFF` | menu, finestre, ricerca                     |
-| `foreground`            | `#EAF0FF`                         | `#0B1530` | testo principale                            |
-| `muted-foreground`      | `#8E9CC0`                         | `#5A6478` | testo secondario, etichette                 |
-| `border`                | blu 16%                           | `#E3E7EE` | bordi e divisori                            |
-| `primary`               | `#4C97FF` (sfumatura → `#22C3FF`) | `#2456E6` | **unico colore d'azione**                   |
-| `primary-foreground`    | `#04101F`                         | `#FFFFFF` | testo su `primary`                          |
-| `cyan`                  | `#22C3FF`                         | `#0891B2` | luce del marchio (filo luminoso, sfumature) |
-| `navy`                  | navy 72% + sfocatura              | `#0B1530` | sidebar                                     |
-| `success`               | `#3DDC97`                         | `#0F7A4A` | stati positivi                              |
-| `warning`               | `#FFC04D`                         | `#B45309` | attenzione                                  |
-| `danger`                | `#FF7A6E`                         | `#B42318` | errori, azioni distruttive                  |
-| `info`                  | `#7FB0FF`                         | `#1D4ED8` | informazioni neutre                         |
+| Token                   | Chiaro (predefinito) | Scuro "Cantiere digitale"         | Uso                                         |
+| ----------------------- | -------------------- | --------------------------------- | ------------------------------------------- |
+| `background` / `canvas` | `#FFFFFF`            | `#04140C` + griglia e bagliori    | sfondo dell'app                             |
+| `card`                  | bianco 56% + vetro   | verde scuro 44% + sfocatura       | pannelli, card, tabelle                     |
+| `popover`               | `#FFFFFF`            | `#0A2016` (pieno)                 | menu, finestre, ricerca                     |
+| `foreground`            | `#0F2A1D`            | `#ECFDF3`                         | testo principale                            |
+| `muted-foreground`      | `#5A6478`            | `#94B8A4`                         | testo secondario, etichette                 |
+| `border`                | `#DFE9E3`            | verde 16%                         | bordi e divisori                            |
+| `primary`               | `#15803D`            | `#22C55E` (sfumatura → `#10B981`) | **unico colore d'azione**                   |
+| `primary-foreground`    | `#FFFFFF`            | `#04140C`                         | testo su `primary`                          |
+| `cyan`                  | `#0D9488`            | `#10B981`                         | luce del marchio (filo luminoso, sfumature) |
+| `navy`                  | `#0F2A1D`            | verde scuro 55% + sfocatura       | sidebar (verde profondo)                    |
+| `success`               | `#0F7A4A`            | `#3DDC97`                         | stati positivi                              |
+| `warning`               | `#B45309`            | `#FFC04D`                         | attenzione                                  |
+| `danger`                | `#B42318`            | `#FF7A6E`                         | errori, azioni distruttive                  |
+| `info`                  | `#1D4ED8`            | `#7FB0FF`                         | informazioni neutre                         |
 
 Ogni colore semantico ha una variante tenue (`bg-success/10`) per sfondi di badge e avvisi.
 Mai comunicare uno stato **solo** con il colore: c'è sempre un'etichetta o un'icona.
@@ -97,11 +97,11 @@ Mai comunicare uno stato **solo** con il colore: c'è sempre un'etichetta o un'i
   `apple-icon.png` (marchio su tessera navy).
 - Il marchio ha parti bianche: va sempre su fondo scuro (sidebar navy, pannello delle pagine di
   accesso, tessera navy su fondo chiaro). Mai direttamente su bianco.
-- Logotipo testuale nell'interfaccia: "Cantiere" nel colore del testo + "OS" in blu.
+- Logotipo testuale nell'interfaccia: "Cantiere" nel colore del testo + "OS" in verde.
 
 ## 3. Tema chiaro e scuro
 
-Tre preferenze: **Scuro** ("Cantiere digitale", predefinito), **Chiaro**, **Sistema**. La scelta è
+Tre preferenze: **Chiaro** (bianco e verde, predefinito), **Scuro** ("Cantiere digitale"), **Sistema**. La scelta è
 salvata in un cookie (`cos_theme`), letta dal server al rendering (niente lampeggio) e applicata come
 classe `dark`, `light` o `system` su `<html>`. Il selettore è nel menu utente.
 
