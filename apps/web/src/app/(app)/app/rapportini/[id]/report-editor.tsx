@@ -6,7 +6,7 @@ import {
   type WorkItemKind,
   type WorkReportDetail,
 } from "@cantiereos/core";
-import { Clock, Copy, Package, Plus, Save, Trash2, UserPlus } from "lucide-react";
+import { Clock, Copy, Package, Plus, Save, Send, Trash2, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { FormAlert } from "@/components/ui/form-alert";
 import { FormField, Input, Select, Textarea } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
 import { centsToInput } from "../../pagamenti/payment-bits";
-import { saveReportAction } from "../actions";
+import { changeStatusAction, saveReportAction } from "../actions";
 import { formatHours } from "../report-bits";
 
 interface Labor {
@@ -82,18 +82,33 @@ export function ReportEditor({
   const [date, setDate] = useState(report.reportDate);
   const [work, setWork] = useState(report.workDescription ?? "");
   const [notes, setNotes] = useState(report.notes ?? "");
-  const [labor, setLabor] = useState<Labor[]>(
-    report.labor.map((l) => ({
-      key: l.id,
-      id: l.id,
-      employeeId: l.employeeId,
-      byTime: Boolean(l.startTime && l.endTime),
-      startTime: l.startTime ?? "",
-      endTime: l.endTime ?? "",
-      breakMinutes: String(l.breakMinutes ?? 0),
-      hours: num(l.hours),
-      notes: l.notes ?? "",
-    })),
+  const me = employees.find((e) => e.mine);
+  const [labor, setLabor] = useState<Labor[]>(() =>
+    report.labor.length === 0 && me
+      ? // rapportino nuovo: la propria riga è già proposta (si salva solo con «Salva»)
+        [
+          {
+            key: newKey(),
+            employeeId: me.id,
+            byTime: true,
+            startTime: "07:30",
+            endTime: "16:30",
+            breakMinutes: "60",
+            hours: "",
+            notes: "",
+          },
+        ]
+      : report.labor.map((l) => ({
+          key: l.id,
+          id: l.id,
+          employeeId: l.employeeId,
+          byTime: Boolean(l.startTime && l.endTime),
+          startTime: l.startTime ?? "",
+          endTime: l.endTime ?? "",
+          breakMinutes: String(l.breakMinutes ?? 0),
+          hours: num(l.hours),
+          notes: l.notes ?? "",
+        })),
   );
   const [items, setItems] = useState<Item[]>(
     report.items.map((i) => ({
@@ -106,7 +121,7 @@ export function ReportEditor({
       unitCost: i.unitCostCents != null ? centsToInput(i.unitCostCents) : "",
     })),
   );
-  const [dirty, setDirty] = useState(false);
+  const [dirty, setDirty] = useState(report.labor.length === 0 && Boolean(me));
   const touch = () => {
     setDirty(true);
     if (result.message) setResult({});
@@ -141,7 +156,7 @@ export function ReportEditor({
   };
   const total = labor.reduce((t, l) => t + (hoursOf(l) ?? 0), 0);
 
-  const save = () =>
+  const save = (thenSubmit = false) =>
     start(async () => {
       const r = await saveReportAction(
         report.id,
@@ -173,6 +188,13 @@ export function ReportEditor({
         },
         new Date(report.updatedAt).toISOString(),
       );
+      if (!r.error && thenSubmit) {
+        const sub = await changeStatusAction(report.id, "submit");
+        setResult(sub);
+        if (!sub.error) setDirty(false);
+        router.refresh();
+        return;
+      }
       setResult(r);
       if (!r.error) {
         setDirty(false);
@@ -551,7 +573,15 @@ export function ReportEditor({
             </span>
           )}
         </div>
-        <Button onClick={save} disabled={pending} data-testid="save-report">
+        <Button
+          variant="secondary"
+          onClick={() => save(true)}
+          disabled={pending || labor.length === 0}
+          data-testid="save-submit-report"
+        >
+          <Send aria-hidden /> Salva e invia
+        </Button>
+        <Button onClick={() => save()} disabled={pending} data-testid="save-report">
           <Save aria-hidden /> {pending ? "Salvataggio…" : "Salva"}
         </Button>
       </div>

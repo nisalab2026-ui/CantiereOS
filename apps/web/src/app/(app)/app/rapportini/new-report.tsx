@@ -21,10 +21,14 @@ export function NewReportDialog({
   projects,
   defaultProjectId,
   variant = "primary",
+  label = "Nuovo rapportino",
+  size = "md",
 }: {
   projects: WorkReportOptions["projects"];
   defaultProjectId?: string;
   variant?: "primary" | "secondary";
+  label?: string;
+  size?: "md" | "lg";
 }) {
   const [open, setOpen] = useState(false);
   const [round, setRound] = useState(0);
@@ -37,8 +41,8 @@ export function NewReportDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button variant={variant} data-testid="new-report">
-          <ClipboardPlus aria-hidden /> Nuovo rapportino
+        <Button variant={variant} size={size} className="w-full sm:w-auto" data-testid="new-report">
+          <ClipboardPlus aria-hidden /> {label}
         </Button>
       </DialogTrigger>
       <DialogContent

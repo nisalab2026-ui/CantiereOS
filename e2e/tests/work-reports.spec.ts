@@ -6,6 +6,8 @@ const PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAEUlEQVR4nGM4UaGBFTEMLQkAUtVaAV8W4QQAAAAASUVORK5CYII=",
   "base64",
 );
+const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome" }).format(new Date());
+const year = today.slice(0, 4);
 
 /**
  * Rapportini (ADR-015): compilazione con ore calcolate e materiali, firma del
@@ -47,12 +49,14 @@ test("rapportino: compilazione, firma, approvazione e costi reali della commessa
   // Nuovo rapportino dalla sezione Rapportini
   await page.getByRole("link", { name: "Rapportini", exact: true }).click();
   await expect(page.getByText("Nessun rapportino da completare")).toBeVisible();
-  await page.getByTestId("new-report").click();
+  // dalla Panoramica: «Compila il rapportino di oggi»
+  await page.getByRole("link", { name: "Panoramica", exact: true }).click();
+  await page.getByTestId("today-report").getByTestId("new-report").click();
   const nr = page.getByRole("dialog", { name: "Nuovo rapportino" });
-  await nr.getByLabel("Giorno").fill("2026-11-17");
+  await nr.getByLabel("Giorno").fill(today);
   await nr.getByRole("button", { name: "Crea e compila" }).click();
   await expect(page).toHaveURL(/\/app\/rapportini\/[0-9a-f-]{36}\?nuovo=1$/);
-  await expect(page.getByTestId("report-title")).toHaveText("Rapportino 2026-0001");
+  await expect(page.getByTestId("report-title")).toHaveText(`Rapportino ${year}-0001`);
 
   // invio senza ore: bloccato
   await page.getByTestId("submit-report").click();
@@ -104,9 +108,16 @@ test("rapportino: compilazione, firma, approvazione e costi reali della commessa
   await page.getByRole("button", { name: "Conferma firma" }).click();
   await expect(page.getByRole("img", { name: "Firma di Anna Bianchi" })).toBeVisible();
 
-  // invio e approvazione
-  await page.getByTestId("submit-report").click();
+  // invio (salva e invia) e approvazione
+  await page.getByTestId("save-submit-report").click();
   await expect(page.getByTestId("report-status")).toHaveText("Inviato");
+  await page.getByRole("link", { name: "Panoramica", exact: true }).click();
+  await expect(page.getByTestId("today-report")).toContainText("1 rapportino da approvare");
+  await page
+    .getByTestId("today-report")
+    .getByRole("link", { name: /C-|Copertura/ })
+    .first()
+    .click();
   await expect(page.getByTestId("report-editor")).toHaveCount(0);
   await page.getByTestId("approve-report").click();
   await expect(page.getByTestId("report-status")).toHaveText("Approvato");
@@ -117,7 +128,7 @@ test("rapportino: compilazione, firma, approvazione e costi reali della commessa
   const printUrl = `${page.url().replace(/\?.*$/, "")}/stampa`;
   await page.goto(printUrl);
   const doc = page.getByTestId("report-print");
-  await expect(doc).toContainText("N. 2026-0001");
+  await expect(doc).toContainText(`N. ${year}-0001`);
   await expect(doc).toContainText("Sostituzione coppi lato nord");
   await expect(doc).toContainText("Mario Rossi");
   await expect(doc).toContainText("Anna Bianchi");
@@ -126,7 +137,7 @@ test("rapportino: compilazione, firma, approvazione e costi reali della commessa
   // costo orario della persona → costi reali della commessa
   await page.goto(personUrl);
   await page.getByLabel("Costo orario (€)").fill("30,00");
-  await page.getByLabel("Valido dal").fill("2026-01-01");
+  await page.getByLabel("Valido dal").fill(`${year}-01-01`);
   await page.getByRole("button", { name: "Salva" }).click();
   await expect(page.getByTestId("cost-rates")).toContainText("30,00");
 
@@ -135,5 +146,5 @@ test("rapportino: compilazione, firma, approvazione e costi reali della commessa
   await expect(work).toContainText("8 h");
   await expect(work).toContainText("390,00"); // 8 h × 30 € + 100 × 1,50 €
   await expect(work).toContainText("610,00"); // 1.000 − 390
-  await expect(page.getByRole("link", { name: /2026-0001/ }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: new RegExp(`${year}-0001`) }).first()).toBeVisible();
 });
