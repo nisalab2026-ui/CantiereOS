@@ -16,10 +16,13 @@ export function FormDocument({
   definition,
   values,
   header,
+  blank = false,
 }: {
   definition: FormDefinition;
   values: FormValues;
   header?: React.ReactNode;
+  /** Campi vuoti disegnati come sul modulo cartaceo (caselle, righe, spazio per la firma). */
+  blank?: boolean;
 }) {
   return (
     <article className="form-document space-y-5" data-testid="form-document">
@@ -46,7 +49,7 @@ export function FormDocument({
               >
                 <dt className="text-xs text-muted-foreground print:text-neutral-600">{f.label}</dt>
                 <dd className="mt-0.5 text-sm">
-                  <Value field={f} value={values[f.id]} />
+                  <Value field={f} value={values[f.id]} blank={blank} />
                 </dd>
               </div>
             ))}
@@ -59,8 +62,17 @@ export function FormDocument({
 
 const Empty = () => <span className="text-muted-foreground print:text-neutral-400">—</span>;
 
-function Value({ field, value }: { field: FormField; value: FormValues[string] | undefined }) {
-  if (value === undefined || value === null || value === "") return <Empty />;
+function Value({
+  field,
+  value,
+  blank,
+}: {
+  field: FormField;
+  value: FormValues[string] | undefined;
+  blank: boolean;
+}) {
+  if (value === undefined || value === null || value === "")
+    return blank ? <BlankValue field={field} /> : <Empty />;
   switch (field.type) {
     case "date":
       return <span className="tabular-nums">{itDate(String(value))}</span>;
@@ -141,6 +153,75 @@ function Value({ field, value }: { field: FormField; value: FormValues[string] |
     }
     default:
       return <span>{String(value)}</span>;
+  }
+}
+
+const Box = ({ label }: { label: string }) => (
+  <span className="mr-3 inline-flex items-center gap-1 whitespace-nowrap">
+    <span aria-hidden className="inline-block size-3 rounded-[2px] border border-neutral-500" />
+    {label}
+  </span>
+);
+
+/** Campo non compilato, disegnato come sul foglio da stampare. */
+function BlankValue({ field }: { field: FormField }) {
+  switch (field.type) {
+    case "auto":
+      return <span className="text-xs text-neutral-400 italic">compilato in automatico</span>;
+    case "yes_no":
+      return (
+        <span>
+          <Box label="Sì" />
+          <Box label="No" />
+        </span>
+      );
+    case "choice":
+      return (
+        <span className="flex flex-wrap gap-y-1">
+          {field.options.map((o) => (
+            <Box key={o} label={o} />
+          ))}
+        </span>
+      );
+    case "checklist":
+      return (
+        <table className="mt-1 w-full border-collapse text-sm">
+          <tbody>
+            {field.rows.map((row, i) => (
+              <tr key={i} className="border-b border-neutral-200 last:border-0">
+                <td className="py-1 pr-3 align-top">{row}</td>
+                <td className="py-1 pr-3 align-top whitespace-nowrap">
+                  {field.options.map((o) => (
+                    <Box key={o} label={o} />
+                  ))}
+                </td>
+                {field.withNote && (
+                  <td className="w-1/4 py-1 align-bottom">
+                    <span className="block h-4 border-b border-neutral-300" />
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    case "signature":
+      return <span className="mt-2 block h-14 w-60 max-w-full border-b border-neutral-500" />;
+    case "textarea":
+      return (
+        <span className="block space-y-4 pt-3">
+          <span className="block border-b border-neutral-300" />
+          <span className="block border-b border-neutral-300" />
+        </span>
+      );
+    default:
+      return (
+        <span className="block h-5 border-b border-neutral-300">
+          {field.type === "number" && field.unit && (
+            <span className="float-right text-xs text-neutral-500">{field.unit}</span>
+          )}
+        </span>
+      );
   }
 }
 

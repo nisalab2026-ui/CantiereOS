@@ -167,6 +167,12 @@ creato (`?id=…`); un componente `Toast` arriverà quando servirà davvero.
 - **Grafici** (`components/charts/bar-charts.tsx`): una serie, un colore (`primary`), barre sottili
   con angoli 4px, valore al passaggio, tabella nascosta per i lettori di schermo, link alla lista.
 
+- **Editor dei modelli** (`moduli/modelli/[id]/template-editor.tsx`): tre colonne su schermi larghi —
+  componenti (clic = aggiungi alla sezione attiva, oppure trascina), struttura con trascinamento di
+  campi e sezioni (maniglia; frecce su telefono), duplicazione, annulla/ripristina (50 passi,
+  Ctrl Z / Ctrl Maiusc Z fuori dai campi di testo), Ctrl S per salvare; anteprima "Foglio A4"
+  (`FormDocument` con `blank`: caselle, righe e spazio firma come sul cartaceo) o "Prova a compilare".
+
 ## 6. Stati
 
 Ogni pagina con dati gestisce quattro stati:
