@@ -121,6 +121,16 @@ Le email di autenticazione le invia Supabase Auth con il proprio SMTP.
 - Eventi applicativi non legati a righe (login, export, download documenti, impersonazione) da
   aggiungere in fase 2 con `action` dedicate (es. `auth.login`, `file.download`).
 
+### Storico per elemento e scadenze
+
+- La cronologia di un elemento (`app.record_history`) verifica nel database il permesso di
+  lettura di quella tabella; il registro completo resta riservato a `audit.read` con MFA.
+- Lo storico mostra solo campi in whitelist con etichette italiane: `tenant_id`, token, hash e
+  campi tecnici non compaiono mai.
+- Modifiche con controllo di concorrenza (`updated_at`): una versione superata viene rifiutata,
+  mai sovrascritta in silenzio.
+- Chi ha completato una scadenza e quando lo stabilisce un trigger, non il browser.
+
 ## 6. File (progettato)
 
 - Chiavi `tenants/{tenant_id}/…`; bucket privato; nessun URL pubblico permanente.

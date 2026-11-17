@@ -1,5 +1,7 @@
 import {
   Building2,
+  CalendarClock,
+  History,
   HardHat,
   LayoutDashboard,
   ShieldCheck,
@@ -21,6 +23,13 @@ export interface NavItem {
 /** Solo voci con una pagina reale dietro (niente voci "in arrivo"). */
 export const NAV_ITEMS: NavItem[] = [
   { href: "/app", label: "Panoramica", icon: LayoutDashboard, group: "lavoro" },
+  {
+    href: "/app/scadenze",
+    label: "Scadenze",
+    icon: CalendarClock,
+    permission: "deadlines.read",
+    group: "lavoro",
+  },
   {
     href: "/app/clienti",
     label: "Clienti",
@@ -54,6 +63,13 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Utenti e accessi",
     icon: Users,
     permission: "members.read",
+    group: "azienda",
+  },
+  {
+    href: "/app/registro",
+    label: "Registro attività",
+    icon: History,
+    permission: "audit.read",
     group: "azienda",
   },
   { href: "/account/sicurezza", label: "Sicurezza", icon: ShieldCheck, group: "account" },

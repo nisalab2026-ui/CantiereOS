@@ -373,7 +373,7 @@ export async function completeDeadline(
   tx: UserTx,
   access: TenantAccess,
   id: string,
-  input: { notes?: string },
+  input: { notes?: string | undefined },
 ): Promise<{ nextId: string | null }> {
   requirePermission(access, "deadlines.write");
   const d = parseInput(completeInput, input);

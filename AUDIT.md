@@ -23,7 +23,7 @@
 | Infrastruttura | Docker locale, CI GitHub (DB + E2E)                                                                                                                                                                                         | ambiente online, backup automatici verificati, monitoraggio                                                   |
 
 **Giudizio sintetico.** Le fondamenta (isolamento tra aziende, autorizzazione, registro modifiche
-immutabile) sono solide e testate. Il prodotto però **non è ancora un gestionale utilizzabile
+immutabile) sono solide e testate. Il prodotto, al momento dell'audit, **non era ancora un gestionale utilizzabile
 ogni giorno**: si possono vedere elenchi ma non aprire, modificare o seguire nel tempo un
 cliente, un dipendente o una scadenza. Le aree richieste (scadenziario, certificazioni,
 manutenzioni, documenti, pagamenti, comunicazioni, attività) non esistono ancora.
@@ -149,15 +149,15 @@ manutenzioni, documenti, pagamenti, comunicazioni, attività) non esistono ancor
 
 ## 14. Piano di lavoro (aggiornato a ogni PR)
 
-| Passo | Contenuto                                                                                                              | Stato                |
-| ----- | ---------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| A     | AUDIT.md (questo documento)                                                                                            | ✅                   |
-| B     | Storico consultabile: pagina Registro attività con filtri ed etichette italiane, cronologia nella scheda               | in corso             |
-| C     | Scheda di dettaglio e modifica per clienti e personale, con breadcrumb e storico                                       | in corso             |
-| D     | Scadenziario unico (certificazioni, manutenzioni, controlli, pagamenti, documenti) con stati, responsabili, ricorrenza | in corso             |
-| E     | Notifiche scadenze senza duplicati + dashboard "Priorità"                                                              | in corso             |
-| F     | Esportazione CSV con registrazione nello storico                                                                       | da fare              |
-| G     | Archivio documentale con storage privato e versioni                                                                    | da fare              |
-| H     | Catena di hash sull'audit log, rate limiting, CSP, codici MFA                                                          | da fare              |
-| I     | Calendario, attività, commenti, pagamenti, comunicazioni                                                               | da fare              |
-| J     | Versione dimostrativa online (Supabase + Vercel, dati DEMO separati)                                                   | in attesa di account |
+| Passo | Contenuto                                                                                                              | Stato                                                       |
+| ----- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| A     | AUDIT.md (questo documento)                                                                                            | ✅                                                          |
+| B     | Storico consultabile: pagina Registro attività con filtri ed etichette italiane, cronologia nella scheda               | ✅ (PR #5)                                                  |
+| C     | Scheda di dettaglio e modifica per clienti e personale, con breadcrumb e storico                                       | ✅ clienti e personale (PR #5); fornitori e squadre da fare |
+| D     | Scadenziario unico (certificazioni, manutenzioni, controlli, pagamenti, documenti) con stati, responsabili, ricorrenza | ✅ (PR #5)                                                  |
+| E     | Notifiche scadenze senza duplicati + dashboard "Priorità"                                                              | ✅ (PR #5); job pianificato da fare                         |
+| F     | Esportazione CSV con registrazione nello storico                                                                       | da fare                                                     |
+| G     | Archivio documentale con storage privato e versioni                                                                    | da fare                                                     |
+| H     | Catena di hash sull'audit log, rate limiting, CSP, codici MFA                                                          | da fare                                                     |
+| I     | Calendario, attività, commenti, pagamenti, comunicazioni                                                               | da fare                                                     |
+| J     | Versione dimostrativa online (Supabase + Vercel, dati DEMO separati)                                                   | in attesa di account                                        |

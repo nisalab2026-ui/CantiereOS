@@ -15,12 +15,14 @@ export function ConfirmDialog({
   description,
   confirmLabel,
   action,
+  confirmVariant = "danger",
 }: {
   trigger: React.ReactNode;
   title: string;
   description: string;
   confirmLabel: string;
   action: () => Promise<void>;
+  confirmVariant?: "danger" | "primary";
 }) {
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
@@ -33,7 +35,7 @@ export function ConfirmDialog({
             <Button variant="secondary">Annulla</Button>
           </DialogClose>
           <Button
-            variant="danger"
+            variant={confirmVariant}
             loading={pending}
             onClick={() =>
               start(async () => {

@@ -148,6 +148,17 @@ spaziato (come il motto del marchio); valori dei KPI in Geist Mono.
 Esiti delle azioni: per ora messaggi in linea (`Notice`) e ritorno alla lista filtrata sull'elemento
 creato (`?id=…`); un componente `Toast` arriverà quando servirà davvero.
 
+### Pagine di dettaglio, storico e moduli
+
+- **Pagina di dettaglio**: breadcrumb → titolo con badge di stato → azioni reali (solo se
+  permesse) → schede come link `?tab=` (Panoramica, Scadenze, Storico).
+- **Timeline** (`components/history/timeline.tsx`): eventi raggruppati per giorno; per ogni
+  modifica il confronto "prima → dopo" per campo; le creazioni mostrano i dati iniziali su richiesta.
+- **Moduli**: `KeepValuesForm` non svuota i campi dopo un errore del server; errori per campo
+  accanto al campo e messaggio generale con `role="alert"`.
+- **Grafici** (`components/charts/bar-charts.tsx`): una serie, un colore (`primary`), barre sottili
+  con angoli 4px, valore al passaggio, tabella nascosta per i lettori di schermo, link alla lista.
+
 ## 6. Stati
 
 Ogni pagina con dati gestisce quattro stati:

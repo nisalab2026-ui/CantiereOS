@@ -116,3 +116,16 @@ insert into public.team_members (id, tenant_id, team_id, employee_id) values
   ('d7100000-0000-4000-8000-000000000003', 'd1000000-0000-4000-8000-000000000001', 'd7000000-0000-4000-8000-000000000001', 'd6000000-0000-4000-8000-000000000003'),
   ('d7100000-0000-4000-8000-000000000004', 'd1000000-0000-4000-8000-000000000002', 'd7000000-0000-4000-8000-000000000002', 'd6000000-0000-4000-8000-000000000004')
 on conflict (id) do nothing;
+
+-- Scadenze DEMO (date relative a oggi: la dashboard mostra sempre casi realistici)
+insert into public.deadlines (id, tenant_id, kind, title, reference_code, due_date, remind_days_before,
+                              recurrence_months, customer_id, supplier_id, employee_id, responsible_user_id) values
+  ('d8000000-0000-4000-8000-000000000001', 'd1000000-0000-4000-8000-000000000001', 'maintenance',   'DEMO Manutenzione caldaia condominiale', 'CT-01', current_date - 4,  30, 12, 'd2000000-0000-4000-8000-000000000001', null, null, 'd0000000-0000-4000-8000-000000000002'),
+  ('d8000000-0000-4000-8000-000000000002', 'd1000000-0000-4000-8000-000000000001', 'certification', 'DEMO Patentino PLE',                     'PLE-2291', current_date + 5, 30, 60, null, null, 'd6000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000002'),
+  ('d8000000-0000-4000-8000-000000000003', 'd1000000-0000-4000-8000-000000000001', 'certification', 'DEMO Corso sicurezza lavoratori',        null, current_date + 20, 30, 60, null, null, 'd6000000-0000-4000-8000-000000000002', null),
+  ('d8000000-0000-4000-8000-000000000004', 'd1000000-0000-4000-8000-000000000001', 'inspection',    'DEMO Verifica estintori scuola',         null, current_date + 45, 30, 6,  'd2000000-0000-4000-8000-000000000003', null, null, 'd0000000-0000-4000-8000-000000000001'),
+  ('d8000000-0000-4000-8000-000000000005', 'd1000000-0000-4000-8000-000000000001', 'contract',      'DEMO Rinnovo contratto noleggio ponteggi', null, current_date + 75, 30, null, null, 'd3000000-0000-4000-8000-000000000002', null, 'd0000000-0000-4000-8000-000000000001'),
+  ('d8000000-0000-4000-8000-000000000006', 'd1000000-0000-4000-8000-000000000001', 'document',      'DEMO DURC aziendale',                    null, current_date + 110, 30, 4, null, null, null, null),
+  ('d8000000-0000-4000-8000-000000000007', 'd1000000-0000-4000-8000-000000000001', 'payment',       'DEMO Verifica incasso SAL 2',            null, current_date - 1,  7,  null, 'd2000000-0000-4000-8000-000000000003', null, null, null),
+  ('d8000000-0000-4000-8000-000000000008', 'd1000000-0000-4000-8000-000000000002', 'maintenance',   'DEMO Manutenzione centrale termica hotel', null, current_date + 12, 30, 12, 'd2000000-0000-4000-8000-000000000004', null, null, 'd0000000-0000-4000-8000-000000000004')
+on conflict (id) do nothing;

@@ -1,7 +1,10 @@
 import {
   getDashboard,
-  type AuditEntry,
+  getDeadlineSummary,
+  listActivity,
   type DashboardData,
+  type DeadlineSummary,
+  type HistoryEvent,
   type TeamSummary,
 } from "@cantiereos/core";
 import {
@@ -22,7 +25,8 @@ import { KpiCard } from "@/components/ui/kpi-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/states";
 import { asCurrentUser, getAppContext } from "@/lib/auth";
-import { formatDate, formatRelative } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { PrioritySection, RecentChanges } from "./priority";
 
 export const metadata: Metadata = { title: "Panoramica" };
 
@@ -43,7 +47,17 @@ export default async function DashboardPage({
     return sp[key!] === value;
   })?.[1];
   const { company, access } = await getAppContext();
-  const data = await asCurrentUser((tx) => getDashboard(tx, access));
+  const { data, deadlines, activity } = await asCurrentUser(async (tx) => {
+    const d = await getDashboard(tx, access);
+    return {
+      data: d,
+      deadlines: d.kind === "portal" ? null : await getDeadlineSummary(tx, access),
+      activity:
+        d.kind === "admin" && access.permissions.has("audit.read")
+          ? (await listActivity(tx, access, { limit: 8 })).events
+          : null,
+    };
+  });
 
   return (
     <div className="space-y-6" data-testid={`dashboard-${data.kind}`}>
@@ -68,16 +82,26 @@ export default async function DashboardPage({
           Azienda dimostrativa: tutti i dati che vedi vengono dal seed di sviluppo e non sono reali.
         </p>
       )}
-      <DashboardBody data={data} />
+      <DashboardBody data={data} deadlines={deadlines} activity={activity} />
     </div>
   );
 }
 
-function DashboardBody({ data }: { data: DashboardData }) {
+function DashboardBody({
+  data,
+  deadlines,
+  activity,
+}: {
+  data: DashboardData;
+  deadlines: DeadlineSummary | null;
+  activity: HistoryEvent[] | null;
+}) {
+  const priority = deadlines ? <PrioritySection s={deadlines} /> : null;
   switch (data.kind) {
     case "admin":
       return (
         <>
+          {priority}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {data.activeMembers !== null && (
               <KpiCard
@@ -132,9 +156,9 @@ function DashboardBody({ data }: { data: DashboardData }) {
               Periodo di prova fino al {formatDate(data.trialEndsAt)}.
             </p>
           )}
-          {data.recentActivity !== null && (
+          {activity !== null && (
             <div className="cos-enter" style={{ "--i": 5 } as React.CSSProperties}>
-              <RecentActivity entries={data.recentActivity} />
+              <RecentChanges events={activity} />
             </div>
           )}
         </>
@@ -142,6 +166,7 @@ function DashboardBody({ data }: { data: DashboardData }) {
     case "manager":
       return (
         <>
+          {priority}
           <div className="grid gap-4 sm:grid-cols-3">
             {data.employees !== null && (
               <KpiCard
@@ -199,6 +224,7 @@ function DashboardBody({ data }: { data: DashboardData }) {
             </CardBody>
           </Card>
           {data.teams !== null && <Teams teams={data.teams} title="Le tue squadre" />}
+          {priority}
         </>
       );
     case "portal":
@@ -255,62 +281,6 @@ function Teams({ teams, title }: { teams: TeamSummary[]; title: string }) {
                   {t.members} {t.members === 1 ? "persona" : "persone"}
                 </Badge>
               </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
-  );
-}
-
-const TABLE_LABELS: Record<string, string> = {
-  customers: "cliente",
-  customer_sites: "sede cliente",
-  contacts: "contatto",
-  suppliers: "fornitore",
-  employees: "scheda personale",
-  teams: "squadra",
-  team_members: "componente squadra",
-  memberships: "accesso utente",
-  invitations: "invito",
-  tenants: "dati azienda",
-  notifications: "notifica",
-};
-
-const ACTION_LABELS: Record<string, string> = {
-  insert: "Creato",
-  update: "Modificato",
-  delete: "Eliminato",
-};
-
-function RecentActivity({ entries }: { entries: AuditEntry[] }) {
-  return (
-    <Card>
-      <CardHeader
-        title="Attività recenti"
-        description="Dal registro delle modifiche dell'azienda."
-      />
-      {entries.length === 0 ? (
-        <EmptyState
-          icon={CalendarClock}
-          title="Nessuna attività"
-          description="Le modifiche ai dati compariranno qui."
-        />
-      ) : (
-        <ul className="divide-y divide-border" data-testid="recent-activity">
-          {entries.map((e) => (
-            <li key={e.id} className="flex items-center gap-3 px-5 py-2.5 text-sm">
-              <span className="flex-1">
-                {ACTION_LABELS[e.action.toLowerCase()] ?? e.action}{" "}
-                {e.tableName ? (TABLE_LABELS[e.tableName] ?? e.tableName) : ""}
-                {e.actor && <span className="text-muted-foreground"> · {e.actor}</span>}
-              </span>
-              <time
-                dateTime={new Date(e.createdAt).toISOString()}
-                className="text-xs text-muted-foreground tabular-nums"
-              >
-                {formatRelative(e.createdAt)}
-              </time>
             </li>
           ))}
         </ul>

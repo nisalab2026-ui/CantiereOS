@@ -48,7 +48,14 @@
 - [x] Elenchi clienti, fornitori, personale, squadre; creazione cliente; gestione utenti restyling
 - [ ] Scheda di dettaglio, modifica ed eliminazione di clienti/fornitori/personale/squadre, contatti e
       sedi (con il modulo cantieri)
-- [ ] Pagina del registro attività (audit log) completa
+- [x] Pagina del registro attività con filtri (sezione, operazione, utente, periodo, testo) e
+      paginazione per cursore
+- [x] Schede di dettaglio e modifica di clienti e personale con breadcrumb, schede e storico
+      prima/dopo; creazione del personale; archivia/riattiva
+- [x] Scadenziario unico (certificazioni, manutenzioni, controlli, documenti, pagamenti, contratti)
+      con ricorrenza, responsabile, completamento, avvisi senza duplicati
+- [x] Dashboard "Richiede attenzione" con grafici collegati alle liste filtrate
+- [x] AUDIT.md con priorità e piano di lavoro
 - [ ] Conferma ADR-006 (Kysely) e ADR-007 (BullMQ)
 
 ## Fase 3 — Operatività di campo
