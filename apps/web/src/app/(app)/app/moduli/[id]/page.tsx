@@ -60,6 +60,7 @@ export default async function FormSubmissionPage({
       id: s.customer.id,
       name: s.customer.name,
       sites: s.site ? [{ id: s.site.id, name: s.site.name, address: "" }] : [],
+      projects: s.project ? [s.project] : [],
     });
   }
 
@@ -82,6 +83,18 @@ export default async function FormSubmissionPage({
                 <span aria-hidden>·</span>
                 <Link href={`/app/clienti/${s.customer.id}`} className="hover:underline">
                   {s.customer.name}
+                </Link>
+              </>
+            )}
+            {s.project && (
+              <>
+                <span aria-hidden>·</span>
+                <Link
+                  href={`/app/commesse/${s.project.id}`}
+                  className="hover:underline"
+                  data-testid="form-project"
+                >
+                  Commessa {s.project.code}
                 </Link>
               </>
             )}
@@ -117,6 +130,7 @@ export default async function FormSubmissionPage({
                 title: s.title,
                 customerId: s.customer?.id ?? "",
                 siteId: s.site?.id ?? "",
+                projectId: s.project?.id ?? "",
                 data: s.data,
               }}
               customers={customers}

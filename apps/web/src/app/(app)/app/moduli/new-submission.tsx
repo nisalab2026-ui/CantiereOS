@@ -23,7 +23,7 @@ export function NewSubmissionDialog({
 }: {
   templates: { id: string; name: string }[];
   customers: FormCustomerOption[];
-  defaults?: { templateId?: string; customerId?: string };
+  defaults?: { templateId?: string; customerId?: string; projectId?: string };
   triggerLabel?: string;
   variant?: "primary" | "secondary";
 }) {
@@ -70,7 +70,7 @@ function NewSubmissionForm({
 }: {
   templates: { id: string; name: string }[];
   customers: FormCustomerOption[];
-  defaults: { templateId?: string; customerId?: string };
+  defaults: { templateId?: string; customerId?: string; projectId?: string };
 }) {
   const router = useRouter();
   const [state, action, pending] = useActionState<FormState, FormData>(createSubmissionAction, {});
@@ -123,6 +123,34 @@ function NewSubmissionForm({
             ))}
           </Select>
         </FormField>
+        {customer && customer.projects.length > 0 && (
+          <div className="sm:col-span-2">
+            <FormField
+              id="ns-projectId"
+              label="Commessa"
+              hint="Il modulo entra nel riepilogo della commessa."
+              {...errorProp(err, "projectId")}
+            >
+              <Select
+                id="ns-projectId"
+                name="projectId"
+                key={customerId}
+                defaultValue={
+                  customer.projects.some((p) => p.id === defaults.projectId)
+                    ? defaults.projectId
+                    : ""
+                }
+              >
+                <option value="">Nessuna</option>
+                {customer.projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.code} · {p.name}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+          </div>
+        )}
       </div>
       <FormField
         id="ns-title"
