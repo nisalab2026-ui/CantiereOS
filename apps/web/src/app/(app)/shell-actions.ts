@@ -1,5 +1,4 @@
-
-// Deadline reminders are refreshed only when the user opens the notification "use server";
+"use server";
 
 import {
   globalSearch,
