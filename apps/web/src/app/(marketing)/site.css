@@ -724,10 +724,10 @@ html[data-js] [data-shown] .trade-chip {
 }
 
 /* --- Illustrazioni dei mestieri (components/site/trade-scenes.tsx) ---------------------------------
- * --t è l'ingresso della scena (0 → 1 nella prima metà del passaggio); --vp continua a muovere gru,
+ * --t è l'ingresso della scena (0 → 1 nel primo terzo del passaggio); --vp continua a muovere gru,
  * ingranaggi, lancette e cartellini per tutta la sezione. Acqua, gocce e segnaposto si muovono da soli. */
 .trade-scene {
-  --t: clamp(0, calc((var(--vp, 1) - 0.08) * 2.4), 1);
+  --t: clamp(0, calc((var(--vp, 1) - 0.05) * 3.4), 1);
   box-shadow: 0 30px 70px -40px var(--site-shadow);
 }
 html[data-engine] .trade-section .trade-scene {
