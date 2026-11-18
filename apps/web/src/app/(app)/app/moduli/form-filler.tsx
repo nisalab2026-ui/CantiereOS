@@ -23,6 +23,7 @@ interface Draft {
   title: string;
   customerId: string;
   siteId: string;
+  projectId?: string;
   data: FormValues;
 }
 
@@ -197,7 +198,7 @@ export function FormFiller({
         </div>
       )}
 
-      <section className="grid gap-4 rounded-lg border border-border bg-card/60 p-4 sm:grid-cols-3 sm:p-5">
+      <section className="grid gap-4 rounded-lg border border-border bg-card/60 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-4">
         <Field
           id="sub-title"
           label="Titolo"
@@ -215,7 +216,7 @@ export function FormFiller({
           <Select
             id="sub-customer"
             value={draft.customerId}
-            onChange={(e) => update({ customerId: e.target.value, siteId: "" })}
+            onChange={(e) => update({ customerId: e.target.value, siteId: "", projectId: "" })}
           >
             <option value="">Nessuno</option>
             {customers.map((c) => (
@@ -243,6 +244,25 @@ export function FormFiller({
             {customer?.sites.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name} — {s.address}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field
+          id="sub-project"
+          label="Commessa"
+          {...(errors.projectId ? { error: errors.projectId } : {})}
+        >
+          <Select
+            id="sub-project"
+            value={draft.projectId ?? ""}
+            disabled={!customer || customer.projects.length === 0}
+            onChange={(e) => update({ projectId: e.target.value })}
+          >
+            <option value="">Nessuna</option>
+            {customer?.projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.code} · {p.name}
               </option>
             ))}
           </Select>

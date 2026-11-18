@@ -1,0 +1,810 @@
+/*
+ * Sito pubblico (docs/SITO_PUBBLICO.md). Stile "liquid" del gestionale (token in globals.css) con la
+ * coreografia allo scorrimento in quattro livelli, dal più quieto al più evidente:
+ * 1 micro-interazioni (hover, pressione, cursore, pulsanti magnetici), 2 ingressi delle sezioni,
+ * 3 racconto allo scorrimento (parallasse, parole che si accendono, capitolo laterale, card che si impilano),
+ * 4 momenti firma (titolo a parole, finestra dell'app che si raddrizza, anello sul piano consigliato).
+ * Ogni effetto ha uno stato fermo: la pagina si legge tutta senza JavaScript e con "riduci movimento".
+ * html[data-js] = JavaScript attivo; html[data-engine] = motore di scorrimento in funzione.
+ */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/* Palette del sito: bianco e verde come il tema chiaro del gestionale (richiesta del committente del
+ * 17/11/2026), ma sempre chiara anche se il gestionale è in scuro, più luci e ombre proprie del sito. */
+html:has(.site) {
+  scroll-behavior: smooth;
+  --background: #ffffff;
+  --card: rgb(255 255 255 / 0.62);
+  --popover: #ffffff;
+  --foreground: #0f2a1d;
+  --muted-foreground: #4f6158;
+  --border: #dfe9e3;
+  --input: #cfdfd6;
+  --primary: #15803d;
+  --primary-foreground: #ffffff;
+  --cyan: #0d9488;
+  --navy: #0f2a1d;
+  --navy-foreground: #e8f3ec;
+  --navy-muted: #a3c2b0;
+  --navy-accent: #1a3d2b;
+  --accent: #ecf7ef;
+  --success: #0f7a4a;
+  --info: #0f766e;
+  --ring: #15803d;
+  --glass-blur: 26px;
+  --primary-gradient: linear-gradient(135deg, #16a34a 0%, #059669 100%);
+  --primary-glow: 0 8px 22px -8px rgb(21 128 61 / 0.55);
+  --card-glow:
+    inset 0 1px 0 rgb(255 255 255 / 0.95), 0 1px 2px rgb(11 31 23 / 0.04),
+    0 22px 44px -30px rgb(4 120 87 / 0.35);
+  --liquid-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.8), rgb(255 255 255 / 0) 50%);
+  --aurora-1: rgb(16 185 129 / 0.26);
+  --aurora-2: rgb(45 212 191 / 0.2);
+  --aurora-3: rgb(163 230 53 / 0.14);
+  --canvas:
+    radial-gradient(1100px 560px at 85% -10%, rgb(16 185 129 / 0.12), transparent 60%),
+    radial-gradient(900px 500px at 0% 40%, rgb(45 212 191 / 0.07), transparent 60%), #ffffff;
+  /* Luci dietro le sezioni e ombre colorate delle figure */
+  --site-glow-1: rgb(16 185 129 / 0.26);
+  --site-glow-2: rgb(45 212 191 / 0.22);
+  --site-glow-3: rgb(132 204 22 / 0.16);
+  --site-shadow: rgb(21 128 61 / 0.42);
+  color-scheme: light;
+}
+html[data-smooth] {
+  scroll-behavior: auto;
+}
+
+/* --- Livello 2: le sezioni salgono una volta, solo con JavaScript ------------------------------ */
+html[data-js] [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 1.5rem, 0);
+  transition:
+    opacity 0.5s var(--ease-out-expo),
+    transform 0.6s var(--ease-out-expo);
+  transition-delay: calc(var(--reveal-i, 0) * 50ms);
+}
+html[data-js] [data-reveal][data-shown] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Titoli a parole: ogni parola sale da dietro una maschera */
+.split-word {
+  display: inline-block;
+  overflow: clip;
+  vertical-align: top;
+  padding-bottom: 0.1em;
+  margin-bottom: -0.1em;
+}
+.split-word > span {
+  display: inline-block;
+  transform: translate3d(0, 110%, 0);
+  animation: site-word-rise 0.7s var(--ease-out-expo) forwards;
+  animation-delay: calc(var(--d, 0ms) + var(--i, 0) * 40ms);
+}
+@keyframes site-word-rise {
+  to {
+    transform: none;
+  }
+}
+.site-in {
+  opacity: 0;
+  animation: site-in 0.6s var(--ease-out-expo) forwards;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes site-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 1.25rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Parola in evidenza: gradiente del marchio che scorre lentamente */
+.site-accent {
+  background: linear-gradient(100deg, var(--primary), var(--cyan), var(--primary));
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: site-accent 8s ease-in-out infinite alternate;
+}
+@keyframes site-accent {
+  to {
+    background-position: 100% 0;
+  }
+}
+
+/* --- Intestazione: isola di vetro che si fa più piena scorrendo ---------------------------------- */
+.site-header-bar {
+  border: 1px solid transparent;
+  transition:
+    background-color 0.4s,
+    border-color 0.4s,
+    box-shadow 0.4s;
+}
+.site-header[data-scrolled] .site-header-bar,
+.site-header[data-open] .site-header-bar {
+  background: color-mix(in oklab, var(--background) 72%, transparent);
+  border-color: var(--border);
+  box-shadow: var(--card-glow);
+  /* il prefisso prima: lightningcss tiene solo l'ultima delle due */
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  backdrop-filter: blur(20px) saturate(1.6);
+}
+.site-nav-link {
+  position: relative;
+}
+.site-nav-link::after {
+  content: "";
+  position: absolute;
+  inset: auto 0.75rem 0.3rem;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.45s var(--ease-out-expo);
+}
+.site-nav-link:hover::after,
+.site-nav-link[aria-current="page"]::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+.site-menu-sheet:not([hidden]) {
+  animation: site-in 0.5s var(--ease-out-expo);
+}
+.site-menu-sheet:not([hidden]) .site-menu-link {
+  opacity: 0;
+  animation: site-in 0.6s var(--ease-out-expo) forwards;
+  animation-delay: calc(80ms + var(--i, 0) * 60ms);
+}
+
+/* --- Motore di scorrimento ----------------------------------------------------------------------- */
+html[data-engine] [data-parallax] {
+  translate: 0 var(--py, 0px);
+  will-change: translate;
+}
+
+/* Linea di luce in alto che si riempie leggendo */
+.scroll-line {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 65;
+  height: 2px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--primary), var(--cyan));
+  box-shadow: 0 0 12px color-mix(in oklab, var(--cyan) 70%, transparent);
+  transform-origin: left;
+  transform: scaleX(var(--scroll, 0));
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+html[data-engine] .scroll-line {
+  opacity: 1;
+}
+
+/* Manifesto: le parole si accendono una dopo l'altra mentre il paragrafo passa (--sp 0 → 1) */
+.scrub-word {
+  opacity: 1;
+  transition: opacity 0.12s linear;
+}
+html[data-engine] [data-scrub] .scrub-word {
+  opacity: clamp(0.14, calc(var(--sp, 0) * (var(--n, 1) + 4) - var(--i, 0)), 1);
+}
+html[data-engine] [data-scrub] .scrub-word.scrub-glow {
+  color: var(--primary);
+  text-shadow: 0 0 calc(clamp(0, calc(var(--sp, 0) * (var(--n, 1) + 4) - var(--i, 0)), 1) * 24px)
+    color-mix(in oklab, var(--cyan) 55%, transparent);
+}
+.scrub-glow {
+  color: var(--primary);
+}
+
+/* Nastro dei mestieri: scritto due volte, gira da solo e si inclina con la velocità di scorrimento */
+.marquee {
+  overflow: clip;
+  white-space: nowrap;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.marquee-track {
+  display: inline-flex;
+  will-change: transform;
+  animation: site-marquee 38s linear infinite;
+}
+html[data-engine] .marquee-track {
+  animation: none;
+}
+@keyframes site-marquee {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+.marquee-outline {
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in oklab, var(--foreground) 40%, transparent);
+}
+
+/* Capitolo laterale: fissato sugli schermi larghi, scorrimento col dito (con aggancio) sul telefono */
+.hscroll-stage {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 1rem;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.hscroll-stage::-webkit-scrollbar {
+  display: none;
+}
+.hscroll-stage > [data-hscroll-track] > * {
+  scroll-snap-align: start;
+}
+[data-hscroll][data-pinned] .hscroll-stage {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow: clip;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+[data-hscroll][data-pinned] [data-hscroll-track] {
+  will-change: transform;
+}
+.hscroll-bar {
+  transform-origin: left;
+  transform: scaleX(var(--hp, 0));
+}
+/* Il numero grande di ogni pannello scorre un po' più veloce della card: profondità senza 3D */
+[data-hscroll][data-pinned] .hpanel-num {
+  translate: calc((var(--hp, 0) - 0.5) * -6rem) 0;
+}
+
+/* Finestra dell'app che si raddrizza mentre si scende (--vp) */
+html[data-engine] .site-tilt-in {
+  transform: perspective(1400px) rotateX(calc((1 - min(var(--vp, 0) * 2.2, 1)) * 16deg))
+    scale(calc(0.94 + min(var(--vp, 0) * 2.2, 1) * 0.06));
+  transform-origin: 50% 0;
+}
+
+/* Immagine che si apre come un otturatore mentre attraversa lo schermo (--vp) */
+html[data-engine] .reveal-media {
+  clip-path: inset(
+    calc(max(0, 0.35 - var(--vp, 0)) * 60%) calc(max(0, 0.35 - var(--vp, 0)) * 40%) round 1.5rem
+  );
+}
+html[data-engine] .reveal-media > * {
+  scale: calc(1.12 - min(var(--vp, 0), 0.6) * 0.2);
+}
+
+/* Titolo grande che cresce entrando */
+html[data-engine] .grow-title {
+  scale: calc(0.86 + min(var(--vp, 0), 0.5) * 0.28);
+  opacity: calc(0.2 + min(var(--vp, 0), 0.45) * 1.8);
+}
+
+/* Passi che si impilano: ogni card resta in alto e arretra mentre la successiva la copre (--cover) */
+.stack-card {
+  position: sticky;
+  top: calc(6rem + var(--k, 0) * 1.25rem);
+  transform-origin: 50% 0;
+}
+.stack-card > .stack-inner {
+  background-color: color-mix(in oklab, var(--background) 82%, transparent);
+}
+html[data-engine] .stack-card > .stack-inner {
+  scale: calc(1 - var(--cover, 0) * 0.06);
+  filter: brightness(calc(1 - var(--cover, 0) * 0.35));
+}
+
+/* Riga che si disegna (intestazioni delle pagine interne) */
+.site-rule {
+  transform-origin: left;
+  animation: site-rule 1.2s var(--ease-out-expo) 0.2s both;
+}
+@keyframes site-rule {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* Pulsanti magnetici: si avvicinano di qualche pixel al puntatore */
+[data-magnetic] {
+  translate: var(--mgx, 0px) var(--mgy, 0px);
+  transition:
+    translate 0.5s var(--ease-out-expo),
+    box-shadow 0.4s var(--ease-out-expo),
+    filter 0.2s;
+}
+
+/* Griglia da progetto che sfuma, sotto i titoli */
+.site-grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--primary) 12%, transparent) 1px, transparent 1px),
+    linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--primary) 12%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
+}
+
+/* Bolle di stato sospese attorno alla finestra dell'app */
+.site-float {
+  animation: site-drift 7s ease-in-out infinite;
+  animation-delay: var(--d, 0s);
+}
+@keyframes site-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -12px, 0);
+  }
+}
+
+/* Card con la luce che segue il puntatore (--mx/--my dal componente Spotlight) */
+.site-spot {
+  position: relative;
+  isolation: isolate;
+}
+.site-spot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(
+    22rem circle at var(--mx, 50%) var(--my, 0%),
+    color-mix(in oklab, var(--primary) 16%, transparent),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.site-spot:hover::before {
+  opacity: 1;
+}
+
+/* Prezzi: card in vetro, anello di luce che gira attorno al piano consigliato */
+.price-card {
+  transition:
+    translate 0.6s var(--ease-out-expo),
+    border-color 0.4s,
+    box-shadow 0.6s var(--ease-out-expo);
+}
+.price-card:hover {
+  translate: 0 -6px;
+  border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
+}
+@property --ring {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.price-card-hero::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--ring),
+    transparent 0deg,
+    var(--cyan) 40deg,
+    var(--primary) 80deg,
+    transparent 130deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: site-ring 6s linear infinite;
+  pointer-events: none;
+}
+@keyframes site-ring {
+  to {
+    --ring: 360deg;
+  }
+}
+.price-amount {
+  display: inline-block;
+}
+.price-amount[data-changed] {
+  animation: site-in 0.5s var(--ease-out-expo);
+}
+
+/* Catena del registro: gli anelli si accendono in sequenza */
+.chain-link {
+  animation: site-chain 4.8s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 0.6s);
+}
+@keyframes site-chain {
+  0%,
+  60%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+    border-color: var(--border);
+  }
+  20% {
+    box-shadow: 0 0 22px -4px color-mix(in oklab, var(--cyan) 70%, transparent);
+    border-color: color-mix(in oklab, var(--cyan) 60%, transparent);
+  }
+}
+
+/* Domande: la risposta scivola dentro */
+.site-faq[open] > .site-faq-answer {
+  animation: site-in 0.5s var(--ease-out-expo);
+}
+
+/* Dispositivi con meno risorse: stessa storia senza sfocature e derive */
+html[data-tier="lite"] .site-float,
+html[data-tier="lite"] .chain-link {
+  animation: none;
+}
+html[data-tier="lite"] [data-reveal] {
+  filter: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-js] [data-reveal] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+  .split-word > span,
+  .site-in {
+    transform: none;
+    opacity: 1;
+    animation: none;
+  }
+  .marquee-track,
+  .site-accent,
+  .site-float,
+  .chain-link,
+  .price-card-hero::after,
+  .site-rule {
+    animation: none;
+  }
+  .scroll-line {
+    display: none;
+  }
+  html:has(.site) {
+    scroll-behavior: auto;
+  }
+}
+
+@media print {
+  html[data-js] [data-reveal] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* --- Cursore personalizzato (motion/cursor.tsx): la freccia di sistema lascia il posto al punto e
+ * all'anello verdi, tranne nei campi di testo. Solo quando lo script l'ha attivato. -------------- */
+html[data-custom-cursor] .site,
+html[data-custom-cursor] .site * {
+  cursor: none;
+}
+html[data-custom-cursor] .site :is(input, textarea, [contenteditable="true"]) {
+  cursor: text;
+}
+
+/* --- WhatsApp (components/site/whatsapp.tsx) ----------------------------------------------------
+ * Il pulsante entra con un rimbalzo, emette due onde verdi, il simbolo "squilla" ogni pochi secondi e
+ * l'etichetta si apre al passaggio del puntatore o con la tastiera. */
+.wa-fab {
+  transition: translate 0.4s var(--ease-out-expo);
+  animation: wa-in 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) 1.2s both;
+}
+.wa-fab:hover {
+  translate: 0 -3px;
+}
+.wa-fab:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 3px;
+}
+.wa-label {
+  display: grid;
+  grid-template-columns: 0fr;
+  transition: grid-template-columns 0.45s var(--ease-out-expo);
+}
+.wa-label > span {
+  min-width: 0;
+}
+.wa-fab:hover .wa-label,
+.wa-fab:focus-visible .wa-label {
+  grid-template-columns: 1fr;
+}
+.wa-wave {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #25d366;
+  opacity: 0;
+  pointer-events: none;
+  animation: wa-wave 2.8s ease-out 2s infinite;
+}
+.wa-wave-2 {
+  animation-delay: 3.4s;
+}
+.wa-fab .wa-icon,
+.wa-badge .wa-icon,
+.wa-inline:hover .wa-icon {
+  animation: wa-ring 4s ease-in-out 2.2s infinite;
+  transform-origin: 50% 60%;
+}
+@keyframes wa-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes wa-wave {
+  0% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+@keyframes wa-ring {
+  0%,
+  78%,
+  100% {
+    transform: rotate(0);
+  }
+  82% {
+    transform: rotate(-14deg) scale(1.08);
+  }
+  86% {
+    transform: rotate(12deg) scale(1.08);
+  }
+  90% {
+    transform: rotate(-8deg);
+  }
+  94% {
+    transform: rotate(5deg);
+  }
+}
+/* Sul telefono il pulsante non copre il menu aperto */
+.site:has(.site-header[data-open]) .wa-fab {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --- Firma di chi ha realizzato il sito --------------------------------------------------------- */
+.site-credit-name {
+  background: linear-gradient(90deg, currentColor 50%, var(--primary) 50%) 0 0 / 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  transition: background-position 0.6s var(--ease-out-expo);
+}
+.site-credit:hover .site-credit-name {
+  -webkit-text-fill-color: transparent;
+  background-position: -100% 0;
+}
+.site-credit-dot {
+  animation: site-pulse 2.4s ease-in-out infinite;
+}
+@keyframes site-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.6);
+  }
+}
+
+/* --- Indice delle pagine legali: la voce della sezione in lettura si accende -------------------- */
+.legal-toc-link[aria-current] {
+  color: var(--foreground);
+  border-left-color: var(--primary);
+  font-weight: 500;
+}
+
+/* --- Nuovi effetti allo scorrimento ------------------------------------------------------------- */
+/* Sigillo circolare che gira con lo scorrimento della pagina (--scroll dal motore) */
+.site-seal {
+  animation: site-seal 30s linear infinite;
+}
+html[data-engine] .site-seal {
+  animation: none;
+  transform: rotate(calc(var(--scroll, 0) * 540deg));
+}
+@keyframes site-seal {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Firma in fondo: il nome sale lettera per lettera mentre il piè di pagina entra (data-progress) */
+.footer-word > span {
+  display: inline-block;
+}
+html[data-engine] .footer-word > span {
+  transform: translate3d(
+    0,
+    calc((1 - min(1, max(0, var(--vp, 1) * 2.4 - var(--i) * 0.06))) * 70%),
+    0
+  );
+  opacity: calc(min(1, max(0, var(--vp, 1) * 2.4 - var(--i) * 0.06)) * 0.9 + 0.1);
+}
+
+/* Fascia dei numeri: le cifre si contano (data-count) e la riga sopra si allunga entrando */
+.site-stat::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--primary-gradient);
+  transform-origin: left;
+  transform: scaleX(0.15);
+  transition: transform 0.9s var(--ease-out-expo) 0.1s;
+}
+.site-stat[data-shown]::before,
+html:not([data-js]) .site-stat::before {
+  transform: none;
+}
+
+/* Titoli di sezione: la riga dell'occhiello si allunga mentre il titolo sale (data-progress) */
+html[data-engine] .site-eyebrow-line {
+  transform-origin: left;
+  transform: scaleX(min(1, calc(var(--vp, 1) * 2.6)));
+}
+
+/* --- Pagina Mestieri ------------------------------------------------------------------------------
+ * Nome del mestiere a contorno che scorre dietro, icona che ruota e barra che si riempie mentre la
+ * sezione passa (data-progress), etichette che entrano una dopo l'altra, indice che si accende. */
+.trade-ghost {
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in oklab, var(--primary) 22%, transparent);
+}
+.trade-pill[aria-current] {
+  color: var(--foreground);
+  background: var(--accent);
+  border-color: color-mix(in oklab, var(--primary) 30%, transparent);
+}
+.trade-progress > div {
+  transform-origin: left;
+}
+html[data-engine] .trade-progress > div {
+  transform: scaleX(var(--vp, 1));
+}
+html[data-engine] .trade-icon {
+  transform: rotate(calc((var(--vp, 0.5) - 0.5) * -40deg));
+}
+html[data-js] .trade-chip {
+  opacity: 0;
+  transform: translate3d(0, 0.6rem, 0) scale(0.92);
+  transition:
+    opacity 0.4s var(--ease-out-expo),
+    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition-delay: calc(0.1s + var(--k, 0) * 40ms);
+}
+html[data-js] [data-shown] .trade-chip {
+  opacity: 1;
+  transform: none;
+}
+.trade-card {
+  transition:
+    transform 0.5s var(--ease-out-expo),
+    border-color 0.3s;
+}
+.trade-card:hover {
+  border-color: color-mix(in oklab, var(--primary) 35%, transparent);
+}
+
+/* --- Illustrazioni dei mestieri (components/site/trade-scenes.tsx) ---------------------------------
+ * --t è l'ingresso della scena (0 → 1 nella prima metà del passaggio); --vp continua a muovere gru,
+ * ingranaggi, lancette e cartellini per tutta la sezione. Acqua, gocce e segnaposto si muovono da soli. */
+.trade-scene {
+  --t: clamp(0, calc((var(--vp, 1) - 0.08) * 2.4), 1);
+  box-shadow: 0 30px 70px -40px var(--site-shadow);
+}
+html[data-engine] .trade-section .trade-scene {
+  transform: perspective(1000px) rotateX(calc((1 - var(--t)) * 16deg))
+    scale(calc(0.92 + var(--t) * 0.08));
+  transform-origin: 50% 100%;
+}
+.trade-flow {
+  stroke-dasharray: 4 10;
+  animation: trade-flow 1.4s linear infinite;
+}
+@keyframes trade-flow {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+.trade-drop {
+  animation: trade-drop 1.8s cubic-bezier(0.5, 0, 0.9, 0.5) infinite;
+}
+@keyframes trade-drop {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(70px);
+    opacity: 0;
+  }
+}
+.trade-pin {
+  animation: trade-pin 2.4s ease-in-out infinite;
+}
+@keyframes trade-pin {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+.trade-tile .trade-scene {
+  transition: transform 0.6s var(--ease-out-expo);
+}
+.trade-tile:hover .trade-scene {
+  transform: scale(1.03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-fab,
+  .wa-wave,
+  .wa-fab .wa-icon,
+  .wa-badge .wa-icon,
+  .wa-inline:hover .wa-icon,
+  .site-credit-dot,
+  .site-seal {
+    animation: none;
+  }
+  .wa-wave {
+    display: none;
+  }
+  .site-stat::before {
+    transform: none;
+  }
+  html[data-js] .trade-chip {
+    opacity: 1;
+    transform: none;
+  }
+  .trade-flow,
+  .trade-drop,
+  .trade-pin {
+    animation: none;
+  }
+  .trade-drop {
+    opacity: 0;
+  }
+}

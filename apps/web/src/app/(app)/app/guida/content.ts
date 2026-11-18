@@ -23,6 +23,7 @@ export type GuideIcon =
   | "start"
   | "search"
   | "dashboard"
+  | "projects"
   | "tasks"
   | "calendar"
   | "deadlines"
@@ -59,7 +60,7 @@ export const GUIDE: GuideTopic[] = [
           "- Inserisci i clienti (e le loro sedi) in «Clienti».",
           "- Aggiungi personale e squadre, poi invita i colleghi da «Utenti e accessi».",
           "- Carica scadenze e documenti, così la Panoramica ti avvisa per tempo.",
-          "- Se usate moduli cartacei, trasformali in modelli in «Moduli» → «Modelli».",
+          "- Se usi moduli cartacei, trasformali in modelli in «Moduli» → «Modelli».",
         ],
       },
       {
@@ -114,6 +115,40 @@ export const GUIDE: GuideTopic[] = [
         q: "Cosa mostra la Panoramica?",
         a: [
           "I numeri che richiedono attenzione (scadenze in ritardo, entro 7 giorni, senza responsabile, assegnate a te), l'elenco delle cose da gestire subito e l'andamento delle scadenze nei prossimi mesi. Tocca un riquadro per aprire l'elenco filtrato.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "commesse",
+    title: "Commesse e cantieri",
+    summary: "I lavori concordati con i clienti, i loro cantieri e gli importi.",
+    icon: "projects",
+    href: "/app/commesse",
+    permission: "projects.read",
+    entries: [
+      {
+        q: "Che differenza c'è tra commessa e cantiere?",
+        a: [
+          "La commessa è il lavoro concordato con un cliente: un contratto a corpo o a misura, un lavoro in economia, un contratto di manutenzione. Il cantiere è il luogo dove si lavora. Una commessa può avere più cantieri, per esempio più scale dello stesso condominio o più punti vendita dello stesso cliente.",
+        ],
+      },
+      {
+        q: "Come apro una commessa?",
+        a: [
+          "Da Commesse tocca «Nuova commessa», scegli il cliente e il tipo di lavoro. Se lasci vuoto il codice, la commessa viene numerata da sola per anno (2026-001, 2026-002…). Puoi aggiungere subito il primo cantiere: una sede già registrata del cliente oppure un altro indirizzo.",
+        ],
+      },
+      {
+        q: "Chi vede gli importi?",
+        a: [
+          "Importo del contratto, costo previsto e margine previsto li vedono solo titolare, amministratori e ufficio. Gli altri ruoli vedono la commessa e i cantieri, ma non le cifre: il controllo è fatto dal database, non solo dalla pagina.",
+        ],
+      },
+      {
+        q: "Cosa c'è nel riepilogo?",
+        a: [
+          "Il margine previsto (contratto meno costo previsto) e il conteggio di attività, moduli e documenti collegati alla commessa che puoi vedere. Ogni modifica a commessa, cantieri e importi resta nella cronologia con autore e valori prima e dopo.",
         ],
       },
     ],

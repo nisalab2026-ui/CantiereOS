@@ -37,6 +37,30 @@ export const TABLE_LABELS: Record<string, { one: string; section: string; href?:
     href: "/app/moduli/modelli",
   },
   form_submissions: { one: "Modulo", section: "Moduli", href: "/app/moduli" },
+  projects: { one: "Commessa", section: "Commesse", href: "/app/commesse" },
+  project_sites: { one: "Cantiere", section: "Commesse", href: "/app/commesse" },
+  project_financials: { one: "Importi della commessa", section: "Commesse", href: "/app/commesse" },
+};
+
+export const PROJECT_STATUS_NAMES: Record<string, string> = {
+  quote: "In offerta",
+  active: "In corso",
+  suspended: "Sospesa",
+  completed: "Conclusa",
+  cancelled: "Annullata",
+};
+export const PROJECT_KIND_NAMES: Record<string, string> = {
+  lump_sum: "A corpo",
+  measured: "A misura",
+  time_materials: "In economia (ore e materiali)",
+  maintenance: "Contratto di manutenzione",
+  other: "Altro",
+};
+export const SITE_STATUS_NAMES: Record<string, string> = {
+  planned: "Da aprire",
+  active: "Aperto",
+  suspended: "Fermo",
+  closed: "Chiuso",
 };
 
 export const PAYMENT_DIRECTION_NAMES: Record<string, string> = {
@@ -260,6 +284,7 @@ export const FIELD_LABELS: Record<string, Record<string, FieldSpec>> = {
     employee_id: { label: "Dipendente", kind: "ref" },
     team_id: { label: "Squadra", kind: "ref" },
     deleted_at: { label: "Eliminata il", kind: "datetime" },
+    project_id: { label: "Commessa", kind: "ref" },
   },
   payments: {
     direction: { label: "Tipo", kind: "enum", values: PAYMENT_DIRECTION_NAMES },
@@ -275,6 +300,38 @@ export const FIELD_LABELS: Record<string, Record<string, FieldSpec>> = {
     customer_id: { label: "Cliente", kind: "ref" },
     supplier_id: { label: "Fornitore", kind: "ref" },
     deleted_at: { label: "Eliminato il", kind: "datetime" },
+  },
+  projects: {
+    code: { label: "Codice" },
+    name: { label: "Nome" },
+    customer_id: { label: "Cliente", kind: "ref" },
+    kind: { label: "Tipo", kind: "enum", values: PROJECT_KIND_NAMES },
+    status: { label: "Stato", kind: "enum", values: PROJECT_STATUS_NAMES },
+    start_date: { label: "Inizio", kind: "date" },
+    end_date: { label: "Fine prevista", kind: "date" },
+    manager_employee_id: { label: "Responsabile", kind: "ref" },
+    description: { label: "Descrizione" },
+    closed_at: { label: "Chiusa il", kind: "datetime" },
+    deleted_at: { label: "Eliminata il", kind: "datetime" },
+  },
+  project_sites: {
+    name: { label: "Cantiere" },
+    status: { label: "Stato", kind: "enum", values: SITE_STATUS_NAMES },
+    customer_site_id: { label: "Sede del cliente", kind: "ref" },
+    address_line: { label: "Indirizzo" },
+    postal_code: { label: "CAP" },
+    city: { label: "Città" },
+    province: { label: "Provincia" },
+    start_date: { label: "Apertura", kind: "date" },
+    end_date: { label: "Chiusura prevista", kind: "date" },
+    access_notes: { label: "Accesso" },
+    safety_notes: { label: "Sicurezza" },
+    deleted_at: { label: "Tolto il", kind: "datetime" },
+  },
+  project_financials: {
+    contract_amount_cents: { label: "Importo del contratto", kind: "cents" },
+    budget_cost_cents: { label: "Costo previsto", kind: "cents" },
+    notes: { label: "Note sugli importi" },
   },
   communications: {
     channel: { label: "Canale", kind: "enum", values: COMMUNICATION_CHANNEL_NAMES },
@@ -320,6 +377,7 @@ export const FIELD_LABELS: Record<string, Record<string, FieldSpec>> = {
     site_id: { label: "Sede", kind: "ref" },
     completed_at: { label: "Chiuso il", kind: "datetime" },
     deleted_at: { label: "Eliminato il", kind: "datetime" },
+    project_id: { label: "Commessa", kind: "ref" },
   },
   comments: {
     body: { label: "Testo" },
@@ -337,6 +395,7 @@ export const FIELD_LABELS: Record<string, Record<string, FieldSpec>> = {
     team_id: { label: "Squadra", kind: "ref" },
     expires_on: { label: "Scadenza", kind: "date" },
     deleted_at: { label: "Eliminato il", kind: "datetime" },
+    project_id: { label: "Commessa", kind: "ref" },
   },
   document_versions: {
     original_name: { label: "File" },
@@ -503,6 +562,12 @@ export function recordTitle(table: string, data: Record<string, unknown> | null)
       return pick("name");
     case "form_submissions":
       return pick("title");
+    case "projects":
+      return pick("code", "name");
+    case "project_sites":
+      return pick("name");
+    case "project_financials":
+      return "Importi";
     case "comments": {
       const body = typeof data.body === "string" ? data.body : "";
       return body.length > 60 ? `${body.slice(0, 57)}…` : body || null;

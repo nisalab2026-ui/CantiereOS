@@ -43,6 +43,8 @@ function mapError(error: unknown, fallbackField = "form"): never {
   if (code === "23514") {
     const msg = (error as { message?: string }).message ?? "";
     if (/sede/i.test(msg)) throw new ValidationError({ siteId: "La sede non è di questo cliente" });
+    if (/commessa/i.test(msg))
+      throw new ValidationError({ projectId: "La commessa non è di questo cliente" });
     throw new ValidationError({ form: "Dati non validi" });
   }
   throw error;
@@ -271,6 +273,7 @@ export interface FormSubmissionRow {
   version: number;
   customer: { id: string; name: string } | null;
   site: { id: string; name: string } | null;
+  project: { id: string; code: string; name: string } | null;
   completedAt: string | null;
   updatedAt: string;
   createdByName: string | null;
@@ -287,12 +290,14 @@ const SUB_SELECT = `x.id, x.title, x.subject_code as "subjectCode", x.status, x.
   t.name as "templateName", v.version, x.completed_at as "completedAt", x.updated_at as "updatedAt",
   coalesce(cb.full_name, cb.email) as "createdByName",
   case when c.id is null then null else json_build_object('id', c.id, 'name', c.display_name) end as customer,
-  case when st.id is null then null else json_build_object('id', st.id, 'name', st.name) end as site`;
+  case when st.id is null then null else json_build_object('id', st.id, 'name', st.name) end as site,
+  case when pr.id is null then null else json_build_object('id', pr.id, 'code', pr.code, 'name', pr.name) end as project`;
 const SUB_FROM = `public.form_submissions x
   join public.form_templates t on t.tenant_id = x.tenant_id and t.id = x.template_id
   join public.form_template_versions v on v.tenant_id = x.tenant_id and v.id = x.template_version_id
   left join public.customers c on c.tenant_id = x.tenant_id and c.id = x.customer_id
   left join public.customer_sites st on st.tenant_id = x.tenant_id and st.id = x.site_id
+  left join public.projects pr on pr.tenant_id = x.tenant_id and pr.id = x.project_id
   left join public.users cb on cb.id = x.created_by`;
 
 export interface FormSubmissionQuery {
@@ -300,6 +305,7 @@ export interface FormSubmissionQuery {
   status?: string;
   templateId?: string;
   customerId?: string;
+  projectId?: string;
   page?: number;
   pageSize?: number;
 }
@@ -322,6 +328,7 @@ export async function listFormSubmissions(
   for (const [key, col] of [
     ["templateId", "template_id"],
     ["customerId", "customer_id"],
+    ["projectId", "project_id"],
   ] as const) {
     if (isUuid(q[key])) {
       params.push(q[key]);
@@ -462,12 +469,19 @@ const submissionMeta = z.object({
   title: z.string().trim().min(1, "Inserisci un titolo").max(200, "Massimo 200 caratteri"),
   customerId: optional(z.uuid("Cliente non valido")),
   siteId: optional(z.uuid("Sede non valida")),
+  projectId: optional(z.uuid("Commessa non valida")),
 });
 
 export async function createFormSubmission(
   tx: UserTx,
   access: TenantAccess,
-  input: { templateId: string; title?: string; customerId?: string; siteId?: string },
+  input: {
+    templateId: string;
+    title?: string;
+    customerId?: string;
+    siteId?: string;
+    projectId?: string;
+  },
 ): Promise<{ id: string }> {
   requirePermission(access, "forms.write");
   if (!isUuid(input.templateId)) throw new ValidationError({ templateId: "Scegli un modello" });
@@ -486,6 +500,8 @@ export async function createFormSubmission(
     throw new ValidationError({ templateId: "Modello non disponibile o non pubblicato" });
   const d = parseInput(submissionMeta, { ...input, title: input.title?.trim() || tpl[0].name });
   if (d.siteId && !d.customerId) throw new ValidationError({ siteId: "Scegli prima il cliente" });
+  if (d.projectId && !d.customerId)
+    throw new ValidationError({ projectId: "Scegli prima il cliente" });
   const data = await resolveAutoValues(tx, access, tpl[0].definition, {
     templateId: input.templateId,
     customerId: d.customerId ?? null,
@@ -496,8 +512,8 @@ export async function createFormSubmission(
   try {
     const { rows } = await tx.query<{ id: string }>(
       `insert into public.form_submissions
-         (tenant_id, template_id, template_version_id, title, customer_id, site_id, data)
-       values ($1, $2, $3, $4, $5, $6, $7::jsonb) returning id`,
+         (tenant_id, template_id, template_version_id, title, customer_id, site_id, data, project_id)
+       values ($1, $2, $3, $4, $5, $6, $7::jsonb, $8) returning id`,
       [
         access.tenantId,
         input.templateId,
@@ -506,6 +522,7 @@ export async function createFormSubmission(
         d.customerId ?? null,
         d.siteId ?? null,
         JSON.stringify(data),
+        d.projectId ?? null,
       ],
     );
     return { id: rows[0]!.id };
@@ -524,7 +541,7 @@ export async function saveFormSubmission(
   tx: UserTx,
   access: TenantAccess,
   id: string,
-  input: { title: string; customerId?: string; siteId?: string; data: unknown },
+  input: { title: string; customerId?: string; siteId?: string; projectId?: string; data: unknown },
   expectedUpdatedAt: string,
   complete: boolean,
 ): Promise<void> {
@@ -537,6 +554,8 @@ export async function saveFormSubmission(
   }
   const d = parseInput(submissionMeta, input);
   if (d.siteId && !d.customerId) throw new ValidationError({ siteId: "Scegli prima il cliente" });
+  if (d.projectId && !d.customerId)
+    throw new ValidationError({ projectId: "Scegli prima il cliente" });
   const def = formDefinitionSchema.parse(current.definition);
   const { data, errors } = validateFormData(def, input.data, complete ? "complete" : "draft");
   if (Object.keys(errors).length) throw new ValidationError(errors);
@@ -571,7 +590,7 @@ export async function saveFormSubmission(
     const { rowCount } = await tx.query(
       `update public.form_submissions
           set title = $3, customer_id = $4, site_id = $5, subject_code = $6, data = $7::jsonb,
-              status = $8
+              status = $8, project_id = $10
         where tenant_id = $1 and id = $2 and deleted_at is null and status = 'draft'
           and date_trunc('milliseconds', updated_at) = date_trunc('milliseconds', $9::timestamptz)`,
       [
@@ -584,6 +603,7 @@ export async function saveFormSubmission(
         JSON.stringify(data),
         complete ? "completed" : "draft",
         expectedUpdatedAt,
+        d.projectId ?? null,
       ],
     );
     if (rowCount === 0) {
@@ -637,6 +657,8 @@ export interface FormCustomerOption {
   id: string;
   name: string;
   sites: { id: string; name: string; address: string }[];
+  /** commesse aperte del cliente (vuoto senza projects.read) */
+  projects: { id: string; code: string; name: string }[];
 }
 
 /** Clienti attivi con le loro sedi, per collegare un modulo (con i permessi dell'utente). */
@@ -652,11 +674,17 @@ export async function listFormCustomerOptions(
                         'address', concat_ws(', ', s.address_line, s.city)) order by lower(s.name))
                         from public.customer_sites s
                        where s.tenant_id = c.tenant_id and s.customer_id = c.id
-                         and s.deleted_at is null and s.is_active), '[]'::json) as sites
+                         and s.deleted_at is null and s.is_active), '[]'::json) as sites,
+            case when $2::boolean then coalesce((select json_agg(json_build_object('id', p.id, 'code', p.code, 'name', p.name)
+                        order by lower(p.code) desc)
+                        from public.projects p
+                       where p.tenant_id = c.tenant_id and p.customer_id = c.id and p.deleted_at is null
+                         and p.status in ('quote', 'active', 'suspended')), '[]'::json)
+                 else '[]'::json end as projects
        from public.customers c
       where c.tenant_id = $1 and c.deleted_at is null and c.is_active
       order by lower(c.display_name) limit 500`,
-    [access.tenantId],
+    [access.tenantId, access.permissions.has("projects.read")],
   );
   return rows;
 }
