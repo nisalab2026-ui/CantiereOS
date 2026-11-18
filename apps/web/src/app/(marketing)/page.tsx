@@ -166,7 +166,7 @@ export default async function HomePage() {
         stats={[
           { value: 6, label: "strumenti in un solo gestionale" },
           { value: 30, label: "giorni di prova gratuita, senza carta di credito" },
-          { value: 39, suffix: " €", label: "al mese per iniziare, IVA esclusa" },
+          { value: 49, suffix: " €", label: "al mese per iniziare, IVA esclusa" },
           { value: 0, label: "programmi da installare: basta il browser" },
         ]}
       />

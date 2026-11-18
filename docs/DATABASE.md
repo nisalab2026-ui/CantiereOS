@@ -524,8 +524,9 @@ specifici di un tipo, se serviranno, andranno in tabelle collegate 1:1, non in c
 - Permessi `deadlines.read|write|delete` (delete con MFA). Ruolo di sistema **Sola consultazione**
   (`viewer`) reintrodotto con soli permessi di lettura.
 - `notifications.dedupe_key` + indice univoco `(tenant_id, user_id, dedupe_key)`: lo stesso evento
-  non genera mai due notifiche. `app.generate_deadline_notifications(tenant)` è idempotente; oggi
-  la richiama l'app a ogni caricamento della shell, in seguito un job pianificato.
+  non genera mai due notifiche. `app.generate_deadline_notifications(tenant)` è idempotente; la
+  richiama l'app quando l'utente apre la campanella. Un job pianificato potrà aggiornare gli avvisi
+  anche senza accessi all'app.
 - `app.record_history(tabella, id)`: cronologia di un elemento (e delle scadenze collegate) per chi
   può **leggere quell'elemento**, senza dover avere `audit.read` (che resta per il registro completo).
   Tabelle ammesse in whitelist; per un elemento di un'altra azienda restituisce zero righe.

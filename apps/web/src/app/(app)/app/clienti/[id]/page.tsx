@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import { Notice } from "@/components/ui";
 import { DetailList } from "@/components/ui/detail-list";
 import { PageHeader } from "@/components/ui/page-header";
 import { ForbiddenState } from "@/components/ui/states";
@@ -193,9 +194,10 @@ export default async function CustomerPage({
                 mode="create"
                 subjects={options.subjects}
                 members={options.members}
-                defaults={{ subject: `customer:${c.id}` }}
+                defaults={{ kind: "maintenance", subject: `customer:${c.id}` }}
                 lockSubject
-                triggerLabel="Nuova scadenza"
+                triggerLabel="Pianifica manutenzione"
+                afterCreateHref={`${base}?tab=scadenze&manutenzione=creata`}
               />
             )}
             {canWrite && (
@@ -250,6 +252,12 @@ export default async function CustomerPage({
           { key: "storico", label: "Storico", href: `${base}?tab=storico` },
         ]}
       />
+      {sp.manutenzione === "creata" && (
+        <Notice>Manutenzione pianificata e collegata allo storico di {c.displayName}.</Notice>
+      )}
+      {sp.intervento === "programmato" && (
+        <Notice>Intervento programmato e aggiunto alle attività di {c.displayName}.</Notice>
+      )}
 
       {tab === "panoramica" && (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
@@ -348,9 +356,13 @@ export default async function CustomerPage({
                         mode="create"
                         subjects={options.subjects}
                         members={options.members}
-                        defaults={{ subject: `customer:${c.id}` }}
+                        defaults={{
+                          title: `Intervento presso ${c.displayName}`,
+                          subject: `customer:${c.id}`,
+                        }}
                         lockSubject
-                        triggerLabel="Nuova attività"
+                        triggerLabel="Programma intervento"
+                        afterCreateHref={`${base}?intervento=programmato`}
                       />
                     ) : undefined
                   }

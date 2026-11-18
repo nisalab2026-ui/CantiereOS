@@ -1,9 +1,4 @@
-import {
-  refreshDeadlineNotifications,
-  type CompanyMembership,
-  type TenantAccess,
-  type VerifiedSession,
-} from "@cantiereos/core";
+import type { CompanyMembership, TenantAccess, VerifiedSession } from "@cantiereos/core";
 import { cookies } from "next/headers";
 import { Header } from "@/components/shell/header";
 import { Sidebar } from "@/components/shell/sidebar";
@@ -33,17 +28,6 @@ export async function AppShell({
     const u = await tx.query<{ full_name: string | null }>(
       "select full_name from public.users where id = auth.uid()",
     );
-    // Avvisi di scadenza: generazione idempotente (nessun duplicato), finché
-    // non c'è un job pianificato. Un errore qui non deve bloccare l'app.
-    if (access) {
-      await tx.query("savepoint deadline_notifications");
-      try {
-        await refreshDeadlineNotifications(tx, access);
-        await tx.query("release savepoint deadline_notifications");
-      } catch {
-        await tx.query("rollback to savepoint deadline_notifications");
-      }
-    }
     const n = access
       ? await tx.query<{ n: number }>(
           "select count(*)::int as n from public.notifications where tenant_id = $1 and user_id = auth.uid() and read_at is null",

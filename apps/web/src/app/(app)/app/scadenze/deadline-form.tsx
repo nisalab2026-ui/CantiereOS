@@ -68,6 +68,7 @@ export function DeadlineDialog({
   defaults,
   lockSubject = false,
   triggerLabel,
+  afterCreateHref,
 }: {
   mode: "create" | "edit";
   subjects: SubjectOptions;
@@ -76,6 +77,8 @@ export function DeadlineDialog({
   /** Nella scheda di un cliente/dipendente il collegamento è già deciso. */
   lockSubject?: boolean;
   triggerLabel?: string;
+  /** Torna al contesto d'origine dopo aver creato una scadenza collegata. */
+  afterCreateHref?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [round, setRound] = useState(0);
@@ -110,6 +113,7 @@ export function DeadlineDialog({
           members={members}
           defaults={defaults ?? {}}
           lockSubject={lockSubject}
+          {...(afterCreateHref ? { afterCreateHref } : {})}
           onDone={() => setOpen(false)}
         />
       </DialogContent>
@@ -123,6 +127,7 @@ function DeadlineForm({
   members,
   defaults,
   lockSubject,
+  afterCreateHref,
   onDone,
 }: {
   mode: "create" | "edit";
@@ -130,6 +135,7 @@ function DeadlineForm({
   members: Option[];
   defaults: DeadlineDefaults;
   lockSubject: boolean;
+  afterCreateHref?: string;
   onDone: () => void;
 }) {
   const router = useRouter();
@@ -140,9 +146,10 @@ function DeadlineForm({
   useEffect(() => {
     if (!state.createdId) return;
     onDone();
-    if (mode === "create") router.push(`/app/scadenze/${state.createdId}?creata=1`);
+    if (mode === "create")
+      router.push(afterCreateHref ?? `/app/scadenze/${state.createdId}?creata=1`);
     else router.refresh();
-  }, [state.createdId, mode, onDone, router]);
+  }, [state.createdId, mode, onDone, router, afterCreateHref]);
   const err = state.fieldErrors ?? {};
   const f = (name: string) => fieldAttrs("d", err, name);
   const lockedName =

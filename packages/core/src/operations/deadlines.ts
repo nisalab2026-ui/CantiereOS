@@ -501,8 +501,9 @@ export async function getDeadlineSummary(
 }
 
 /**
- * Genera gli avvisi di scadenza per l'azienda attiva. Idempotente: si può
- * chiamare a ogni apertura dell'app; un job pianificato lo farà comunque.
+ * Genera gli avvisi di scadenza per l'azienda attiva. Idempotente: viene
+ * richiamata quando l'utente apre la campanella delle notifiche; un job
+ * pianificato potrà aggiornare gli avvisi anche senza accessi all'app.
  */
 export async function refreshDeadlineNotifications(
   tx: UserTx,

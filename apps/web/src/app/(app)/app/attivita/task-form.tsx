@@ -46,6 +46,7 @@ export function TaskDialog({
   defaults,
   lockSubject = false,
   triggerLabel,
+  afterCreateHref,
 }: {
   mode: "create" | "edit";
   subjects: SubjectOptions;
@@ -54,6 +55,8 @@ export function TaskDialog({
   /** Nella scheda di un cliente/dipendente il collegamento è già deciso. */
   lockSubject?: boolean;
   triggerLabel?: string;
+  /** Mantiene l'utente nel contesto d'origine dopo aver creato l'attività. */
+  afterCreateHref?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [round, setRound] = useState(0);
@@ -88,6 +91,7 @@ export function TaskDialog({
           members={members}
           defaults={defaults ?? {}}
           lockSubject={lockSubject}
+          {...(afterCreateHref ? { afterCreateHref } : {})}
           onDone={() => setOpen(false)}
         />
       </DialogContent>
@@ -101,6 +105,7 @@ function TaskForm({
   members,
   defaults,
   lockSubject,
+  afterCreateHref,
   onDone,
 }: {
   mode: "create" | "edit";
@@ -108,6 +113,7 @@ function TaskForm({
   members: Option[];
   defaults: TaskDefaults;
   lockSubject: boolean;
+  afterCreateHref?: string;
   onDone: () => void;
 }) {
   const router = useRouter();
@@ -118,9 +124,10 @@ function TaskForm({
   useEffect(() => {
     if (!state.createdId) return;
     onDone();
-    if (mode === "create") router.push(`/app/attivita/${state.createdId}?creata=1`);
+    if (mode === "create")
+      router.push(afterCreateHref ?? `/app/attivita/${state.createdId}?creata=1`);
     else router.refresh();
-  }, [state.createdId, mode, onDone, router]);
+  }, [state.createdId, mode, onDone, router, afterCreateHref]);
   const err = state.fieldErrors ?? {};
   const f = (name: string) => fieldAttrs("t", err, name);
   const lockedName =

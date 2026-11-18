@@ -4,6 +4,7 @@ import {
   globalSearch,
   listNotifications,
   markNotificationsRead,
+  refreshDeadlineNotifications,
   resolveActiveTenant,
   switchActiveTenant,
   type NotificationItem,
@@ -48,7 +49,11 @@ export async function searchAction(term: string): Promise<SearchResult[]> {
 }
 
 export async function loadNotifications(): Promise<{ items: NotificationItem[]; unread: number }> {
-  return asCurrentUser(async (tx) => listNotifications(tx, await resolveActiveTenant(tx), 20));
+  return asCurrentUser(async (tx) => {
+    const access = await resolveActiveTenant(tx);
+    await refreshDeadlineNotifications(tx, access);
+    return listNotifications(tx, access, 20);
+  });
 }
 
 export async function markNotificationsReadAction(ids: string[] = []): Promise<void> {
