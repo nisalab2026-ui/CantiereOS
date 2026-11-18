@@ -182,8 +182,9 @@ export function startScrollEngine(options: { smooth: boolean }): () => void {
       if (disposed) return;
       lenis = new LenisClass({
         autoRaf: true,
-        lerp: 0.085,
-        wheelMultiplier: 0.95,
+        // Più reattivo: la pagina segue la rotella senza "galleggiare".
+        lerp: 0.16,
+        wheelMultiplier: 1.1,
         anchors: true,
         prevent: (node) => node.closest("[data-lenis-prevent], dialog, [role=dialog]") !== null,
       });
