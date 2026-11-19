@@ -98,7 +98,7 @@
 
 - Service worker, installazione, push notification
 - IndexedDB + outbox + `/api/sync` con idempotenza e versioni
-- Interfaccia tecnico mobile-first
+- Interfaccia tecnico mobile-first (app "Campo", progetto in [APP_CAMPO.md](APP_CAMPO.md))
 - Test E2E offline (Playwright con rete disattivata)
 
 ## Fase 5 — Documenti, OCR e AI

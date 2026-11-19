@@ -168,13 +168,14 @@ messaggio); tracing OpenTelemetry; metriche per coda e sync. Provider da sceglie
 
 ## 10. Decisioni architetturali
 
-| #       | Decisione                                                                                  | Stato                           |
-| ------- | ------------------------------------------------------------------------------------------ | ------------------------------- |
-| ADR-001 | Monolite modulare + worker separato                                                        | Accettata                       |
-| ADR-002 | Multi-tenancy con `tenant_id` + RLS su schema condiviso                                    | Accettata, implementata in 0001 |
-| ADR-003 | Migrazioni SQL scritte a mano in `supabase/migrations`, nessuna migrazione generata da ORM | Accettata                       |
-| ADR-004 | Server come unico punto di accesso ai dati di dominio; RLS come seconda barriera           | Accettata                       |
-| ADR-005 | FK composte `(tenant_id, id)` tra tabelle di dominio                                       | Accettata, implementata in 0001 |
-| ADR-006 | Kysely come query builder                                                                  | Da confermare in fase 2         |
-| ADR-007 | BullMQ su Redis per i job                                                                  | Da confermare in fase 2         |
-| ADR-008 | Serwist + Dexie per PWA offline                                                            | Da confermare con prototipo     |
+| #       | Decisione                                                                                                        | Stato                           |
+| ------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| ADR-001 | Monolite modulare + worker separato                                                                              | Accettata                       |
+| ADR-002 | Multi-tenancy con `tenant_id` + RLS su schema condiviso                                                          | Accettata, implementata in 0001 |
+| ADR-003 | Migrazioni SQL scritte a mano in `supabase/migrations`, nessuna migrazione generata da ORM                       | Accettata                       |
+| ADR-004 | Server come unico punto di accesso ai dati di dominio; RLS come seconda barriera                                 | Accettata                       |
+| ADR-005 | FK composte `(tenant_id, id)` tra tabelle di dominio                                                             | Accettata, implementata in 0001 |
+| ADR-006 | Kysely come query builder                                                                                        | Da confermare in fase 2         |
+| ADR-007 | BullMQ su Redis per i job                                                                                        | Da confermare in fase 2         |
+| ADR-008 | Serwist + Dexie per PWA offline                                                                                  | Da confermare con prototipo     |
+| ADR-017 | App dipendenti ("Campo") come route `/campo` dentro `apps/web`, stessa auth e RLS — [APP_CAMPO.md](APP_CAMPO.md) | Proposta                        |
