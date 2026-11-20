@@ -7,6 +7,8 @@ import {
   listActivity,
   listMapPoints,
   listTasks,
+  listWorkReports,
+  loadWorkReportOptions,
   type DashboardData,
   type DeadlineSummary,
   type HistoryEvent,
@@ -41,6 +43,7 @@ import { formatDate } from "@/lib/format";
 import { TaskMiniList } from "./attivita/task-mini-list";
 import { Money } from "./pagamenti/payment-bits";
 import { PrioritySection, RecentChanges } from "./priority";
+import { TodayReportCard } from "./rapportini/today-card";
 
 export const metadata: Metadata = { title: "Panoramica" };
 
@@ -61,11 +64,34 @@ export default async function DashboardPage({
     return sp[key!] === value;
   })?.[1];
   const { company, access } = await getAppContext();
-  const { data, deadlines, docs, activity, tasks, payments, map } = await asCurrentUser(
+  const canReport = access.permissions.has("work_reports.write");
+  const canApproveReports = access.permissions.has("work_reports.approve");
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome" }).format(new Date());
+  const { data, deadlines, docs, activity, tasks, payments, reports, map } = await asCurrentUser(
     async (tx) => {
       const d = await getDashboard(tx, access);
       return {
         data: d,
+        reports:
+          canReport || canApproveReports
+            ? {
+                today: canReport
+                  ? (
+                      await listWorkReports(tx, access, {
+                        mine: true,
+                        from: today,
+                        to: today,
+                        status: "all",
+                        pageSize: 5,
+                      })
+                    ).rows
+                  : null,
+                projects: canReport ? (await loadWorkReportOptions(tx, access)).projects : null,
+                toApprove: canApproveReports
+                  ? (await listWorkReports(tx, access, { status: "submitted", pageSize: 1 })).total
+                  : null,
+              }
+            : null,
         deadlines: d.kind === "portal" ? null : await getDeadlineSummary(tx, access),
         docs:
           d.kind !== "portal" && access.permissions.has("documents.read")
@@ -118,6 +144,7 @@ export default async function DashboardPage({
           Azienda dimostrativa: tutti i dati che vedi vengono dal seed di sviluppo e non sono reali.
         </p>
       )}
+      {reports && <TodayReportCard {...reports} />}
       <DashboardBody
         data={data}
         deadlines={deadlines}

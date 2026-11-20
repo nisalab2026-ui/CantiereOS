@@ -482,23 +482,67 @@ create policy work_report_files_update on public.work_report_files for update to
 -- Permessi
 -- -----------------------------------------------------------------------------
 insert into public.permissions (key, description) values
-  ('work_reports.read',    'Vedere i rapportini'),
+  ('work_reports.read',    'Vedere i propri rapportini e quelli in cui si compare'),
+  ('work_reports_all.read','Vedere i rapportini di tutta l''azienda'),
   ('work_reports.write',   'Compilare e inviare i propri rapportini'),
   ('work_reports.approve', 'Approvare, rimandare e modificare tutti i rapportini'),
   ('work_reports.delete',  'Eliminare i rapportini');
 update public.permissions set requires_mfa = true where key in ('work_reports.delete');
 
 select app.grant_system_permissions('owner',
-  array['work_reports.read','work_reports.write','work_reports.approve','work_reports.delete']);
+  array['work_reports.read','work_reports_all.read','work_reports.write','work_reports.approve','work_reports.delete']);
 select app.grant_system_permissions('admin',
-  array['work_reports.read','work_reports.write','work_reports.approve','work_reports.delete']);
+  array['work_reports.read','work_reports_all.read','work_reports.write','work_reports.approve','work_reports.delete']);
 select app.grant_system_permissions('operations_manager',
-  array['work_reports.read','work_reports.write','work_reports.approve']);
+  array['work_reports.read','work_reports_all.read','work_reports.write','work_reports.approve']);
 select app.grant_system_permissions('site_manager',
-  array['work_reports.read','work_reports.write','work_reports.approve']);
-select app.grant_system_permissions('back_office',  array['work_reports.read','work_reports.write']);
+  array['work_reports.read','work_reports_all.read','work_reports.write','work_reports.approve']);
+-- l'ufficio vede i rapportini (ore e costi) ma non li compila: li fa chi è in cantiere
+select app.grant_system_permissions('back_office',  array['work_reports.read','work_reports_all.read']);
 select app.grant_system_permissions('technician',   array['work_reports.read','work_reports.write']);
-select app.grant_system_permissions('viewer',       array['work_reports.read']);
+select app.grant_system_permissions('viewer',       array['work_reports.read','work_reports_all.read']);
+
+-- -----------------------------------------------------------------------------
+-- Visibilità per grado: chi ha solo work_reports.read (il tecnico in cantiere)
+-- vede i rapportini che ha creato e quelli in cui compare tra le ore; chi ha
+-- work_reports_all.read (responsabili, ufficio, titolare, lettore) li vede tutti.
+-- Funzione security definer per evitare la ricorsione tra le policy.
+-- -----------------------------------------------------------------------------
+-- p_author: l'autore se il chiamante ha già la riga (policy di work_reports: serve
+-- anche per INSERT ... RETURNING, quando la riga nuova non è ancora leggibile).
+create or replace function app.work_report_visible(p_tenant uuid, p_report uuid, p_author uuid default null)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select p_tenant in (select app.tenant_ids_with_permission('work_reports_all.read'))
+      or (p_tenant in (select app.tenant_ids_with_permission('work_reports.read'))
+          and (coalesce(p_author = auth.uid(), false)
+               or exists (select 1 from public.work_reports w
+                           where w.tenant_id = p_tenant and w.id = p_report
+                             and w.created_by = auth.uid())
+               or exists (select 1
+                            from public.work_report_labor l
+                            join public.employees e on e.tenant_id = l.tenant_id and e.id = l.employee_id
+                           where l.tenant_id = p_tenant and l.report_id = p_report
+                             and e.user_id = auth.uid())));
+$$;
+grant execute on function app.work_report_visible(uuid, uuid, uuid) to authenticated;
+
+drop policy work_reports_select on public.work_reports;
+create policy work_reports_select on public.work_reports for select to authenticated
+  using (app.work_report_visible(tenant_id, id, created_by));
+drop policy work_report_labor_select on public.work_report_labor;
+create policy work_report_labor_select on public.work_report_labor for select to authenticated
+  using (app.work_report_visible(tenant_id, report_id));
+drop policy work_report_items_select on public.work_report_items;
+create policy work_report_items_select on public.work_report_items for select to authenticated
+  using (app.work_report_visible(tenant_id, report_id));
+drop policy work_report_files_select on public.work_report_files;
+create policy work_report_files_select on public.work_report_files for select to authenticated
+  using (app.work_report_visible(tenant_id, report_id));
 
 -- -----------------------------------------------------------------------------
 -- Cronologia: rapportino con righe e foto; la commessa mostra i suoi rapportini
@@ -570,6 +614,11 @@ begin
     return;
   end if;
 
+  -- un rapportino altrui non rivela la propria cronologia al tecnico
+  if p_table = 'work_reports' and not app.work_report_visible(v_tenant, p_record_id) then
+    return;
+  end if;
+
   -- un documento riservato non rivela la propria cronologia senza il permesso dedicato
   if p_table = 'documents'
      and exists (select 1 from public.documents d
@@ -589,8 +638,9 @@ begin
     and v_tenant in (select app.tenant_ids_with_permission('payments.read'));
   v_comms := v_fk is not null
     and v_tenant in (select app.tenant_ids_with_permission('communications.read'));
+  -- nella cronologia della commessa i rapportini solo per chi li vede tutti
   v_reports := v_fk = 'project_id'
-    and v_tenant in (select app.tenant_ids_with_permission('work_reports.read'));
+    and v_tenant in (select app.tenant_ids_with_permission('work_reports_all.read'));
   v_forms := v_fk in ('customer_id', 'project_id')
     and v_tenant in (select app.tenant_ids_with_permission('forms.read'));
 

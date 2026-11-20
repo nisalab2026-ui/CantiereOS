@@ -46,8 +46,9 @@ function refresh(id?: string, projectId?: string) {
 }
 
 export async function createReportAction(_: FormState, form: FormData): Promise<FormState> {
+  let id: string;
   try {
-    const { id } = await asCurrentUser(async (tx) =>
+    ({ id } = await asCurrentUser(async (tx) =>
       createWorkReport(tx, await resolveActiveTenant(tx), {
         projectId: formText(form, "projectId") ?? "",
         reportDate: formText(form, "reportDate") ?? "",
@@ -55,12 +56,13 @@ export async function createReportAction(_: FormState, form: FormData): Promise<
           ? { projectSiteId: formText(form, "projectSiteId") }
           : {}),
       }),
-    );
-    refresh(undefined, formText(form, "projectId"));
-    return { message: "Rapportino creato.", createdId: id };
+    ));
   } catch (error) {
     return failure(error);
   }
+  refresh(undefined, formText(form, "projectId"));
+  // redirect dal server: il pulsante che ha aperto la finestra può sparire (Panoramica)
+  redirect(`/app/rapportini/${id}?nuovo=1`);
 }
 
 /** Salvataggio della bozza dall'editor (dati strutturati, validati nel core). */

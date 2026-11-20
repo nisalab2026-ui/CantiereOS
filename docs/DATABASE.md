@@ -254,9 +254,14 @@ dell'implementazione, sul piano approvato dal titolare il 17/11/2026 («la soluz
   validità) e i prezzi delle voci (`work_report_item_costs`) stanno in tabelle separate visibili solo
   con `projects.finance`, come gli importi della commessa. Il costo di un rapportino usa la tariffa
   valida alla sua data. **Solo i rapportini approvati** entrano in ore e costi della commessa.
-- **Permessi.** `work_reports.read` a tutti i ruoli interni; `work_reports.write` anche a
-  capocantiere e tecnico; `work_reports.approve` a titolare, amministratore, responsabile operativo
-  e capocantiere; `work_reports.delete` (MFA) a titolare e amministratore. Eliminazione solo logica.
+- **Permessi per grado.** `work_reports.read` a tutti i ruoli interni, ma da solo (tecnico) mostra
+  soltanto i rapportini creati da sé e quelli in cui si compare tra le ore
+  (`app.work_report_visible`, usata dalle policy e da `app.record_history`);
+  `work_reports_all.read` (tutti i rapportini) a titolare, amministratore, responsabile operativo,
+  capocantiere, ufficio e sola consultazione. `work_reports.write` (compilare) a titolare,
+  amministratore, responsabile operativo, capocantiere e tecnico: l'ufficio vede ma non compila.
+  `work_reports.approve` a titolare, amministratore, responsabile operativo e capocantiere;
+  `work_reports.delete` (MFA) a titolare e amministratore. Eliminazione solo logica.
 - **Non ancora.** Precompilazione dalle timbrature (con le presenze), listino articoli e magazzino,
   fattura dal rapportino (con i documenti commerciali), invio del PDF via email (SMTP non configurato).
 
