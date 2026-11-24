@@ -155,6 +155,41 @@ export const GUIDE: GuideTopic[] = [
     ],
   },
   {
+    id: "interventi",
+    title: "Interventi e web app",
+    summary:
+      "Lavori con giorno, orario e indirizzo: l'ufficio li pianifica, la squadra li svolge dal telefono.",
+    icon: "calendar",
+    href: "/app/interventi",
+    permission: "work_orders.read",
+    entries: [
+      {
+        q: "Come pianifico un intervento?",
+        a: [
+          "Interventi → «Nuovo intervento»: cosa fare, giorno e orario, cliente o commessa (l'indirizzo arriva da cantiere, sede o cliente, oppure lo scrivi tu) e chi ci va. Puoi aggiungere una squadra intera: ne copia le persone e il capo squadra. Chi viene assegnato riceve subito un avviso.",
+        ],
+      },
+      {
+        q: "Come vede i suoi lavori un dipendente?",
+        a: [
+          "Dal telefono apre CantiereOS su /campo (si può aggiungere alla schermata Home come un'app). Trova i lavori di oggi, il calendario, la mappa del giro e lo storico, con «Naviga» verso l'indirizzo e i pulsanti grandi Inizia, Sospendi e Completa. Perché li veda, la persona deve essere collegata al suo account: scheda della persona → «Accesso alla web app».",
+        ],
+      },
+      {
+        q: "Chi può fare cosa con gli interventi?",
+        a: [
+          "Titolare, amministratori, responsabili e ufficio pianificano, spostano e annullano. Il tecnico vede solo gli interventi in cui è in squadra e può solo cambiarne lo stato e scrivere le note dal campo. Eliminare è riservato a titolare e amministratori. I limiti li applica il database, non solo la pagina.",
+        ],
+      },
+      {
+        q: "Cosa succede se sposto o annullo un intervento?",
+        a: [
+          "La squadra riceve un avviso. Ogni cambio di stato resta nello storico dell'intervento con data, ora e motivo (obbligatorio per sospendere e annullare).",
+        ],
+      },
+    ],
+  },
+  {
     id: "rapportini",
     title: "Rapportini",
     summary: "La giornata di lavoro su una commessa: ore, materiali, foto e firma del cliente.",
