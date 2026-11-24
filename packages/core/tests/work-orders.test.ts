@@ -5,6 +5,8 @@ import {
   changeWorkOrderStatus,
   createWorkOrder,
   getWorkOrder,
+  linkEmployeeAccount,
+  listLinkableAccounts,
   listWorkOrders,
   loadWorkOrderOptions,
   resolveActiveTenant,
@@ -18,8 +20,14 @@ import { addMember, createPool, createSession, createTenant, createUser } from "
 
 /** Interventi (ADR-017): pianificazione dall'ufficio, aggiornamenti dal campo. */
 let pool: pg.Pool;
-let office: VerifiedSession, tech: VerifiedSession, otherTech: VerifiedSession;
-let tenant: string, customerId: string, siteId: string, techEmployee: string, teamId: string;
+let owner: VerifiedSession, office: VerifiedSession, tech: VerifiedSession, otherTech: VerifiedSession;
+let tenant: string,
+  helperId: string,
+  techUserId: string,
+  customerId: string,
+  siteId: string,
+  techEmployee: string,
+  teamId: string;
 const run = <T>(s: VerifiedSession, fn: Parameters<typeof withUserTransaction<T>>[2]) =>
   withUserTransaction(pool, s, fn);
 
@@ -33,6 +41,7 @@ beforeAll(async () => {
   await addMember(pool, tenant, b.id, "back_office");
   await addMember(pool, tenant, t.id, "technician");
   await addMember(pool, tenant, t2.id, "technician");
+  owner = await createSession(pool, o);
   office = await createSession(pool, b);
   tech = await createSession(pool, t);
   otherTech = await createSession(pool, t2);
@@ -53,10 +62,12 @@ beforeAll(async () => {
      values ($1, 'Bruno', 'Tecnico', $2) returning id`,
     [tenant, t.id],
   );
+  techUserId = t.id;
   const helper = await ins(
     `insert into public.employees (tenant_id, first_name, last_name) values ($1, 'Aldo', 'Aiuto') returning id`,
     [tenant],
   );
+  helperId = helper;
   await ins(
     `insert into public.employees (tenant_id, first_name, last_name, user_id)
      values ($1, 'Carlo', 'Altro', $2) returning id`,
@@ -143,11 +154,17 @@ describe("Interventi", () => {
   });
 
   it("dal campo: inizia, note, sospendi con motivo, completa; storico degli stati", async () => {
-    const ctx = async <T>(fn: (tx: Parameters<Parameters<typeof run<T>>[1]>[0], a: Awaited<ReturnType<typeof resolveActiveTenant>>) => Promise<T>) =>
-      run(tech, async (tx) => fn(tx, await resolveActiveTenant(tx)));
+    const ctx = async <T>(
+      fn: (
+        tx: Parameters<Parameters<typeof run<T>>[1]>[0],
+        a: Awaited<ReturnType<typeof resolveActiveTenant>>,
+      ) => Promise<T>,
+    ) => run(tech, async (tx) => fn(tx, await resolveActiveTenant(tx)));
     expect(await ctx((tx, a) => changeWorkOrderStatus(tx, a, id, "start"))).toBe("in_progress");
     await ctx((tx, a) => saveWorkOrderNotes(tx, a, id, "Pezzo da ordinare"));
-    const noReason = await ctx((tx, a) => changeWorkOrderStatus(tx, a, id, "suspend").catch((e: unknown) => e));
+    const noReason = await ctx((tx, a) =>
+      changeWorkOrderStatus(tx, a, id, "suspend").catch((e: unknown) => e),
+    );
     expect(noReason).toBeInstanceOf(ValidationError);
     await ctx((tx, a) => changeWorkOrderStatus(tx, a, id, "suspend", "Manca il ricambio"));
     const cancel = await ctx((tx, a) =>
@@ -196,5 +213,48 @@ describe("Interventi", () => {
       [tenant, techEmployee],
     );
     expect(rows.map((r) => r.kind)).toEqual(["work_orders.assigned", "work_orders.rescheduled"]);
+  });
+});
+
+describe("collegamento persona ↔ account", () => {
+  it("il titolare collega un account libero; doppioni, estranei e tecnici respinti", async () => {
+    const accounts = await run(owner, async (tx) =>
+      listLinkableAccounts(tx, await resolveActiveTenant(tx)),
+    );
+    expect(accounts.find((a) => a.id === techUserId)?.linkedTo).toBe("Bruno Tecnico");
+    // account già collegato a Bruno: respinto
+    await expect(
+      run(owner, async (tx) =>
+        linkEmployeeAccount(tx, await resolveActiveTenant(tx), helperId, techUserId),
+      ),
+    ).rejects.toBeInstanceOf(ValidationError);
+    // utente di un'altra azienda: respinto
+    const stranger = await createUser(pool, "int-estraneo");
+    await expect(
+      run(owner, async (tx) =>
+        linkEmployeeAccount(tx, await resolveActiveTenant(tx), helperId, stranger.id),
+      ),
+    ).rejects.toBeInstanceOf(ValidationError);
+    // il tecnico non può collegare persone
+    await expect(
+      run(tech, async (tx) =>
+        linkEmployeeAccount(tx, await resolveActiveTenant(tx), helperId, null),
+      ),
+    ).rejects.toBeInstanceOf(AuthError);
+    // scollega e ricollega Bruno
+    await run(owner, async (tx) =>
+      linkEmployeeAccount(tx, await resolveActiveTenant(tx), techEmployee, null),
+    );
+    await run(owner, async (tx) =>
+      linkEmployeeAccount(tx, await resolveActiveTenant(tx), techEmployee, techUserId),
+    );
+    const mine = await run(tech, async (tx) =>
+      listWorkOrders(tx, await resolveActiveTenant(tx), {
+        from: "2020-01-01",
+        to: "2020-01-02",
+        mine: true,
+      }),
+    );
+    expect(Array.isArray(mine)).toBe(true);
   });
 });

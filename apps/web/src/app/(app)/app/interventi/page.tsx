@@ -168,7 +168,7 @@ export default async function WorkOrdersPage({
           />
         </div>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
+        <div className="grid gap-3 md:grid-cols-2 xl:flex xl:overflow-x-auto xl:pb-2">
           {days.map((d, i) => {
             const items = byDay.get(d) ?? [];
             const isToday = d === today;
@@ -177,15 +177,17 @@ export default async function WorkOrdersPage({
                 key={d}
                 aria-label={`${WEEKDAYS[i]} ${label(d)}`}
                 className={cn(
-                  "flex min-h-28 flex-col rounded-xl border bg-card/60 p-2",
+                  "flex min-h-28 flex-col rounded-xl border bg-card/60 p-2 xl:min-w-[208px] xl:flex-1",
                   isToday ? "border-primary/50 ring-1 ring-primary/20" : "border-border",
-                  items.length === 0 && "hidden xl:flex",
+                  items.length === 0 && "hidden xl:flex xl:min-w-[112px] xl:flex-[0.55]",
                 )}
               >
                 <header className="mb-2 flex items-baseline justify-between px-1">
                   <h2 className={cn("text-sm font-semibold", isToday && "text-primary")}>
                     {WEEKDAYS[i]}{" "}
-                    <span className="font-normal text-muted-foreground">{label(d)}</span>
+                    <span className="font-normal whitespace-nowrap text-muted-foreground">
+                      {label(d)}
+                    </span>
                   </h2>
                   {items.length > 0 && (
                     <span className="text-xs text-muted-foreground tabular-nums">
@@ -205,7 +207,7 @@ export default async function WorkOrdersPage({
                         )}
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-mono text-xs text-muted-foreground tabular-nums">
+                          <span className="text-xs font-medium whitespace-nowrap text-muted-foreground tabular-nums">
                             {r.start.slice(0, 10) === d ? timeOf(r.start) : "…"}–
                             {r.end.slice(0, 10) === d ? timeOf(r.end) : "…"}
                           </span>
@@ -221,8 +223,8 @@ export default async function WorkOrdersPage({
                             <span className="line-clamp-2">{r.address}</span>
                           </p>
                         )}
-                        <div className="mt-2 flex items-center justify-between gap-2">
-                          <span className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                          <span className="flex min-w-0 flex-1 items-center gap-1 text-xs text-muted-foreground">
                             <Users className="size-3 shrink-0" aria-hidden />
                             <span className="truncate">
                               {r.assignees.length === 0

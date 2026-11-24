@@ -2,6 +2,7 @@
 
 import {
   createEmployee,
+  linkEmployeeAccount,
   resolveActiveTenant,
   setEmployeeActive,
   updateEmployee,
@@ -80,4 +81,19 @@ export async function setEmployeeActiveAction(id: string, active: boolean): Prom
     setEmployeeActive(tx, await resolveActiveTenant(tx), id, active),
   );
   refresh(id);
+}
+
+/** Collega la persona al suo account: così vede i suoi interventi nella web app /campo. */
+export async function linkEmployeeAccountAction(_: FormState, form: FormData): Promise<FormState> {
+  const id = formText(form, "id") ?? "";
+  const userId = formText(form, "userId") ?? null;
+  try {
+    await asCurrentUser(async (tx) =>
+      linkEmployeeAccount(tx, await resolveActiveTenant(tx), id, userId),
+    );
+    refresh(id);
+    return { message: userId ? "Account collegato." : "Account scollegato." };
+  } catch (error) {
+    return failure(error);
+  }
 }

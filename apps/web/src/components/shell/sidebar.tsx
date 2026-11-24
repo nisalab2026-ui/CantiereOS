@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { BrandMark } from "@/components/brand-logo";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -118,21 +118,12 @@ export function Sidebar({
   );
 }
 
-/** Marchio CantiereOS (casco + edifici), pensato per fondi scuri (sidebar navy). */
+/** Marchio CantiereOS (gru su tessera verde), animato al primo disegno. */
 export function Logo({ className }: { className?: string }) {
-  return (
-    <Image
-      src="/brand/logo-mark.png"
-      alt=""
-      width={268}
-      height={256}
-      priority
-      className={cn("h-7 w-auto shrink-0", className)}
-    />
-  );
+  return <BrandMark className={cn("size-7", className)} />;
 }
 
-/** Logotipo: "Cantiere" chiaro + "OS" blu, come nel marchio. */
+/** Logotipo: "Cantiere" chiaro + "OS" verde, come nel marchio. */
 export function Wordmark({ className }: { className?: string }) {
   return (
     <span className={cn("text-[15px] font-semibold tracking-tight", className)}>

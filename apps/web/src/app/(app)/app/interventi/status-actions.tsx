@@ -47,11 +47,13 @@ export function WorkOrderStatusActions({
   const big = size === "lg" ? "h-12 w-full text-base" : "";
 
   return (
-    <div className={cn("flex flex-col gap-2", size === "md" && "items-end")}>
+    <div className={cn("flex flex-col gap-2", size === "md" && "items-start")}>
       <div
         className={cn(
           "flex flex-wrap gap-2",
-          size === "lg" ? "grid grid-cols-2 [&>*:first-child]:col-span-2 [&>*:last-child:nth-child(even)]:col-span-2" : "justify-end",
+          size === "lg"
+            ? "grid grid-cols-2 [&>*:first-child]:col-span-2 [&>*:last-child:nth-child(even)]:col-span-2"
+            : "justify-start",
         )}
       >
         {field && status === "scheduled" && (

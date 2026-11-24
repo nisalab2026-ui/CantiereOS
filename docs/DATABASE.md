@@ -219,6 +219,10 @@ il 19-20/11/2026 («parti»); documento di architettura: app dei dipendenti come
   motivo, orari reali, rapportino collegato); `work_order_assignees` (persone in squadra, al massimo
   un capo squadra); `work_order_events` (storico degli stati, scritto solo dal trigger, solo lettura).
   Una squadra già esistente si assegna copiandone i membri nel momento dell'assegnazione.
+- **"I miei interventi".** Un intervento è "mio" se sono assegnato tramite la persona
+  (`employees.user_id`) collegata al mio account. Il collegamento si fa dalla scheda della persona
+  («Accesso alla web app», `employees.write`): solo membri attivi della stessa azienda, esclusi i
+  clienti esterni, un account per persona (indice unico esistente).
 - **Collegamenti coerenti.** Il trigger `app.work_order_guard` completa commessa e cliente dal
   cantiere, rifiuta una sede o un cantiere di un altro cliente o commessa e, se l'indirizzo non è
   scritto a mano, lo copia con le coordinate dal cantiere, dalla sede o dal cliente.

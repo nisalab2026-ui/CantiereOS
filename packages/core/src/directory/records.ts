@@ -214,6 +214,8 @@ export interface EmployeeDetail {
   notes: string | null;
   isActive: boolean;
   hasAccount: boolean;
+  /** Account CantiereOS collegato: serve alla web app dei dipendenti per riconoscere i suoi interventi. */
+  account: { id: string; name: string } | null;
   createdAt: Date;
   updatedAt: Date;
   teams: { id: string; name: string; color: string | null }[];
@@ -226,23 +228,34 @@ export async function getEmployee(
 ): Promise<EmployeeDetail | null> {
   requirePermission(access, "employees.read");
   if (!isUuid(id)) return null;
-  const { rows } = await tx.query<Omit<EmployeeDetail, "teams">>(
+  const { rows } = await tx.query<
+    Omit<EmployeeDetail, "teams" | "account"> & { userId: string | null }
+  >(
     `select id, employee_code as code, first_name as "firstName", last_name as "lastName", email, phone,
             job_title as "jobTitle", employment_type as "employmentType",
             to_char(hire_date, 'YYYY-MM-DD') as "hireDate", to_char(termination_date, 'YYYY-MM-DD') as "terminationDate",
-            notes, is_active as "isActive", user_id is not null as "hasAccount",
+            notes, is_active as "isActive", user_id is not null as "hasAccount", user_id as "userId",
             created_at as "createdAt", updated_at as "updatedAt"
        from public.employees where tenant_id = $1 and id = $2 and deleted_at is null`,
     [access.tenantId, id],
   );
   if (!rows[0]) return null;
+  const { userId, ...base } = rows[0];
+  let account: EmployeeDetail["account"] = null;
+  if (userId) {
+    const u = await tx.query<{ name: string | null }>(
+      `select coalesce(full_name, email) as name from public.users where id = $1`,
+      [userId],
+    );
+    account = { id: userId, name: u.rows[0]?.name ?? "Account collegato" };
+  }
   const teams = await tx.query<EmployeeDetail["teams"][number]>(
     `select t.id, t.name, t.color from public.team_members tm
        join public.teams t on t.tenant_id = tm.tenant_id and t.id = tm.team_id and t.deleted_at is null
       where tm.tenant_id = $1 and tm.employee_id = $2 order by lower(t.name)`,
     [access.tenantId, id],
   );
-  return { ...rows[0], teams: teams.rows };
+  return { ...base, account, teams: teams.rows };
 }
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data non valida");
@@ -353,6 +366,67 @@ export async function updateEmployee(
     await tx.query("rollback to savepoint update_employee");
     if (error instanceof ValidationError) throw error;
     mapError(error, employeeUnique);
+  }
+}
+
+/** Account dell'azienda collegabili a una persona (attivi, esclusi i clienti esterni). */
+export async function listLinkableAccounts(
+  tx: UserTx,
+  access: TenantAccess,
+): Promise<{ id: string; name: string; linkedTo: string | null }[]> {
+  requirePermission(access, "employees.write");
+  const { rows } = await tx.query<{ id: string; name: string; linkedTo: string | null }>(
+    `select u.id, coalesce(u.full_name, u.email) as name,
+            (select e.first_name || ' ' || e.last_name from public.employees e
+              where e.tenant_id = m.tenant_id and e.user_id = m.user_id and e.deleted_at is null
+              limit 1) as "linkedTo"
+       from public.memberships m
+       join public.users u on u.id = m.user_id
+       join public.roles r on r.id = m.role_id
+      where m.tenant_id = $1 and m.status = 'active'
+        and not (r.tenant_id is null and r.key = 'external_client')
+      order by lower(coalesce(u.full_name, u.email))`,
+    [access.tenantId],
+  );
+  return rows;
+}
+
+/**
+ * Collega (o scollega, con null) una persona a un account dell'azienda. Il database
+ * accetta solo membri della stessa azienda (FK su memberships) e un account per persona.
+ */
+export async function linkEmployeeAccount(
+  tx: UserTx,
+  access: TenantAccess,
+  id: string,
+  userId: string | null,
+): Promise<void> {
+  requirePermission(access, "employees.write");
+  if (!isUuid(id)) throw new ValidationError({ form: "Dipendente non trovato" });
+  if (userId !== null && !isUuid(userId))
+    throw new ValidationError({ userId: "Account non valido" });
+  if (userId !== null) {
+    const ok = await tx.query(
+      `select 1 from public.memberships m join public.roles r on r.id = m.role_id
+        where m.tenant_id = $1 and m.user_id = $2 and m.status = 'active'
+          and not (r.tenant_id is null and r.key = 'external_client')`,
+      [access.tenantId, userId],
+    );
+    if (ok.rowCount === 0)
+      throw new ValidationError({ userId: "Account non trovato in questa azienda" });
+  }
+  await tx.query("savepoint link_employee");
+  try {
+    const { rowCount } = await tx.query(
+      `update public.employees set user_id = $3
+        where tenant_id = $1 and id = $2 and deleted_at is null`,
+      [access.tenantId, id, userId],
+    );
+    if (rowCount === 0) throw new ValidationError({ form: "Dipendente non trovato" });
+  } catch (error) {
+    await tx.query("rollback to savepoint link_employee");
+    if (error instanceof ValidationError) throw error;
+    mapError(error, () => ({ userId: "Questo account è già collegato a un'altra persona" }));
   }
 }
 
