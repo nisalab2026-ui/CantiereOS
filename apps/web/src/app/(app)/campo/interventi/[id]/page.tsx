@@ -168,7 +168,7 @@ export default async function FieldWorkOrderPage({ params }: { params: Promise<{
         </details>
       )}
 
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-10 -mx-1 rounded-2xl p-1">
+      <div className="cos-glass sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 -mx-4 border-t border-border/60 bg-background/90 px-4 py-3 backdrop-blur-xl">
         <WorkOrderStatusActions
           id={o.id}
           status={o.status}

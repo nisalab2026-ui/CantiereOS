@@ -48,7 +48,12 @@ export function WorkOrderStatusActions({
 
   return (
     <div className={cn("flex flex-col gap-2", size === "md" && "items-end")}>
-      <div className={cn("flex flex-wrap gap-2", size === "lg" ? "flex-col" : "justify-end")}>
+      <div
+        className={cn(
+          "flex flex-wrap gap-2",
+          size === "lg" ? "grid grid-cols-2 [&>*:first-child]:col-span-2 [&>*:last-child:nth-child(even)]:col-span-2" : "justify-end",
+        )}
+      >
         {field && status === "scheduled" && (
           <Button
             className={big}
