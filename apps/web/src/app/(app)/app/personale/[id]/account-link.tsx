@@ -48,7 +48,7 @@ export function AccountLink({
       )}
       <FormAlert error={state.error} message={state.message} />
       <div className="flex justify-end">
-        <SubmitButton variant="secondary">Salva collegamento</SubmitButton>
+        <SubmitButton variant="secondary">Aggiorna collegamento</SubmitButton>
       </div>
     </form>
   );

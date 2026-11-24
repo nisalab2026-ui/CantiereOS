@@ -48,7 +48,7 @@ test("intervento: pianificato in ufficio, svolto dal telefono", async ({ page })
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(personUrl);
   await page.getByLabel("Account collegato").selectOption({ label: "E2E int" });
-  await page.getByRole("button", { name: "Salva collegamento" }).click();
+  await page.getByRole("button", { name: "Aggiorna collegamento" }).click();
   await expect(page.getByText("Account collegato.")).toBeVisible();
 
   // Sul telefono: l'intervento è il prossimo, con Naviga verso l'indirizzo.
