@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { BrandMark } from "@/components/brand-logo";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -52,7 +52,7 @@ export function SidebarNav({
                       )}
                     >
                       <i.icon
-                        className={cn("size-4 shrink-0", active && "text-[#8fb0ff]")}
+                        className={cn("size-4 shrink-0", active && "text-[#86efac]")}
                         aria-hidden
                       />
                       {collapsed ? <span className="sr-only">{i.label}</span> : i.label}
@@ -118,25 +118,16 @@ export function Sidebar({
   );
 }
 
-/** Marchio CantiereOS (casco + edifici), pensato per fondi scuri (sidebar navy). */
+/** Marchio CantiereOS (gru su tessera verde), animato al primo disegno. */
 export function Logo({ className }: { className?: string }) {
-  return (
-    <Image
-      src="/brand/logo-mark.png"
-      alt=""
-      width={268}
-      height={256}
-      priority
-      className={cn("h-7 w-auto shrink-0", className)}
-    />
-  );
+  return <BrandMark className={cn("size-7", className)} />;
 }
 
-/** Logotipo: "Cantiere" chiaro + "OS" blu, come nel marchio. */
+/** Logotipo: "Cantiere" chiaro + "OS" verde, come nel marchio. */
 export function Wordmark({ className }: { className?: string }) {
   return (
     <span className={cn("text-[15px] font-semibold tracking-tight", className)}>
-      Cantiere<span className="text-[#3B9BFF]">OS</span>
+      Cantiere<span className="text-[#22c55e]">OS</span>
     </span>
   );
 }

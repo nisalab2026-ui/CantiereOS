@@ -205,6 +205,40 @@ chi li gestisce non può concedere permessi che non possiede.
 Tutte le funzioni `SECURITY DEFINER` hanno `search_path = ''`; nessuna è eseguibile da `PUBLIC` o
 `anon` (verificato dai test).
 
+### Interventi (migrazione `20261120090000_work_orders`)
+
+**ADR-017 — Interventi pianificati e app dei dipendenti sul campo.** Progetto approvato dal titolare
+il 19-20/11/2026 («parti»); documento di architettura: app dei dipendenti come seconda interfaccia
+(`/campo`) dello stesso gestionale, stessi dati, nessuna sincronizzazione.
+
+- **Perché una tabella nuova e non `tasks`.** Un'attività ha una scadenza e una persona; un
+  intervento ha orario di inizio e fine, luogo, cliente, una squadra e uno stato che cambia dal
+  campo. Le attività restano come promemoria.
+- **Tabelle.** `work_orders` (numero `AAAA-NNNN` dal database, titolo, tipo, priorità, cliente, sede,
+  commessa, cantiere, indirizzo e coordinate, orari previsti, descrizione, note dal campo, stato,
+  motivo, orari reali, rapportino collegato); `work_order_assignees` (persone in squadra, al massimo
+  un capo squadra); `work_order_events` (storico degli stati, scritto solo dal trigger, solo lettura).
+  Una squadra già esistente si assegna copiandone i membri nel momento dell'assegnazione.
+- **"I miei interventi".** Un intervento è "mio" se sono assegnato tramite la persona
+  (`employees.user_id`) collegata al mio account. Il collegamento si fa dalla scheda della persona
+  («Accesso alla web app», `employees.write`): solo membri attivi della stessa azienda, esclusi i
+  clienti esterni, un account per persona (indice unico esistente).
+- **Collegamenti coerenti.** Il trigger `app.work_order_guard` completa commessa e cliente dal
+  cantiere, rifiuta una sede o un cantiere di un altro cliente o commessa e, se l'indirizzo non è
+  scritto a mano, lo copia con le coordinate dal cantiere, dalla sede o dal cliente.
+- **Stati.** `scheduled` → `in_progress` → `completed`, con `suspended` in mezzo (motivo
+  obbligatorio). Chi è in squadra fa questi passaggi; chi pianifica in più annulla (motivo
+  obbligatorio), riapre un completato e ripristina un annullato. Inizio e fine reali li scrive il
+  database.
+- **Gradi.** `work_orders.read`: vedere i propri interventi (si è in squadra tramite la scheda del
+  personale collegata all'utente) e aggiornarne solo stato e note: qualsiasi altro campo è rifiutato
+  dal trigger, non solo dall'interfaccia. `work_orders_all.read`: tutti (titolare, admin,
+  responsabili, capi cantiere, ufficio, viewer). `work_orders.write`: pianificare (anche l'ufficio).
+  `work_orders.delete`: eliminare, con MFA (titolare, admin).
+- **Avvisi.** Nel centro notifiche, scritti dal database: nuova assegnazione, orario spostato,
+  annullamento; mai a chi ha fatto la modifica. Le notifiche push (Web Push) arriveranno con le
+  chiavi VAPID: oggi non sono configurate.
+
 ### Mappa di clienti, sedi e cantieri (migrazione `20261117223000_map_locations`)
 
 **ADR-016 — Posizioni sulle righe, mappa OpenStreetMap senza chiavi.** Richiesta del titolare del
@@ -254,9 +288,14 @@ dell'implementazione, sul piano approvato dal titolare il 17/11/2026 («la soluz
   validità) e i prezzi delle voci (`work_report_item_costs`) stanno in tabelle separate visibili solo
   con `projects.finance`, come gli importi della commessa. Il costo di un rapportino usa la tariffa
   valida alla sua data. **Solo i rapportini approvati** entrano in ore e costi della commessa.
-- **Permessi.** `work_reports.read` a tutti i ruoli interni; `work_reports.write` anche a
-  capocantiere e tecnico; `work_reports.approve` a titolare, amministratore, responsabile operativo
-  e capocantiere; `work_reports.delete` (MFA) a titolare e amministratore. Eliminazione solo logica.
+- **Permessi per grado.** `work_reports.read` a tutti i ruoli interni, ma da solo (tecnico) mostra
+  soltanto i rapportini creati da sé e quelli in cui si compare tra le ore
+  (`app.work_report_visible`, usata dalle policy e da `app.record_history`);
+  `work_reports_all.read` (tutti i rapportini) a titolare, amministratore, responsabile operativo,
+  capocantiere, ufficio e sola consultazione. `work_reports.write` (compilare) a titolare,
+  amministratore, responsabile operativo, capocantiere e tecnico: l'ufficio vede ma non compila.
+  `work_reports.approve` a titolare, amministratore, responsabile operativo e capocantiere;
+  `work_reports.delete` (MFA) a titolare e amministratore. Eliminazione solo logica.
 - **Non ancora.** Precompilazione dalle timbrature (con le presenze), listino articoli e magazzino,
   fattura dal rapportino (con i documenti commerciali), invio del PDF via email (SMTP non configurato).
 

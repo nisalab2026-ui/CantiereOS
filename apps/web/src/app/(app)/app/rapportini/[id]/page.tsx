@@ -95,6 +95,7 @@ export default async function ReportPage({
           />
         }
       />
+      {sp.salvato === "1" && r.status === "draft" && <Notice>Rapportino salvato.</Notice>}
       {sp.nuovo === "1" && r.status === "draft" && (
         <Notice>
           Rapportino {r.number} creato. Aggiungi ore e materiali, poi salva e invialo.

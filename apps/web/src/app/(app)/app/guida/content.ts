@@ -155,6 +155,41 @@ export const GUIDE: GuideTopic[] = [
     ],
   },
   {
+    id: "interventi",
+    title: "Interventi e web app",
+    summary:
+      "Lavori con giorno, orario e indirizzo: l'ufficio li pianifica, la squadra li svolge dal telefono.",
+    icon: "calendar",
+    href: "/app/interventi",
+    permission: "work_orders.read",
+    entries: [
+      {
+        q: "Come pianifico un intervento?",
+        a: [
+          "Interventi → «Nuovo intervento»: cosa fare, giorno e orario, cliente o commessa (l'indirizzo arriva da cantiere, sede o cliente, oppure lo scrivi tu) e chi ci va. Puoi aggiungere una squadra intera: ne copia le persone e il capo squadra. Chi viene assegnato riceve subito un avviso.",
+        ],
+      },
+      {
+        q: "Come vede i suoi lavori un dipendente?",
+        a: [
+          "Dal telefono apre CantiereOS su /campo (si può aggiungere alla schermata Home come un'app). Trova i lavori di oggi, il calendario, la mappa del giro e lo storico, con «Naviga» verso l'indirizzo e i pulsanti grandi Inizia, Sospendi e Completa. Perché li veda, la persona deve essere collegata al suo account: scheda della persona → «Accesso alla web app».",
+        ],
+      },
+      {
+        q: "Chi può fare cosa con gli interventi?",
+        a: [
+          "Titolare, amministratori, responsabili e ufficio pianificano, spostano e annullano. Il tecnico vede solo gli interventi in cui è in squadra e può solo cambiarne lo stato e scrivere le note dal campo. Eliminare è riservato a titolare e amministratori. I limiti li applica il database, non solo la pagina.",
+        ],
+      },
+      {
+        q: "Cosa succede se sposto o annullo un intervento?",
+        a: [
+          "La squadra riceve un avviso. Ogni cambio di stato resta nello storico dell'intervento con data, ora e motivo (obbligatorio per sospendere e annullare).",
+        ],
+      },
+    ],
+  },
+  {
     id: "rapportini",
     title: "Rapportini",
     summary: "La giornata di lavoro su una commessa: ore, materiali, foto e firma del cliente.",
@@ -163,9 +198,15 @@ export const GUIDE: GuideTopic[] = [
     permission: "work_reports.read",
     entries: [
       {
-        q: "Come compilo un rapportino dal cantiere?",
+        q: "Lavoro in cantiere: come faccio il rapportino?",
         a: [
-          "Da Rapportini tocca «Nuovo rapportino», scegli la commessa, il cantiere e il giorno. Poi aggiungi chi ha lavorato con inizio, fine e pausa (le ore si calcolano da sole) oppure con le ore totali, i materiali e i mezzi usati, scatta le foto e fai firmare il cliente sul telefono. Ricordati di toccare «Salva».",
+          "1. Apri CantiereOS dal telefono: in Panoramica tocca «Compila il rapportino di oggi». 2. Scegli la commessa (e il cantiere): il giorno è già oggi. 3. La tua riga di ore è già proposta (07:30–16:30 con un'ora di pausa): correggi gli orari e aggiungi i compagni con «Persona». 4. Scrivi i lavori eseguiti, aggiungi materiali e mezzi, scatta le foto e fai firmare il cliente. 5. Tocca «Salva e invia». Da quel momento il rapportino non si modifica più, a meno che il responsabile non te lo restituisca con una nota.",
+        ],
+      },
+      {
+        q: "Chi può fare cosa con i rapportini?",
+        a: [
+          "Tecnico in cantiere: compila e invia i propri rapportini e vede solo i suoi e quelli in cui compare tra le ore. Capocantiere e responsabile operativo: compilano, vedono tutti i rapportini, li approvano o li restituiscono con una nota. Ufficio: vede tutti i rapportini, le ore e i costi, ma non li compila. Titolare e amministratori: possono tutto, compresa l'eliminazione. Costi e prezzi li vedono solo titolare, amministratori e ufficio. I limiti li applica il database, non solo la pagina.",
         ],
       },
       {

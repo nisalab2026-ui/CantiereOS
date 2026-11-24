@@ -1,5 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { become, connect, expectPgError as rawExpect, insertRow, type Db } from "./helpers/db.js";
+import {
+  addMember,
+  become,
+  connect,
+  createUser,
+  expectPgError as rawExpect,
+  insertRow,
+  type Db,
+} from "./helpers/db.js";
 import { seedTwoTenants, type Seed } from "./helpers/fixtures.js";
 
 /** Rapportini, righe, costi riservati e passaggi di stato (ADR-015). */
@@ -133,16 +141,16 @@ describe("Rapportini", () => {
         reportId,
       ]);
     });
-    // carol (amministrazione) scrive ma non approva: solo i propri
+    // carol (ufficio) vede ma non compila: nessuna modifica passa
     await commitAs(s.users.carolOfficeA, async () => {
-      await fails(
-        () => db.query("update public.work_reports set notes = 'no' where id = $1", [reportId]),
-        "42501",
-      );
-      await fails(
-        () => db.query("delete from public.work_report_items where report_id = $1", [reportId]),
-        "42501",
-      );
+      const u = await db.query("update public.work_reports set notes = 'no' where id = $1", [
+        reportId,
+      ]);
+      expect(u.rowCount).toBe(0);
+      const d = await db.query("delete from public.work_report_items where report_id = $1", [
+        reportId,
+      ]);
+      expect(d.rowCount).toBe(0);
     });
   });
 
@@ -259,13 +267,20 @@ describe("Rapportini", () => {
     });
   });
 
-  it("la cronologia della commessa include i rapportini", async () => {
-    await commitAs(s.users.bobTechA, async () => {
+  it("la cronologia della commessa include i rapportini per chi li vede tutti", async () => {
+    await commitAs(s.users.martaManagerA, async () => {
       const { rows } = await db.query<{ table_name: string }>(
         "select distinct table_name from app.record_history('projects', $1)",
         [projectA],
       );
       expect(rows.map((r) => r.table_name)).toContain("work_reports");
+    });
+    await commitAs(s.users.bobTechA, async () => {
+      const { rows } = await db.query<{ table_name: string }>(
+        "select distinct table_name from app.record_history('projects', $1)",
+        [projectA],
+      );
+      expect(rows.map((r) => r.table_name)).not.toContain("work_reports");
       const own = await db.query<{ table_name: string }>(
         "select distinct table_name from app.record_history('work_reports', $1)",
         [reportId],
@@ -273,6 +288,60 @@ describe("Rapportini", () => {
       expect(own.rows.map((r) => r.table_name).sort()).toEqual(
         ["work_report_items", "work_report_labor", "work_reports"].sort(),
       );
+    });
+  });
+
+  it("gradi: il tecnico vede solo i suoi rapportini e quelli in cui compare; l'ufficio vede ma non compila", async () => {
+    const luca = await createUser(db, "luca");
+    await addMember(db, s.tenantA, luca, "technician");
+    const lucaEmployee = await insertRow(db, "employees", {
+      tenant_id: s.tenantA,
+      user_id: luca,
+      first_name: "Luca",
+      last_name: "Prova",
+    });
+    const mine = await commitAs(
+      s.users.bobTechA,
+      async () => (await newReport(s.tenantA, projectA)).rows[0]!.id,
+    );
+    const count = async (user: string) =>
+      commitAs(user, async () => {
+        const { rows } = await db.query("select id from public.work_reports where id = $1", [mine]);
+        const hist = await db.query("select 1 from app.record_history('work_reports', $1)", [mine]);
+        return [rows.length, hist.rows.length > 0 ? 1 : 0];
+      });
+    expect(await count(luca)).toEqual([0, 0]);
+    for (const u of [
+      s.users.martaManagerA,
+      s.users.carolOfficeA,
+      s.users.victorViewerA,
+      s.users.aliceOwnerA,
+    ]) {
+      expect((await count(u))[0]).toBe(1);
+    }
+    // Bob mette Luca tra le ore: ora Luca vede il rapportino (righe comprese)
+    await commitAs(s.users.bobTechA, async () => {
+      await db.query(
+        `insert into public.work_report_labor (tenant_id, report_id, employee_id, hours) values ($1, $2, $3, 4)`,
+        [s.tenantA, mine, lucaEmployee],
+      );
+    });
+    expect(await count(luca)).toEqual([1, 1]);
+    await commitAs(luca, async () => {
+      const { rows } = await db.query(
+        "select hours from public.work_report_labor where report_id = $1",
+        [mine],
+      );
+      expect(rows).toHaveLength(1);
+      // ma non lo modifica: non è l'autore
+      await fails(
+        () => db.query("update public.work_reports set notes = 'x' where id = $1", [mine]),
+        "42501",
+      );
+    });
+    // l'ufficio non compila rapportini
+    await commitAs(s.users.carolOfficeA, async () => {
+      await fails(() => newReport(s.tenantA, projectA), "42501");
     });
   });
 });

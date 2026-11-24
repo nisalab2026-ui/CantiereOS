@@ -523,7 +523,7 @@ export function TemplateEditor({
               className={cn(
                 "cos-enter rounded-xl border bg-card/60 transition-[border-color,box-shadow]",
                 active === si
-                  ? "border-primary/45 shadow-[0_0_0_3px_rgb(76_151_255/0.12)]"
+                  ? "border-primary/45 shadow-[0_0_0_3px_rgb(34_197_94/0.12)]"
                   : "border-border",
                 drop && "section" in drop && drop.section === si && "border-primary border-dashed",
               )}
@@ -831,7 +831,7 @@ function FieldEditor({
       className={cn(
         "group/field rounded-lg border bg-card/40 transition-[border-color,background-color,box-shadow] duration-300",
         open ? "border-primary/50 bg-accent/30" : "border-border hover:border-primary/30",
-        flash && "border-primary shadow-[0_0_0_3px_rgb(76_151_255/0.25)]",
+        flash && "border-primary shadow-[0_0_0_3px_rgb(34_197_94/0.25)]",
       )}
       data-testid="field-editor"
     >
