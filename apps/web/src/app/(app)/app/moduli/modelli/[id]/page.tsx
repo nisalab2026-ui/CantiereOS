@@ -9,6 +9,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { ForbiddenState } from "@/components/ui/states";
 import { asCurrentUser, getAppContext } from "@/lib/auth";
+import Link from "next/link";
 import { sectionGate } from "@/lib/permissions";
 import { FormDocument } from "../../form-document";
 import { ArchiveTemplateButton, DeleteTemplateButton } from "./template-actions";
@@ -78,6 +79,18 @@ export default async function FormTemplatePage({
       {sp.nuovo === "1" && (
         <Notice>
           Modello creato. Sistema campi e testi, poi «Pubblica»: da quel momento si potrà compilare.
+        </Notice>
+      )}
+      {!canManage && sectionGate(access, "forms.manage") === "mfa" && (
+        <Notice>
+          Stai vedendo l'anteprima. Per modificare il modello serve la verifica in due passaggi:{" "}
+          <Link
+            href="/account/sicurezza"
+            className="font-medium text-primary underline-offset-2 hover:underline"
+          >
+            verifica ora
+          </Link>
+          .
         </Notice>
       )}
       <div className="mt-4">

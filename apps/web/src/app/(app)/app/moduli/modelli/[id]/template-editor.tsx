@@ -412,7 +412,7 @@ export function TemplateEditor({
         ))}
       </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[13rem_minmax(0,1fr)] xl:grid-cols-[13rem_minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[13rem_minmax(0,1fr)] xl:grid-cols-[12rem_minmax(0,1.2fr)_minmax(0,1fr)]">
         {/* Componenti: clic per aggiungere alla sezione attiva, oppure trascina nel punto voluto */}
         <aside
           className={cn(
@@ -666,12 +666,15 @@ export function TemplateEditor({
           )}
         >
           <div className="mb-2 flex items-center gap-2">
-            <div className="flex gap-0.5 rounded-lg border border-border p-0.5" role="tablist">
+            <div
+              className="grid flex-1 grid-cols-3 gap-0.5 rounded-lg border border-border bg-card/60 p-0.5"
+              role="tablist"
+            >
               {(
                 [
                   ["sheet", "Foglio A4", FileText],
                   ["style", "Aspetto", Palette],
-                  ["try", "Prova a compilare", Pencil],
+                  ["try", "Prova", Pencil],
                 ] as const
               ).map(([v, l, Icon]) => (
                 <button
@@ -681,15 +684,19 @@ export function TemplateEditor({
                   aria-selected={paper === v}
                   onClick={() => setPaper(v)}
                   className={cn(
-                    "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors",
-                    paper === v ? "bg-accent font-medium" : "text-muted-foreground",
+                    "flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs whitespace-nowrap transition-colors",
+                    paper === v
+                      ? "bg-primary/10 font-medium text-primary"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   <Icon className="size-3.5" aria-hidden /> {l}
                 </button>
               ))}
             </div>
-            <span className="text-xs text-muted-foreground">non viene salvata</span>
+            {paper === "try" && (
+              <span className="text-xs whitespace-nowrap text-muted-foreground">non si salva</span>
+            )}
           </div>
           <div className="max-h-[calc(100dvh-10rem)] overflow-y-auto rounded-xl xl:pr-1">
             {paper === "style" && (
@@ -865,28 +872,40 @@ function FieldEditor({
             )}
             aria-hidden
           />
-          <span className="truncate font-medium">{f.label || "Senza etichetta"}</span>
-          {f.required && (
-            <span className="text-danger" aria-label="obbligatorio">
-              *
+          <span className="min-w-0 flex-1">
+            <span className="line-clamp-2 leading-snug font-medium break-words">
+              {f.label || "Senza etichetta"}
+              {f.required && (
+                <span className="ml-0.5 text-danger" aria-label="obbligatorio">
+                  *
+                </span>
+              )}
             </span>
-          )}
-          <span className="ml-auto hidden shrink-0 rounded-full bg-accent px-2 py-0.5 text-[11px] text-muted-foreground sm:inline">
-            {FORM_FIELD_TYPE_LABELS[f.type]}
+            <span className="block text-[11px] text-muted-foreground">
+              {FORM_FIELD_TYPE_LABELS[f.type]}
+            </span>
           </span>
         </button>
-        <IconButton label="Sposta su" onClick={() => onMove(-1)} disabled={first}>
-          <ArrowUp />
-        </IconButton>
-        <IconButton label="Sposta giù" onClick={() => onMove(1)} disabled={last}>
-          <ArrowDown />
-        </IconButton>
-        <IconButton label="Duplica campo" onClick={onDuplicate}>
-          <Copy />
-        </IconButton>
-        <IconButton label="Elimina campo" danger onClick={onRemove}>
-          <Trash2 />
-        </IconButton>
+        <span
+          className={cn(
+            "flex shrink-0 items-center transition-opacity duration-150",
+            !open &&
+              "[@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-focus-within/field:opacity-100 [@media(hover:hover)]:group-hover/field:opacity-100",
+          )}
+        >
+          <IconButton label="Sposta su" onClick={() => onMove(-1)} disabled={first}>
+            <ArrowUp />
+          </IconButton>
+          <IconButton label="Sposta giù" onClick={() => onMove(1)} disabled={last}>
+            <ArrowDown />
+          </IconButton>
+          <IconButton label="Duplica campo" onClick={onDuplicate}>
+            <Copy />
+          </IconButton>
+          <IconButton label="Elimina campo" danger onClick={onRemove}>
+            <Trash2 />
+          </IconButton>
+        </span>
       </div>
       {open && (
         <div className="grid gap-3 border-t border-border p-3 sm:grid-cols-2">

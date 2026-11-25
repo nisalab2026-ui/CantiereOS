@@ -73,7 +73,7 @@ export function FilterBar({
           defaultValue={values[f.name] ?? ""}
           aria-label={f.label}
           onChange={() => form.current?.requestSubmit()}
-          className="h-9 rounded-sm border border-input bg-card px-2 text-sm focus-visible:border-primary focus-visible:outline-none"
+          className="h-9 min-w-0 flex-1 basis-[calc(50%-0.5rem)] rounded-sm border border-input bg-card px-2 text-sm focus-visible:border-primary focus-visible:outline-none sm:flex-none sm:basis-auto"
         >
           <option value="">{f.emptyLabel ?? `${f.label}: tutti`}</option>
           {f.options.map((o) => (

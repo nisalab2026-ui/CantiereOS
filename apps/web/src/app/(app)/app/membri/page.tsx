@@ -80,7 +80,10 @@ export default async function MembersPage() {
                 <th scope="col" className="px-4 py-2.5 text-xs font-medium text-muted-foreground">
                   Persona
                 </th>
-                <th scope="col" className="px-4 py-2.5 text-xs font-medium text-muted-foreground">
+                <th
+                  scope="col"
+                  className="hidden px-4 py-2.5 text-xs font-medium text-muted-foreground sm:table-cell"
+                >
                   Ruolo
                 </th>
                 <th scope="col" className="px-4 py-2.5 text-xs font-medium text-muted-foreground">
@@ -93,9 +96,12 @@ export default async function MembersPage() {
                 <tr key={m.id} className="border-b border-border last:border-0">
                   <td className="px-4 py-2.5">
                     <p className="font-medium">{m.full_name ?? m.email}</p>
-                    {m.full_name && <p className="text-xs text-muted-foreground">{m.email}</p>}
+                    {m.full_name && (
+                      <p className="text-xs break-all text-muted-foreground">{m.email}</p>
+                    )}
+                    <p className="mt-0.5 text-xs sm:hidden">{m.role}</p>
                   </td>
-                  <td className="px-4 py-2.5">{m.role}</td>
+                  <td className="hidden px-4 py-2.5 sm:table-cell">{m.role}</td>
                   <td className="px-4 py-2.5">{STATUS[m.status] ?? m.status}</td>
                 </tr>
               ))}
