@@ -83,6 +83,8 @@ Mai comunicare uno stato **solo** con il colore: c'è sempre un'etichetta o un'i
   - le animazioni d'ingresso usano `fill-mode: backwards`: a fine animazione non resta alcun
     `transform` sugli elementi, che altrimenti impedirebbe la sfocatura del vetro in Chrome. In CSS
     scrivere `-webkit-backdrop-filter` **prima** di `backdrop-filter` (la build tiene solo l'ultima);
+  - finestre, menu e popover hanno anche un'animazione di chiusura (dissolvenza breve), non solo di
+    apertura;
   - Con `prefers-reduced-motion: reduce` animazioni e inclinazioni si spengono.
 - Bersagli touch: almeno 40 px (44 px nelle schermate del tecnico).
 
@@ -182,11 +184,20 @@ creato (`?id=…`); un componente `Toast` arriverà quando servirà davvero.
 Ogni pagina con dati gestisce quattro stati:
 
 1. **Caricamento** — `loading.tsx` con skeleton della stessa forma (no spinner a pagina intera).
+   Il `loading.tsx` dell'area `/app` sceglie la forma dall'indirizzo: panoramica, elenco o
+   scheda di dettaglio.
 2. **Vuoto** — `EmptyState` che spiega cosa comparirà e, se possibile, come crearlo.
 3. **Errore** — `error.tsx` con `ErrorState`; nessun dettaglio tecnico all'utente, solo il
    riferimento (`digest`) che compare anche nei log del server. Una sezione senza permesso mostra
    `ForbiddenState` (non un reindirizzamento silenzioso).
 4. **Dati** — il contenuto.
+
+**Conferme e errori dei moduli.** Un salvataggio riuscito sul posto (senza cambio di pagina) si
+annuncia con un avviso a scomparsa (`toast()` di `components/ui/toaster.tsx`, mostrato da
+`FormAlert` quando riceve `message`): in basso a destra, `role="status"`, sparisce da solo dopo
+5 secondi, si chiude con la ✕, al massimo tre insieme, lo stesso testo non si ripete. Gli errori
+restano **dentro il modulo** (`role="alert"`, `data-testid="form-error"`), vicino ai campi, e non
+spariscono da soli.
 
 ## 7. Dashboard per ruolo
 

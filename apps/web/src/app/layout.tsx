@@ -2,6 +2,7 @@ import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
+import { Toaster } from "@/components/ui/toaster";
 import { parseTheme, THEME_COOKIE, themeClass } from "@/lib/theme";
 import "./globals.css";
 
@@ -27,7 +28,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         .filter(Boolean)
         .join(" ")}
     >
-      <body className="min-h-dvh font-sans antialiased">{children}</body>
+      <body className="min-h-dvh font-sans antialiased">
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

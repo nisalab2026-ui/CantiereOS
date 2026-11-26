@@ -568,7 +568,7 @@ export function ReportEditor({
       <div className="sticky bottom-3 z-10 flex flex-wrap items-center justify-end gap-3 rounded-xl border border-border bg-card/95 p-3 shadow-lg backdrop-blur">
         <div className="mr-auto min-w-0 text-sm">
           <FormAlert error={result.error} message={result.message} />
-          {!result.error && !result.message && (
+          {!result.error && (
             <span className="text-muted-foreground">
               {dirty ? "Modifiche non salvate" : "Tutto salvato"}
             </span>

@@ -707,3 +707,51 @@ a:hover > .brand-mark {
   stroke-dashoffset: 0;
   opacity: 1;
 }
+
+/* Avvisi a scomparsa */
+@keyframes cos-toast-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes cos-toast-out {
+  to {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0) scale(0.97);
+  }
+}
+.cos-toast {
+  animation: cos-toast-in 260ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.cos-toast-out {
+  animation: cos-toast-out 200ms ease-in forwards;
+}
+
+/* Chiusura di menu e finestre: stessa curva dell'apertura, al contrario */
+@keyframes cos-pop-out {
+  to {
+    opacity: 0;
+    transform: translate3d(0, 4px, 0) scale(0.98);
+  }
+}
+[data-radix-popper-content-wrapper] > [data-state="closed"],
+.cos-pop[data-state="closed"] {
+  animation: cos-pop-out 140ms ease-in forwards;
+}
+.cos-overlay[data-state="closed"] {
+  animation: cos-fade 140ms ease-in reverse forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cos-toast,
+  .cos-toast-out,
+  .cos-pop[data-state="closed"],
+  .cos-overlay[data-state="closed"],
+  [data-radix-popper-content-wrapper] > [data-state="closed"] {
+    animation: none;
+  }
+}

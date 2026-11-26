@@ -1,4 +1,12 @@
-/** Esito di un modulo: errore generale (role=alert) o conferma. */
+"use client";
+
+import { useEffect } from "react";
+import { toast } from "./toaster";
+
+/**
+ * Esito di un modulo: l'errore resta nel modulo (role=alert), la conferma
+ * compare come avviso a scomparsa.
+ */
 export function FormAlert({
   error,
   message,
@@ -6,6 +14,9 @@ export function FormAlert({
   error?: string | undefined;
   message?: string | undefined;
 }) {
+  useEffect(() => {
+    if (message) toast(message);
+  }, [message]);
   return (
     <div aria-live="polite">
       {error && (
@@ -16,9 +27,6 @@ export function FormAlert({
         >
           {error}
         </p>
-      )}
-      {message && (
-        <p className="rounded-md bg-success/10 px-3 py-2 text-sm text-success">{message}</p>
       )}
     </div>
   );
