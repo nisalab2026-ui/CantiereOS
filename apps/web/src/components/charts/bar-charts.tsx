@@ -14,10 +14,16 @@ export function MonthBars({
   data,
   caption,
   hrefFor,
+  format = String,
+  valueLabel = "Scadenze",
 }: {
   data: { month: string; count: number }[];
   caption: string;
   hrefFor?: (month: string) => string;
+  /** come mostrare il valore (es. importi in euro) */
+  format?: (n: number) => string;
+  /** intestazione della colonna dei valori nella tabella accessibile */
+  valueLabel?: string;
 }) {
   const max = Math.max(1, ...data.map((d) => d.count));
   return (
@@ -28,7 +34,7 @@ export function MonthBars({
           const bar = (
             <span className="group relative flex h-full w-full flex-col items-center justify-end">
               <span className="pointer-events-none absolute -top-1 z-10 -translate-y-full rounded-sm border border-border bg-popover px-2 py-1 text-xs whitespace-nowrap opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                <span className="capitalize">{monthLongFmt.format(date)}</span>: {d.count}
+                <span className="capitalize">{monthLongFmt.format(date)}</span>: {format(d.count)}
               </span>
               <span
                 className="w-full max-w-10 rounded-t-[4px] bg-primary/85 transition-colors group-hover:bg-primary"
@@ -64,14 +70,14 @@ export function MonthBars({
         <thead>
           <tr>
             <th scope="col">Mese</th>
-            <th scope="col">Scadenze</th>
+            <th scope="col">{valueLabel}</th>
           </tr>
         </thead>
         <tbody>
           {data.map((d) => (
             <tr key={d.month}>
               <td>{monthLongFmt.format(new Date(`${d.month}-01T00:00:00Z`))}</td>
-              <td>{d.count}</td>
+              <td>{format(d.count)}</td>
             </tr>
           ))}
         </tbody>

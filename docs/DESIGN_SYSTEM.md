@@ -205,12 +205,27 @@ La dashboard si sceglie dal **ruolo verificato sul server** nell'azienda attiva:
 
 | Dashboard       | Ruoli                            | Contenuto (solo dati reali dell'azienda)                                            |
 | --------------- | -------------------------------- | ----------------------------------------------------------------------------------- |
-| Amministrazione | owner, admin, back_office        | utenti e posti del piano, inviti in attesa, anagrafiche, attività recenti (audit)   |
-| Responsabile    | operations_manager, site_manager | squadre e composizione, personale, clienti e sedi                                   |
+| Amministrazione | owner, admin, back_office        | centro di controllo (sotto) + utenti e posti del piano, inviti, anagrafiche, audit  |
+| Responsabile    | operations_manager, site_manager | centro di controllo (sotto) + squadre, personale, clienti e sedi                    |
 | Tecnico         | technician                       | la propria scheda dipendente e squadre; agenda quando esisterà il modulo interventi |
 
-Le sezioni dei moduli non ancora realizzati (cantieri, rapportini, scadenze) **non** compaiono
-con numeri finti: arrivano con i rispettivi moduli.
+Le sezioni dei moduli non ancora realizzati **non** compaiono con numeri finti: arrivano con i
+rispettivi moduli.
+
+**Centro di controllo** (`app/(app)/app/command-center.tsx`, dati da `getCommandCenter` del core).
+Riquadri: indicatori principali (incassato nel periodo con variazione, da incassare, interventi di
+oggi, clienti attivi e nuovi, rapportini da approvare, attività urgenti), incassi (andamento a 6
+mesi + pagamenti attesi), scadenze che richiedono attenzione, interventi di oggi e della settimana
+con la squadra, le tue attività, da chiudere, mappa, ultime modifiche, azienda e squadre.
+
+- Un riquadro esiste solo se chi guarda ha il permesso sui suoi dati; ogni numero è un link alla
+  lista già filtrata.
+- «Incassato» = pagamenti in entrata segnati come pagati, per data d'incasso. Non si chiama
+  fatturato finché non esiste il modulo fatture.
+- Filtro di periodo con link (`?periodo=last-month|quarter`): il periodo in corso si confronta con
+  lo stesso tratto del periodo prima (1–26 novembre contro 1–26 ottobre).
+- «Personalizza» mostra, nasconde e riordina i riquadri; la scelta è per persona e azienda nella
+  tabella `user_preferences` (ADR-018), «Ripristina» la cancella. I riquadri nuovi compaiono in coda.
 
 ## 8. Scrittura
 

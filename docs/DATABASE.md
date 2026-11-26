@@ -205,6 +205,23 @@ chi li gestisce non può concedere permessi che non possiede.
 Tutte le funzioni `SECURITY DEFINER` hanno `search_path = ''`; nessuna è eseguibile da `PUBLIC` o
 `anon` (verificato dai test).
 
+### Preferenze personali (migrazione `20261126120000_user_preferences`)
+
+**ADR-018 — Preferenze dell'interfaccia nel database.** Decisione del titolare del 26/11/2026
+(«Nel database»): disposizione della panoramica e filtri salvati seguono la persona su ogni
+dispositivo.
+
+- `user_preferences (tenant_id, user_id, key, value jsonb)`, unica per `(tenant_id, user_id, key)`,
+  FK composta verso `memberships`: se la persona esce dall'azienda le sue preferenze spariscono.
+- RLS **solo proprietario**: `user_id = auth.uid()` e azienda tra quelle di cui è membro attivo,
+  per lettura, inserimento, modifica e cancellazione. Nessun permesso di ruolo: il titolare non
+  legge le preferenze degli altri.
+- Si modifica solo `value`; `key` segue `^[a-z][a-z0-9_.-]{1,63}$`, `value` è un oggetto o un
+  elenco JSON di al massimo 16 KB. Contiene solo scelte di visualizzazione, mai dati aziendali.
+- Il core valida ogni valore con lo schema zod della chiave (`dashboard.layout`: solo widget noti);
+  un valore non valido si ignora e vale l'impostazione predefinita.
+- Test: `packages/db/tests/user-preferences.test.ts`, `packages/core/tests/workspace.test.ts`.
+
 ### Interventi (migrazione `20261120090000_work_orders`)
 
 **ADR-017 — Interventi pianificati e app dei dipendenti sul campo.** Progetto approvato dal titolare

@@ -1,8 +1,18 @@
 import type pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
+  DASHBOARD_LAYOUT_KEY,
   dashboardKindFor,
+  dashboardLayoutSchema,
+  deletePreference,
+  getCommandCenter,
   getDashboard,
+  getPreference,
+  periodRange,
+  resolveDashboardLayout,
+  setPreference,
+  shiftMonths,
+  ValidationError,
   globalSearch,
   likePattern,
   listNotifications,
@@ -181,5 +191,142 @@ describe("Dashboard per ruolo", () => {
     });
     if (t.kind !== "technician") throw new Error();
     expect(t.teams!.map((x) => x.name)).toEqual(["Squadra Rossa"]);
+  });
+});
+
+const romeToday = () =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome" }).format(new Date());
+
+describe("Periodo della panoramica", () => {
+  it("mese in corso fino a oggi contro lo stesso tratto del mese prima", () => {
+    expect(periodRange("month", "2026-03-31")).toEqual({
+      period: "month",
+      from: "2026-03-01",
+      to: "2026-04-01",
+      prevFrom: "2026-02-01",
+      prevTo: "2026-03-01",
+    });
+    expect(periodRange("last-month", "2026-01-15")).toMatchObject({
+      from: "2025-12-01",
+      to: "2026-01-01",
+      prevFrom: "2025-11-01",
+      prevTo: "2025-12-01",
+    });
+    expect(periodRange("quarter", "2026-11-26")).toMatchObject({
+      from: "2026-10-01",
+      to: "2026-11-27",
+      prevFrom: "2026-07-01",
+      prevTo: "2026-08-27",
+    });
+    expect(shiftMonths("2026-05-31", -1)).toBe("2026-04-30");
+  });
+
+  it("disposizione: ordine salvato, widget nuovi in coda, solo quelli disponibili", () => {
+    const r = resolveDashboardLayout({ order: ["map", "kpis"], hidden: ["activity"] }, [
+      "kpis",
+      "cash",
+      "map",
+      "activity",
+    ]);
+    expect(r).toEqual({ visible: ["map", "kpis", "cash"], hidden: ["activity"] });
+    expect(resolveDashboardLayout(null, ["cash", "kpis"]).visible).toEqual(["kpis", "cash"]);
+    expect(dashboardLayoutSchema.safeParse({ order: ["boh"], hidden: [] }).success).toBe(false);
+  });
+});
+
+describe("Centro di controllo", () => {
+  it("incassi del periodo, confronto e andamento: solo azienda attiva e con permesso", async () => {
+    const today = romeToday();
+    const prevDay = `${shiftMonths(today, -1).slice(0, 7)}-01`;
+    const cust = await pool.query<{ id: string }>(
+      "select id from public.customers where tenant_id = $1 and code = 'C001'",
+      [tenantA],
+    );
+    const custB = await pool.query<{ id: string }>(
+      "select id from public.customers where tenant_id = $1 limit 1",
+      [tenantB],
+    );
+    const pay = `insert into public.payments
+      (tenant_id, direction, description, amount_cents, due_date, status, paid_on, paid_amount_cents, customer_id)
+      values ($1, 'incoming', $2, $3, $4, $5, $6, $7, $8)`;
+    await pool.query(pay, [tenantA, "SAL 1", 12000, today, "paid", today, 10000, cust.rows[0]!.id]);
+    await pool.query(pay, [
+      tenantA,
+      "SAL 0",
+      5000,
+      prevDay,
+      "paid",
+      prevDay,
+      5000,
+      cust.rows[0]!.id,
+    ]);
+    await pool.query(pay, [tenantA, "Aperto", 7000, today, "open", null, null, cust.rows[0]!.id]);
+    await pool.query(pay, [
+      tenantB,
+      "Altra",
+      99900,
+      today,
+      "paid",
+      today,
+      99900,
+      custB.rows[0]!.id,
+    ]);
+
+    const s = await createSession(pool, owner);
+    const cc = await run(s, async (tx) =>
+      getCommandCenter(tx, await resolveActiveTenant(tx), "month", today),
+    );
+    expect(cc.cash?.collectedCents).toBe(10000);
+    expect(cc.cash?.prevCollectedCents).toBe(5000);
+    expect(cc.cash?.byMonth).toHaveLength(6);
+    expect(cc.cash?.byMonth.at(-1)).toEqual({ month: today.slice(0, 7), cents: 10000 });
+    expect(cc.customers).toEqual({ active: 2, newInPeriod: 2, newPrev: 0 });
+    expect(cc.workOrders?.today).toEqual([]);
+    expect(cc.queues.reportsToApprove).toEqual({ count: 0, oldest: null });
+
+    // il tecnico non vede i pagamenti: niente widget economico
+    const st = await createSession(pool, tech);
+    const techCc = await run(st, async (tx) =>
+      getCommandCenter(tx, await resolveActiveTenant(tx), "month", today),
+    );
+    expect(techCc.cash).toBeNull();
+    expect(techCc.queues.reportsToApprove).toBeNull();
+  });
+});
+
+describe("Preferenze personali", () => {
+  it("salva, rilegge e cancella solo le proprie", async () => {
+    const s = await createSession(pool, owner);
+    const layout = { order: ["cash", "kpis"], hidden: ["map"] };
+    await run(s, async (tx) =>
+      setPreference(tx, await resolveActiveTenant(tx), DASHBOARD_LAYOUT_KEY, layout),
+    );
+    const read = await run(s, async (tx) =>
+      getPreference(tx, await resolveActiveTenant(tx), DASHBOARD_LAYOUT_KEY, dashboardLayoutSchema),
+    );
+    expect(read).toEqual(layout);
+
+    const sm = await createSession(pool, manager);
+    const other = await run(sm, async (tx) =>
+      getPreference(tx, await resolveActiveTenant(tx), DASHBOARD_LAYOUT_KEY, dashboardLayoutSchema),
+    );
+    expect(other).toBeNull();
+
+    await run(s, async (tx) =>
+      deletePreference(tx, await resolveActiveTenant(tx), DASHBOARD_LAYOUT_KEY),
+    );
+    expect(
+      await run(s, async (tx) =>
+        getPreference(
+          tx,
+          await resolveActiveTenant(tx),
+          DASHBOARD_LAYOUT_KEY,
+          dashboardLayoutSchema,
+        ),
+      ),
+    ).toBeNull();
+    await expect(
+      run(s, async (tx) => setPreference(tx, await resolveActiveTenant(tx), "Non valida", {})),
+    ).rejects.toBeInstanceOf(ValidationError);
   });
 });
