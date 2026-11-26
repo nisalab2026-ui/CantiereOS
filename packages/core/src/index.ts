@@ -9,6 +9,8 @@ export * from "./db/transaction";
 export * from "./workspace/notifications";
 export * from "./workspace/search";
 export * from "./workspace/dashboard";
+export * from "./workspace/command-center";
+export * from "./workspace/preferences";
 export * from "./directory/lists";
 export * from "./validation";
 export * from "./history/labels";
