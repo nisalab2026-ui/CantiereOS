@@ -20,6 +20,9 @@ async function pick(page: Page, groupName: string, option: string) {
 }
 
 test("dal modello pronto al modulo chiuso e firmato", async ({ page }) => {
+  // percorso completo (account con MFA, modello, compilazione, firma, chiusura): sui runner
+  // lenti supera i 90 s predefiniti senza essere bloccato
+  test.setTimeout(180_000);
   owner = await createOwner(page, "mod", company);
   await page.getByRole("link", { name: "Clienti", exact: true }).click();
   await page.getByRole("button", { name: "Nuovo cliente" }).click();
