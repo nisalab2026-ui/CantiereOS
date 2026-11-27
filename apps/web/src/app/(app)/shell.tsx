@@ -1,5 +1,6 @@
 import type { CompanyMembership, TenantAccess, VerifiedSession } from "@cantiereos/core";
 import { cookies } from "next/headers";
+import { BottomBar } from "@/components/shell/bottom-bar";
 import { Header } from "@/components/shell/header";
 import { Sidebar } from "@/components/shell/sidebar";
 import { asCurrentUser } from "@/lib/auth";
@@ -60,9 +61,10 @@ export async function AppShell({
             unread={unread}
           />
         </div>
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 lg:px-8 lg:py-8 print:max-w-none print:p-0">
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-6 pb-24 lg:px-8 lg:py-8 print:max-w-none print:p-0">
           {children}
         </main>
+        {access && <BottomBar permissions={permissions} />}
       </div>
     </div>
   );

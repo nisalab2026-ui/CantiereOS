@@ -127,36 +127,58 @@ spaziato (come il motto del marchio); valori dei KPI in Geist Mono.
 - **Sidebar**: selettore azienda in alto (con ruolo e badge DEMO), voci di menu **filtrate per
   permesso** (una voce compare solo se il server conferma il permesso), comprimibile su desktop
   (preferenza in cookie), a scomparsa su mobile.
-- **Header**: titolo della pagina, ricerca globale, notifiche, menu utente (profilo, sicurezza,
-  tema, esci, esci da tutti i dispositivi).
-- **Ricerca globale (⌘K / Ctrl K)**: palette di comandi che cerca sul server, con RLS, tra le
-  entità disponibili all'utente (oggi: clienti, fornitori, dipendenti, squadre, pagine). Ogni
-  modulo nuovo aggiunge il proprio provider di risultati.
+- **Header**: titolo della pagina, ricerca globale, «+ Nuovo», notifiche, menu utente (profilo,
+  sicurezza, tema, esci, esci da tutti i dispositivi). Sfocato sul contenuto; dopo 24 px di
+  scorrimento si compatta (56 → 48 px, fondo più pieno, ombra) e torna sotto i 4 px (isteresi:
+  niente rimbalzi vicino alla soglia).
+- **«+ Nuovo»** (tasto `N`): crea un elemento da qualsiasi pagina. Ogni voce porta all'elenco con
+  `?crea=1`, che apre la finestra di creazione già esistente (`useOpenFromUrl`) e poi toglie il
+  parametro. Compaiono solo le voci per cui il server conferma lettura e scrittura; il
+  salvataggio ricontrolla. Catalogo in `components/shell/navigation.ts` (`CREATE_ACTIONS`).
+- **Ricerca e comandi (⌘K / Ctrl K, oppure `/`)**: Recenti (ultime 8 schede aperte, solo nel
+  browser e separate per azienda: indirizzo e titolo, nessun dato inviato), «Crea», «Vai a» e i
+  risultati cercati sul server con RLS. Scrivere «nuovo cliente» trova l'azione.
+- **Barra in basso (telefono e tablet)**: Home, due sezioni principali secondo i permessi
+  (Interventi, Rapportini, Attività, Clienti in quest'ordine), Cerca e «+ Nuovo». Il menu
+  completo resta in alto a sinistra. Il contenuto lascia 96 px in fondo e i toast salgono sopra
+  la barra.
+- **Tasti rapidi**: ⌘K/Ctrl K o `/` ricerca, `N` nuovo, `[` comprime il menu laterale. Non
+  scattano mentre si scrive in un campo.
 - **Notifiche**: pannello con le notifiche dell'utente nell'azienda attiva (tabella
   `notifications`). Badge con il conteggio non lette. Nessuna notifica inventata: se non ce ne
   sono, stato vuoto.
 
 ## 5. Componenti
 
-| Componente                                | Note d'uso                                                                                  |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `Button`                                  | varianti `primary`, `secondary`, `ghost`, `danger`; taglie `sm`/`md`/`lg`; stato `loading`  |
-| `Input`, `Select`, `Textarea`, `Checkbox` | sempre con `Label`; errore sotto il campo con `aria-describedby`                            |
-| `FormField`                               | etichetta + controllo + suggerimento + errore; usato da tutti i moduli                      |
-| `Card`                                    | contenitore con titolo, descrizione, azioni                                                 |
-| `Badge`                                   | stati (`success`, `warning`, `danger`, `info`, `neutral`) e marcatore `DEMO`                |
-| `Dialog`                                  | modale accessibile (Radix): focus intrappolato, Esc per chiudere, titolo obbligatorio       |
-| `ConfirmDialog`                           | conferma per azioni distruttive: testo esplicito di cosa succede, bottone `danger`          |
-| `DropdownMenu`                            | menu contestuali e menu utente (Radix)                                                      |
-| `DataTable`                               | tabella server-side: ordinamento, ricerca, filtri, paginazione **tramite URL**, selezione   |
-| `FilterBar`                               | ricerca testuale + filtri; ogni filtro si riflette nell'URL (condivisibile, tasto indietro) |
-| `Pagination`                              | pagina corrente / totale, link precedente e successivo                                      |
-| `KpiCard`                                 | valore, etichetta, variazione opzionale; numeri tabulari                                    |
-| `EmptyState`                              | icona, titolo, testo; azione solo se l'utente ha il permesso e la funzione esiste           |
-| `ErrorState`                              | messaggio comprensibile, id richiesta per l'assistenza, riprova                             |
-| `Skeleton`                                | segnaposto di caricamento con la forma del contenuto finale                                 |
-| `PageHeader`                              | titolo, descrizione, azioni della pagina                                                    |
-| `ForbiddenState`                          | sezione non consentita al ruolo, o consentita solo dopo la verifica in due passaggi         |
+| Componente                                | Note d'uso                                                                                    |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `Button`                                  | varianti `primary`, `secondary`, `ghost`, `danger`; taglie `sm`/`md`/`lg`; stato `loading`    |
+| `Input`, `Select`, `Textarea`, `Checkbox` | sempre con `Label`; errore sotto il campo con `aria-describedby`                              |
+| `FormField`                               | etichetta + controllo + suggerimento + errore; usato da tutti i moduli                        |
+| `Card`                                    | contenitore con titolo, descrizione, azioni                                                   |
+| `Badge`                                   | stati (`success`, `warning`, `danger`, `info`, `neutral`) e marcatore `DEMO`                  |
+| `Dialog`                                  | modale accessibile (Radix): focus intrappolato, Esc per chiudere, titolo obbligatorio         |
+| `ConfirmDialog`                           | conferma per azioni distruttive: testo esplicito di cosa succede, bottone `danger`            |
+| `DropdownMenu`                            | menu contestuali e menu utente (Radix)                                                        |
+| `DataTable`                               | tabella server-side: ordinamento, ricerca, filtri, paginazione **tramite URL**, selezione     |
+| `Drawer`                                  | pannello da destra a tutta altezza, scorrimento interno; guidato dall'URL (`?anteprima=<id>`) |
+| `FilterBar`                               | ricerca testuale + filtri; ogni filtro si riflette nell'URL (condivisibile, tasto indietro)   |
+| `Pagination`                              | pagina corrente / totale, link precedente e successivo                                        |
+| `KpiCard`                                 | valore, etichetta, variazione opzionale; numeri tabulari                                      |
+| `EmptyState`                              | icona, titolo, testo; azione solo se l'utente ha il permesso e la funzione esiste             |
+| `ErrorState`                              | messaggio comprensibile, id richiesta per l'assistenza, riprova                               |
+| `Skeleton`                                | segnaposto di caricamento con la forma del contenuto finale                                   |
+| `PageHeader`                              | titolo, descrizione, azioni della pagina                                                      |
+| `ForbiddenState`                          | sezione non consentita al ruolo, o consentita solo dopo la verifica in due passaggi           |
+
+**Tabelle (blocco 4)**: da desktop la tabella scorre nel suo riquadro (altezza schermo meno
+15 rem): intestazione fissa in alto, prima colonna fissa scorrendo in orizzontale, celle con
+fondo pieno. Colonne `align: "right"` o `mono: true` in Geist Mono con cifre tabulari (importi,
+quantità, codici). `rowActions` aggiunge azioni rapide per riga (`RowAction`: icona con
+etichetta accessibile), visibili al passaggio del mouse o col focus, sempre visibili su schermi
+touch. `selectedId` evidenzia la riga aperta nel `Drawer`. Ordinare o cambiare pagina chiude il
+pannello. Primo uso: anteprima del cliente in «Clienti» (dati, contatti, sedi, «Modifica»,
+«Apri la scheda»).
 
 Esiti delle azioni: per ora messaggi in linea (`Notice`) e ritorno alla lista filtrata sull'elemento
 creato (`?id=…`); un componente `Toast` arriverà quando servirà davvero.

@@ -4,12 +4,55 @@ import { cn } from "@/lib/cn";
 import { formatNumber } from "@/lib/format";
 import { listHref, type SearchParams } from "@/lib/list-params";
 
+/** Fondo pieno delle celle (serve alla prima colonna fissa) con evidenza al passaggio e in selezione. */
+const ROW_BG =
+  "bg-popover group-hover/row:bg-[color-mix(in_oklab,var(--accent)_70%,var(--popover))] group-data-[selected]/row:bg-[color-mix(in_oklab,var(--primary)_10%,var(--popover))]";
+
+/** Parametro dell'indirizzo che apre il pannello laterale di un elemento. */
+export const PREVIEW_PARAM = "anteprima";
+
+/** Azione rapida di una riga: pulsante a icona con etichetta accessibile. */
+export function RowAction({
+  href,
+  label,
+  icon: Icon,
+  testId,
+}: {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  testId?: string;
+}) {
+  const external = /^(mailto|tel):/.test(href);
+  const cls =
+    "inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background hover:text-foreground";
+  const icon = <Icon className="size-4" aria-hidden />;
+  return external ? (
+    <a href={href} className={cls} aria-label={label} title={label} data-testid={testId}>
+      {icon}
+    </a>
+  ) : (
+    <Link
+      href={href}
+      scroll={false}
+      className={cls}
+      aria-label={label}
+      title={label}
+      data-testid={testId}
+    >
+      {icon}
+    </Link>
+  );
+}
+
 export interface Column<T> {
   key: string;
   header: string;
   /** chiave di ordinamento lato server (whitelist della pagina) */
   sortKey?: string;
   align?: "left" | "right";
+  /** Numeri, importi, codici: carattere monospazio con cifre allineate. */
+  mono?: boolean;
   /**
    * Classi della colonna. Se manca, sul telefono restano visibili solo la prima
    * e l'ultima colonna (di solito nome e stato): le altre compaiono da sm in su.
@@ -21,6 +64,11 @@ export interface Column<T> {
 /**
  * Tabella server-side: ordinamento e paginazione sono link (funzionano senza
  * JavaScript, si possono condividere, il tasto indietro funziona).
+ *
+ * Da desktop la tabella scorre dentro il suo riquadro: l'intestazione resta in
+ * alto e la prima colonna resta ferma scorrendo in orizzontale. Le azioni
+ * rapide di una riga compaiono al passaggio del mouse (sempre visibili su
+ * schermi touch); `selectedId` evidenzia la riga aperta nel pannello laterale.
  */
 export function DataTable<T extends { id: string }>({
   columns,
@@ -34,6 +82,8 @@ export function DataTable<T extends { id: string }>({
   searchParams,
   empty,
   caption,
+  rowActions,
+  selectedId,
 }: {
   columns: Column<T>[];
   rows: T[];
@@ -46,17 +96,24 @@ export function DataTable<T extends { id: string }>({
   searchParams: SearchParams;
   empty: React.ReactNode;
   caption: string;
+  rowActions?: (row: T) => React.ReactNode;
+  selectedId?: string;
 }) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
+  // ordinare o cambiare pagina chiude il pannello laterale
+  const { [PREVIEW_PARAM]: _preview, ...listParams } = searchParams;
   const colClass = (c: Column<T>, i: number) =>
     c.className ?? (i === 0 || i === columns.length - 1 ? undefined : "hidden sm:table-cell");
   return (
     <div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm" data-testid="data-table">
+      <div
+        className="overflow-auto overscroll-x-contain lg:max-h-[calc(100dvh-15rem)] lg:min-h-64"
+        data-testid="table-scroll"
+      >
+        <table className="w-full border-separate border-spacing-0 text-sm" data-testid="data-table">
           <caption className="sr-only">{caption}</caption>
           <thead>
-            <tr className="border-b border-border bg-background/60 text-left">
+            <tr className="text-left">
               {columns.map((c, ci) => {
                 const active = c.sortKey && c.sortKey === sort;
                 const nextDir = active && dir === "asc" ? "desc" : "asc";
@@ -67,14 +124,15 @@ export function DataTable<T extends { id: string }>({
                     scope="col"
                     aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : undefined}
                     className={cn(
-                      "px-4 py-2.5 text-xs font-medium text-muted-foreground",
+                      "sticky top-0 z-10 border-b border-border bg-popover/95 px-4 py-2.5 text-xs font-medium whitespace-nowrap text-muted-foreground backdrop-blur",
+                      ci === 0 && "left-0 z-20 shadow-[inset_-1px_0_0_var(--border)]",
                       c.align === "right" && "text-right",
                       colClass(c, ci),
                     )}
                   >
                     {c.sortKey ? (
                       <Link
-                        href={listHref(pathname, searchParams, {
+                        href={listHref(pathname, listParams, {
                           sort: c.sortKey,
                           dir: nextDir,
                           page: null,
@@ -90,27 +148,52 @@ export function DataTable<T extends { id: string }>({
                   </th>
                 );
               })}
+              {rowActions && (
+                <th
+                  scope="col"
+                  className="sticky top-0 z-10 w-px border-b border-border bg-popover/95 px-2 backdrop-blur"
+                >
+                  <span className="sr-only">Azioni</span>
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
             {rows.map((row, i) => (
               <tr
                 key={row.id}
-                className="cos-enter border-b border-border transition-colors last:border-0 hover:bg-accent/40"
+                className="group/row cos-enter"
                 style={{ "--i": Math.min(i, 12) } as React.CSSProperties}
+                aria-selected={selectedId === row.id || undefined}
+                data-selected={selectedId === row.id || undefined}
               >
                 {columns.map((c, ci) => (
                   <td
                     key={c.key}
                     className={cn(
-                      "px-4 py-2.5 align-middle",
+                      "border-b border-border px-4 py-2.5 align-middle transition-colors group-last/row:border-0",
+                      ROW_BG,
+                      ci === 0 && "sticky left-0 z-[5] shadow-[inset_-1px_0_0_var(--border)]",
                       c.align === "right" && "text-right tabular-nums",
+                      (c.mono || c.align === "right") && "font-mono text-[13px] tabular-nums",
                       colClass(c, ci),
                     )}
                   >
                     {c.render(row)}
                   </td>
                 ))}
+                {rowActions && (
+                  <td
+                    className={cn(
+                      "border-b border-border px-2 py-1.5 text-right whitespace-nowrap transition-colors group-last/row:border-0",
+                      ROW_BG,
+                    )}
+                  >
+                    <div className="inline-flex items-center gap-0.5 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100 [@media(hover:hover)]:opacity-0">
+                      {rowActions(row)}
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -129,7 +212,7 @@ export function DataTable<T extends { id: string }>({
           <div className="flex gap-1">
             {page > 1 ? (
               <Link
-                href={listHref(pathname, searchParams, { page: String(page - 1) })}
+                href={listHref(pathname, listParams, { page: String(page - 1) })}
                 className="inline-flex size-8 items-center justify-center rounded-md border border-border hover:bg-accent"
                 aria-label="Pagina precedente"
               >
@@ -138,7 +221,7 @@ export function DataTable<T extends { id: string }>({
             ) : null}
             {page < pages ? (
               <Link
-                href={listHref(pathname, searchParams, { page: String(page + 1) })}
+                href={listHref(pathname, listParams, { page: String(page + 1) })}
                 className="inline-flex size-8 items-center justify-center rounded-md border border-border hover:bg-accent"
                 aria-label="Pagina successiva"
               >

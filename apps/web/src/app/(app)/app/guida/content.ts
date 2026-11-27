@@ -87,7 +87,21 @@ export const GUIDE: GuideTopic[] = [
       {
         q: "Come cerco un cliente, un documento o un modulo?",
         a: [
-          "Usa la barra «Cerca…» in alto, oppure premi Ctrl K (⌘ K sul Mac) da qualsiasi pagina. Cerca tra clienti, fornitori, personale, squadre, scadenze, documenti, attività, pagamenti, comunicazioni e moduli, anche per codice o numero impianto.",
+          "Usa la barra «Cerca…» in alto, oppure premi Ctrl K (⌘ K sul Mac) o il tasto / da qualsiasi pagina. Cerca tra clienti, fornitori, personale, squadre, scadenze, documenti, attività, pagamenti, comunicazioni e moduli, anche per codice o numero impianto.",
+          "Senza scrivere nulla vedi le ultime schede che hai aperto (Recenti): restano solo in questo browser. Sul telefono trovi «Cerca» nella barra in basso.",
+        ],
+      },
+      {
+        q: "Come creo velocemente un cliente, un'attività o un intervento?",
+        a: [
+          "Premi «+ Nuovo» in alto (o il tasto N) e scegli cosa creare: si apre subito la finestra giusta. Puoi anche premere Ctrl K e scrivere, per esempio, «nuovo cliente». Sul telefono il tasto tondo «+» è nella barra in basso.",
+          "Vedi solo ciò che il tuo ruolo può creare.",
+        ],
+      },
+      {
+        q: "Ci sono altri tasti rapidi?",
+        a: [
+          "Il tasto [ comprime o espande il menu a sinistra. I tasti rapidi non scattano mentre scrivi in un campo.",
         ],
       },
       {
@@ -458,6 +472,13 @@ export const GUIDE: GuideTopic[] = [
         ],
       },
       {
+        q: "Posso vedere un cliente senza lasciare l'elenco?",
+        a: [
+          "Sì: passa sulla riga e premi l'icona del pannello a destra. Si apre l'anteprima con dati, contatti e sedi; da lì puoi modificarlo o aprire la scheda completa. Esc o la X la chiudono e ritrovi l'elenco dove l'avevi lasciato.",
+          "Sulla stessa riga trovi anche «Chiama» e «Scrivi», se il cliente ha telefono o email.",
+        ],
+      },
+      {
         q: "Come funziona la mappa?",
         a: [
           "In «Clienti» apri la scheda «Mappa»: vedi clienti, sedi e cantieri con i colori del tipo. Puoi accendere o spegnere i tipi, cercare per nome o città e toccare una puntina per aprire la scheda. Una mappa più piccola è anche nella Panoramica.",
@@ -562,6 +583,27 @@ export const GUIDE: GuideTopic[] = [
         a: [
           "Ogni creazione, modifica ed eliminazione dell'azienda, con autore, data e valori prima e dopo. Nessun utente può modificarlo o cancellarlo.",
           "La stessa cronologia, limitata al singolo elemento, la trovi in fondo alle schede.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "profilo",
+    title: "Profilo e dati azienda",
+    summary: "Il tuo nome e telefono; nome, ragione sociale e partita IVA dell'azienda.",
+    icon: "users",
+    href: "/account/profilo",
+    entries: [
+      {
+        q: "Dove cambio il mio nome o il telefono?",
+        a: [
+          "Nel menu in alto a destra scegli «Profilo». Il nome è quello che vedono i colleghi nell'app. L'email di accesso non si cambia da qui.",
+        ],
+      },
+      {
+        q: "Dove modifico nome, ragione sociale e partita IVA dell'azienda?",
+        a: [
+          "In «Dati azienda», nel gruppo Azienda del menu. Possono modificarli solo il titolare e gli amministratori, con la verifica in due passaggi attiva; ogni modifica resta nel registro attività.",
         ],
       },
     ],

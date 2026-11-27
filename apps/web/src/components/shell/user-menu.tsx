@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Monitor, Moon, ShieldCheck, Sun } from "lucide-react";
+import { LogOut, Monitor, Moon, ShieldCheck, Sun, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useTransition } from "react";
@@ -77,6 +77,11 @@ export function UserMenu({
             )}
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/account/profilo">
+              <UserRound aria-hidden /> Profilo
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/account/sicurezza">
               <ShieldCheck aria-hidden /> Sicurezza e accesso

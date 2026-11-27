@@ -12,6 +12,7 @@ import { errorProp, fieldAttrs } from "@/lib/form-helpers";
 import type { FormState } from "@/lib/messages";
 import type { SubjectOptions } from "../scadenze/deadline-form";
 import { createCommunicationAction, updateCommunicationAction } from "./actions";
+import { useOpenFromUrl } from "@/lib/open-from-url";
 
 export interface CommunicationDefaults {
   id?: string;
@@ -44,6 +45,7 @@ const GROUPS: ["customer" | "supplier" | "employee", string][] = [
 
 /** Pulsante + finestra per registrare o modificare una comunicazione. */
 export function CommunicationDialog({
+  openFromUrl = false,
   mode,
   subjects,
   defaults,
@@ -52,6 +54,8 @@ export function CommunicationDialog({
   lockedName,
   triggerLabel,
 }: {
+  /** Apre la finestra se l'indirizzo ha ?crea=1 (menu «+ Nuovo»). */
+  openFromUrl?: boolean;
   mode: "create" | "edit";
   subjects: SubjectOptions;
   defaults?: CommunicationDefaults;
@@ -63,6 +67,10 @@ export function CommunicationDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [round, setRound] = useState(0);
+  useOpenFromUrl(openFromUrl, () => {
+    setOpen(true);
+    setRound((r) => r + 1);
+  });
   return (
     <Dialog
       open={open}

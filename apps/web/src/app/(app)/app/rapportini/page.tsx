@@ -103,6 +103,7 @@ export default async function ReportsPage({
     {
       key: "hours",
       header: "Ore",
+      align: "right",
       className: "hidden text-right sm:table-cell",
       render: (r) => <span className="block text-right tabular-nums">{formatHours(r.hours)}</span>,
     },
@@ -123,7 +124,7 @@ export default async function ReportsPage({
             ? "Le giornate di lavoro sulle commesse: ore, materiali, foto e firma del cliente. Approva quelli inviati: solo gli approvati entrano nei costi della commessa."
             : "Le giornate di lavoro sulle commesse: ore, materiali, foto e firma del cliente. Compila e invia per l'approvazione."
         }
-        actions={options ? <NewReportDialog projects={options.projects} /> : undefined}
+        actions={options ? <NewReportDialog projects={options.projects} openFromUrl /> : undefined}
       />
       {eliminato === "1" && (
         <Notice>Rapportino eliminato. La sua cronologia resta nel registro attività.</Notice>

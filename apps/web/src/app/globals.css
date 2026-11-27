@@ -169,6 +169,11 @@ body {
   outline-offset: 2px;
 }
 
+/* Il campo di ⌘K riempie la finestra, che è già evidenziata: niente cornice doppia. */
+[cmdk-input]:focus-visible {
+  outline: none;
+}
+
 /* --- Superfici "Cantiere digitale" ---------------------------------------- */
 .bg-card {
   backdrop-filter: blur(var(--glass-blur));
@@ -852,6 +857,28 @@ a:hover > .brand-mark {
   .cos-pop[data-state="closed"],
   .cos-overlay[data-state="closed"],
   [data-radix-popper-content-wrapper] > [data-state="closed"] {
+    animation: none;
+  }
+}
+
+/* Pannello laterale da destra (Drawer): entra e esce scorrendo */
+@keyframes cos-drawer-in {
+  from {
+    transform: translate3d(100%, 0, 0);
+  }
+  to {
+    transform: none;
+  }
+}
+.cos-drawer[data-state="open"] {
+  animation: cos-drawer-in 260ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.cos-drawer[data-state="closed"] {
+  animation: cos-drawer-in 180ms ease-in reverse forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cos-drawer[data-state="open"],
+  .cos-drawer[data-state="closed"] {
     animation: none;
   }
 }

@@ -129,6 +129,7 @@ export default async function FormsPage({ searchParams }: { searchParams: Promis
             </Link>
             {canWrite && (
               <NewSubmissionDialog
+                openFromUrl
                 templates={usable.map((t) => ({ id: t.id, name: t.name }))}
                 customers={customers}
               />

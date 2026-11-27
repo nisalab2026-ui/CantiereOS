@@ -12,6 +12,7 @@ import { errorProp, fieldAttrs } from "@/lib/form-helpers";
 import type { FormState } from "@/lib/messages";
 import type { Option, SubjectOptions } from "../scadenze/deadline-form";
 import { createTaskAction, updateTaskAction } from "./actions";
+import { useOpenFromUrl } from "@/lib/open-from-url";
 
 export interface TaskDefaults {
   id?: string;
@@ -40,6 +41,7 @@ const SUBJECT_GROUPS: [keyof SubjectOptions, string][] = [
 
 /** Pulsante + finestra per creare o modificare un'attività. */
 export function TaskDialog({
+  openFromUrl = false,
   mode,
   subjects,
   members,
@@ -48,6 +50,8 @@ export function TaskDialog({
   triggerLabel,
   afterCreateHref,
 }: {
+  /** Apre la finestra se l'indirizzo ha ?crea=1 (menu «+ Nuovo»). */
+  openFromUrl?: boolean;
   mode: "create" | "edit";
   subjects: SubjectOptions;
   members: Option[];
@@ -60,6 +64,10 @@ export function TaskDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [round, setRound] = useState(0);
+  useOpenFromUrl(openFromUrl, () => {
+    setOpen(true);
+    setRound((r) => r + 1);
+  });
   return (
     <Dialog
       open={open}

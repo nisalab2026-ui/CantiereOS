@@ -116,7 +116,9 @@ export default async function EmployeesPage({
         actions={
           <>
             <ExportButton section="employees" params={sp} />
-            {access.permissions.has("employees.write") && <EmployeeDialog mode="create" />}
+            {access.permissions.has("employees.write") && (
+              <EmployeeDialog mode="create" openFromUrl />
+            )}
           </>
         }
       />
