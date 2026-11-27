@@ -101,3 +101,29 @@ test("WhatsApp e note legali sono raggiungibili da ogni pagina", async ({ page }
   // i dati aziendali mancanti si vedono, non vengono inventati
   await expect(page.getByText(/ragione sociale \(da completare\)/).first()).toBeVisible();
 });
+
+test("home: tablet in apertura, sezione fissa con anteprime e griglia bento", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  // il tablet c'è sempre: 2D come riserva, 3D se il browser lo regge (WebGL non garantito qui)
+  await expect(page.getByTestId("tablet-hero")).toHaveAttribute("data-mode", /^(2d|3d)$/);
+
+  const steps = page.getByTestId("sticky-step");
+  expect(await steps.count()).toBeGreaterThan(2);
+  const last = steps.last();
+  await last.evaluate((el) => el.scrollIntoView({ block: "center" }));
+  const id = await last.getAttribute("data-id");
+  await expect(page.getByTestId("sticky-preview-active")).toHaveAttribute("data-id", id ?? "");
+
+  await expect(page.getByTestId("bento-cell")).toHaveCount(7);
+  expect(errors).toEqual([]);
+});
+
+test("home su telefono: tablet in 2D, niente 3D", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await expect(page.getByTestId("tablet-hero")).toHaveAttribute("data-mode", "2d");
+  await expect(page.locator("[data-testid=tablet-hero] canvas")).toHaveCount(0);
+});
