@@ -207,10 +207,6 @@ export const COMING_SOON = [
     text: "Avanzamento, foto e note di ogni giornata sulla scheda del cantiere.",
   },
   {
-    title: "Rapportini giornalieri",
-    text: "Ore, materiali e foto inviati dal cantiere in un minuto.",
-  },
-  {
     title: "App da cantiere senza rete",
     text: "Compilazione anche offline, sincronizzata al rientro.",
   },

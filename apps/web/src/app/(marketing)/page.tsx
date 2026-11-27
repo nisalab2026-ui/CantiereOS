@@ -15,6 +15,9 @@ import { CtaBand, FaqList, SectionHeading } from "@/components/site/blocks";
 import { Seal, StatsStrip } from "@/components/site/extras";
 import { TradeScene } from "@/components/site/trade-scenes";
 import { AppWindow, DashboardMock, FeatureMock, PhoneMock } from "@/components/site/mockups";
+import { BentoGrid } from "@/components/site/bento";
+import { StickyFeatures } from "@/components/site/sticky-features";
+import { TabletHero } from "@/components/site/tablet/tablet-hero";
 import { ScrubText, SplitWords } from "@/components/site/split-words";
 import { getVerifiedSession } from "@/lib/auth";
 import { COMING_SOON, FEATURES, HOME_FAQ, PLANS, SECURITY_POINTS, STEPS, TRADES } from "./content";
@@ -29,7 +32,7 @@ export default async function HomePage() {
   return (
     <>
       {/* --- Apertura ------------------------------------------------------------------------------ */}
-      <section className="relative isolate overflow-clip pt-32 sm:pt-40">
+      <section className="relative isolate overflow-clip pt-32 pb-10 sm:pt-40 md:pb-32">
         <div className="site-grid" aria-hidden />
         <div
           aria-hidden
@@ -83,10 +86,17 @@ export default async function HomePage() {
           >
             <Seal text="Prova gratis · 30 giorni · Senza carta · " />
           </div>
-          <div className="site-tilt-in relative">
-            <AppWindow label="Illustrazione: la panoramica di CantiereOS con le scadenze da gestire">
-              <DashboardMock />
-            </AppWindow>
+          <div className="relative">
+            <TabletHero
+              label="CantiereOS su un tablet: la panoramica vera del gestionale, con i dati dell'azienda dimostrativa"
+              fallback={
+                <div className="site-tilt-in">
+                  <AppWindow label="Illustrazione: la panoramica di CantiereOS con le scadenze da gestire">
+                    <DashboardMock />
+                  </AppWindow>
+                </div>
+              }
+            />
             <div
               aria-hidden
               data-parallax="0.18"
@@ -221,56 +231,45 @@ export default async function HomePage() {
         </ul>
       </section>
 
-      {/* --- Capitolo laterale: le funzioni ------------------------------------------------------ */}
-      <section id="funzioni" data-hscroll className="relative scroll-mt-16">
-        <div className="hscroll-stage">
-          <div className="mx-auto w-full max-w-6xl px-4 pt-8 pb-6 sm:px-6">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <SectionHeading eyebrow="Cosa fa" title="Sei strumenti, un solo gestionale." />
-              <Link
-                href="/funzionalita"
-                className="group inline-flex items-center gap-1.5 text-sm font-medium text-primary"
-              >
-                Tutte le funzionalità
-                <ArrowRight
-                  className="size-4 transition-transform group-hover:translate-x-1"
-                  aria-hidden
-                />
-              </Link>
-            </div>
-            <div className="mt-6 hidden h-px bg-border md:block">
-              <div className="hscroll-bar h-px bg-gradient-to-r from-primary to-cyan" />
-            </div>
-          </div>
-          <div
-            data-hscroll-track
-            className="flex w-max gap-4 px-4 pb-10 sm:gap-6 sm:px-6 md:pl-[max(1.5rem,calc((100vw-72rem)/2+1.5rem))]"
+      {/* --- Le funzioni: testo che scorre, anteprima ferma -------------------------------------- */}
+      <section id="funzioni" className="mx-auto max-w-6xl scroll-mt-16 px-4 py-24 sm:px-6 sm:py-32">
+        <div className="mb-10 flex flex-wrap items-end justify-between gap-4 lg:mb-0">
+          <SectionHeading eyebrow="Cosa fa" title="Sei strumenti, un solo gestionale." />
+          <Link
+            href="/funzionalita"
+            className="group inline-flex items-center gap-1.5 text-sm font-medium text-primary"
           >
-            {FEATURES.map((f, i) => {
-              const Icon = FEATURE_ICONS[f.icon];
-              return (
-                <article
-                  key={f.id}
-                  className="site-spot relative grid w-[84vw] max-w-[34rem] shrink-0 gap-6 overflow-hidden rounded-3xl border border-border bg-card p-6 sm:w-[30rem] sm:p-8 lg:w-[34rem]"
-                >
-                  <span
-                    aria-hidden
-                    className="hpanel-num pointer-events-none absolute -top-6 right-4 text-[7rem] leading-none font-semibold tracking-tighter text-foreground/[0.05]"
-                  >
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <div>
-                    <span className="grid size-11 place-items-center rounded-xl bg-primary/12 text-primary">
-                      <Icon className="size-5" aria-hidden />
-                    </span>
-                    <h3 className="mt-5 text-2xl font-semibold tracking-tight">{f.title}</h3>
-                    <p className="mt-2 text-muted-foreground">{f.short}</p>
-                  </div>
-                  <FeatureMock id={f.id} />
-                </article>
-              );
-            })}
-          </div>
+            Tutte le funzionalità
+            <ArrowRight
+              className="size-4 transition-transform group-hover:translate-x-1"
+              aria-hidden
+            />
+          </Link>
+        </div>
+        <StickyFeatures
+          items={FEATURES.map((f) => {
+            const Icon = FEATURE_ICONS[f.icon];
+            return {
+              id: f.id,
+              title: f.title,
+              text: f.text,
+              points: f.points,
+              icon: <Icon className="size-5" aria-hidden />,
+              preview: <FeatureMock id={f.id} />,
+            };
+          })}
+        />
+      </section>
+
+      {/* --- E poi: griglia bento -------------------------------------------------------------------- */}
+      <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 sm:pb-32">
+        <SectionHeading
+          eyebrow="E poi"
+          title="Dall'intervento al rapportino, fino ai costi."
+          lead="Interventi, rapportini e commesse lavorano sugli stessi dati: quello che si fa in cantiere arriva in ufficio senza ricopiare nulla."
+        />
+        <div className="mt-12">
+          <BentoGrid />
         </div>
       </section>
 
