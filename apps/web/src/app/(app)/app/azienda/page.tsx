@@ -63,7 +63,7 @@ export default async function CompanyPage() {
         <CardBody>
           {canManage ? (
             <CompanyForm
-                name={company.name}
+              name={company.name}
               legalName={company.legalName}
               vatNumber={company.vatNumber}
               taxCode={company.taxCode}
