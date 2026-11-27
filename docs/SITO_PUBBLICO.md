@@ -78,7 +78,7 @@ Stesso motore del sito Lume Studio (`components/site/motion/`), adattato allo st
    gru e piani, quadro elettrico, caldaia e radiatore, tetto con linea vita, ingranaggi,
    estintore, finestra, edifici collegati) che si compone allo scorrimento tramite `--vp`; senza
    motore o con "riduci movimento" si vede la scena completa e ferma.
-4. **Momenti firma**: la finestra dell'app che si raddrizza scendendo, l'anello di luce sul piano
+4. **Momenti firma**: il tablet 3D (o la finestra dell'app, in 2D) che si raddrizza scendendo, l'anello di luce sul piano
    consigliato, il nome "CantiereOS" che sale lettera per lettera in fondo alla pagina.
 5. **Cursore personalizzato** (`motion/cursor.tsx`): punto verde più anello che segue, che si allarga
    sui link e diventa un'etichetta (APRI, PROVA, CHAT…). Sostituisce la freccia solo con mouse e senza
@@ -89,6 +89,43 @@ uno stato fermo: senza JavaScript e con `prefers-reduced-motion` la pagina si le
 d'avvio (con il nonce della CSP) nasconde i contenuti "in entrata" solo se JavaScript gira e li mostra
 comunque dopo 2,5 s. Scorrimento morbido (Lenis) solo con mouse su macchine capaci; telefoni e
 macchine modeste ricevono il livello "lite" (niente derive né sfocature in movimento).
+
+## Tablet 3D, sezione fissa e griglia bento (home)
+
+**Tablet 3D in apertura** (`components/site/tablet/`). Il tablet è costruito in codice con
+three.js e `@react-three/fiber` (nessun file `.glb` nel repository): scocca in alluminio, vetro,
+schermo e fotocamera. Sullo schermo c'è `public/site/tablet-panoramica.jpg`, una schermata vera della
+panoramica con l'azienda DEMO. Scendendo, il tablet passa da inclinato a dritto e più grande
+(`p` da 0 a 1 calcolato dalla posizione del blocco, con smorzamento); il puntatore aggiunge una lieve
+parallasse. La scena si ferma (`frameloop="never"`) quando esce dallo schermo.
+
+Il 3D si carica solo dopo l'avvio e solo se: larghezza ≥ 768 px, nessun «riduci movimento», memoria
+del dispositivo ≥ 4 GB (se il browser la dichiara) e WebGL disponibile. In tutti gli altri casi resta
+la finestra 2D (`DashboardMock`), che è anche quella visibile finché la scena non è pronta.
+`data-mode` su `[data-testid="tablet-hero"]` dice quale delle due si vede.
+
+**Usare un modello `.glb` vero al posto di quello costruito.** Mettere il file in
+`apps/web/public/models/` e trovare il nome della mesh dello schermo:
+
+1. `npx @gltf-transform/cli inspect public/models/ipad.glb`: la tabella _MESHES_ elenca i nomi;
+2. oppure trascinare il file in https://threejs.org/editor/ e leggere l'albero a destra;
+3. oppure in codice: `gltf.scene.traverse((o) => console.log(o.type, o.name, o.material?.name))`
+   e cercare la mesh piatta più grande davanti, di solito `Screen`, `Display` o un materiale
+   `screen`.
+
+Poi in `tablet-canvas.tsx` caricare il modello con `GLTFLoader` (`useLoader(GLTFLoader, url)`),
+sostituire il gruppo costruito con `<primitive object={gltf.scene} />` e assegnare alla mesh dello
+schermo un `MeshBasicMaterial` con la texture della panoramica (`texture.flipY = false` per i modelli
+glTF, `colorSpace = SRGBColorSpace`). Se le coordinate UV dello schermo non coprono 0–1 la schermata
+appare tagliata: va corretto nel modello, non nel codice. Le dimensioni del file contano: sopra
+~2 MB comprimere con `gltf-transform optimize --compress draco`.
+
+**Sezione fissa a due colonne** (`components/site/sticky-features.tsx`, `#funzioni`): a sinistra i
+passi che scorrono, a destra un pannello fisso (`sticky top-28`) con l'anteprima del passo al centro
+dello schermo (IntersectionObserver con margine −45%). Su telefono l'anteprima sta sotto ogni passo.
+
+**Griglia bento** (`components/site/bento.tsx`): sette celle `.site-spot` con la luce che segue il
+puntatore; ogni cella descrive una funzione che esiste davvero nel gestionale.
 
 ## Test
 
