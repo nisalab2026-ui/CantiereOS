@@ -255,7 +255,7 @@ function commandCenterWidgets({
   }
   if (cc.cash || payments) {
     nodes.cash = (
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         {cc.cash && <CashTrend cash={cc.cash} />}
         {payments && <PaymentsOverview s={payments} stacked={Boolean(cc.cash)} />}
       </div>

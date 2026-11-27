@@ -150,6 +150,7 @@ export default async function PaymentsPage({
             {options && (
               <PaymentDialog
                 mode="create"
+                openFromUrl
                 customers={options.subjects.customer}
                 suppliers={options.subjects.supplier}
               />

@@ -139,7 +139,12 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
           <>
             <ExportButton section="tasks" params={sp} />
             {options && (
-              <TaskDialog mode="create" subjects={options.subjects} members={options.members} />
+              <TaskDialog
+                mode="create"
+                openFromUrl
+                subjects={options.subjects}
+                members={options.members}
+              />
             )}
           </>
         }

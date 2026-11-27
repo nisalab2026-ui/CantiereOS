@@ -12,6 +12,7 @@ import { errorProp, fieldAttrs } from "@/lib/form-helpers";
 import type { FormState } from "@/lib/messages";
 import type { Option } from "../scadenze/deadline-form";
 import { createPaymentAction, updatePaymentAction } from "./actions";
+import { useOpenFromUrl } from "@/lib/open-from-url";
 
 export const METHODS: [string, string][] = [
   ["bank_transfer", "Bonifico"],
@@ -38,6 +39,7 @@ export interface PaymentDefaults {
 
 /** Pulsante + finestra per registrare o modificare un pagamento atteso. */
 export function PaymentDialog({
+  openFromUrl = false,
   mode,
   customers,
   suppliers,
@@ -45,6 +47,8 @@ export function PaymentDialog({
   lockCounterparty = false,
   triggerLabel,
 }: {
+  /** Apre la finestra se l'indirizzo ha ?crea=1 (menu «+ Nuovo»). */
+  openFromUrl?: boolean;
   mode: "create" | "edit";
   customers: Option[] | null;
   suppliers: Option[] | null;
@@ -55,6 +59,10 @@ export function PaymentDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [round, setRound] = useState(0);
+  useOpenFromUrl(openFromUrl, () => {
+    setOpen(true);
+    setRound((r) => r + 1);
+  });
   return (
     <Dialog
       open={open}

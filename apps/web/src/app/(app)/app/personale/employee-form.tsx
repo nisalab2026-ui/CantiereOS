@@ -12,6 +12,7 @@ import { FormField, Input, Select, Textarea } from "@/components/ui/input";
 import { errorProp, fieldAttrs } from "@/lib/form-helpers";
 import type { FormState } from "@/lib/messages";
 import { createEmployeeAction, setEmployeeActiveAction, updateEmployeeAction } from "./actions";
+import { useOpenFromUrl } from "@/lib/open-from-url";
 
 export interface EmployeeDefaults {
   id: string;
@@ -29,14 +30,21 @@ export interface EmployeeDefaults {
 }
 
 export function EmployeeDialog({
+  openFromUrl = false,
   mode,
   defaults,
 }: {
+  /** Apre la finestra se l'indirizzo ha ?crea=1 (menu «+ Nuovo»). */
+  openFromUrl?: boolean;
   mode: "create" | "edit";
   defaults?: EmployeeDefaults;
 }) {
   const [open, setOpen] = useState(false);
   const [round, setRound] = useState(0);
+  useOpenFromUrl(openFromUrl, () => {
+    setOpen(true);
+    setRound((r) => r + 1);
+  });
   return (
     <Dialog
       open={open}

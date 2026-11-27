@@ -19,6 +19,7 @@ import { errorProp, fieldAttrs } from "@/lib/form-helpers";
 import type { FormState } from "@/lib/messages";
 import { createProjectAction, updateProjectAction } from "./actions";
 import { SiteFields } from "./site-fields";
+import { useOpenFromUrl } from "@/lib/open-from-url";
 
 export interface ProjectDefaults {
   id?: string;
@@ -36,12 +37,15 @@ export interface ProjectDefaults {
 
 /** Pulsante + finestra per creare o modificare una commessa. */
 export function ProjectDialog({
+  openFromUrl = false,
   mode,
   options,
   defaults,
   canFinance = false,
   lockCustomer = false,
 }: {
+  /** Apre la finestra se l'indirizzo ha ?crea=1 (menu «+ Nuovo»). */
+  openFromUrl?: boolean;
   mode: "create" | "edit";
   options: ProjectFormOptions;
   defaults?: ProjectDefaults;
@@ -51,6 +55,10 @@ export function ProjectDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [round, setRound] = useState(0);
+  useOpenFromUrl(openFromUrl, () => {
+    setOpen(true);
+    setRound((r) => r + 1);
+  });
   return (
     <Dialog
       open={open}

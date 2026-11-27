@@ -12,15 +12,19 @@ import { FormField, Input, Select } from "@/components/ui/input";
 import { errorProp } from "@/lib/form-helpers";
 import type { FormState } from "@/lib/messages";
 import { createSubmissionAction } from "./actions";
+import { useOpenFromUrl } from "@/lib/open-from-url";
 
 /** "Nuovo modulo": modello, cliente e sede; i dati automatici li prende il server. */
 export function NewSubmissionDialog({
+  openFromUrl = false,
   templates,
   customers,
   defaults = {},
   triggerLabel = "Compila un modulo",
   variant = "primary",
 }: {
+  /** Apre la finestra se l'indirizzo ha ?crea=1 (menu «+ Nuovo»). */
+  openFromUrl?: boolean;
   templates: { id: string; name: string }[];
   customers: FormCustomerOption[];
   defaults?: { templateId?: string; customerId?: string; projectId?: string };
@@ -29,6 +33,10 @@ export function NewSubmissionDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [round, setRound] = useState(0);
+  useOpenFromUrl(openFromUrl, () => {
+    setOpen(true);
+    setRound((r) => r + 1);
+  });
   return (
     <Dialog
       open={open}

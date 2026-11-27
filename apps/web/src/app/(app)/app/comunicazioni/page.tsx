@@ -168,6 +168,7 @@ export default async function CommunicationsPage({
             {options && (
               <CommunicationDialog
                 mode="create"
+                openFromUrl
                 subjects={options.subjects}
                 now={romeLocalDateTime()}
               />

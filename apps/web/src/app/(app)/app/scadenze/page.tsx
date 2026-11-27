@@ -175,7 +175,12 @@ export default async function DeadlinesPage({
           <>
             <ExportButton section="deadlines" params={sp} />
             {options && (
-              <DeadlineDialog mode="create" subjects={options.subjects} members={options.members} />
+              <DeadlineDialog
+                mode="create"
+                openFromUrl
+                subjects={options.subjects}
+                members={options.members}
+              />
             )}
           </>
         }
