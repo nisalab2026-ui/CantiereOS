@@ -116,7 +116,7 @@ export default async function CustomersPage({
         actions={
           <>
             <ExportButton section="customers" params={sp} />
-            {canWrite && <NewCustomerDialog />}
+            {canWrite && <NewCustomerDialog openFromUrl />}
           </>
         }
       />

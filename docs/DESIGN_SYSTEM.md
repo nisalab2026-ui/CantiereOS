@@ -124,11 +124,23 @@ spaziato (come il motto del marchio); valori dei KPI in Geist Mono.
 - **Sidebar**: selettore azienda in alto (con ruolo e badge DEMO), voci di menu **filtrate per
   permesso** (una voce compare solo se il server conferma il permesso), comprimibile su desktop
   (preferenza in cookie), a scomparsa su mobile.
-- **Header**: titolo della pagina, ricerca globale, notifiche, menu utente (profilo, sicurezza,
-  tema, esci, esci da tutti i dispositivi).
-- **Ricerca globale (⌘K / Ctrl K)**: palette di comandi che cerca sul server, con RLS, tra le
-  entità disponibili all'utente (oggi: clienti, fornitori, dipendenti, squadre, pagine). Ogni
-  modulo nuovo aggiunge il proprio provider di risultati.
+- **Header**: titolo della pagina, ricerca globale, «+ Nuovo», notifiche, menu utente (profilo,
+  sicurezza, tema, esci, esci da tutti i dispositivi). Sfocato sul contenuto; dopo 24 px di
+  scorrimento si compatta (56 → 48 px, fondo più pieno, ombra) e torna sotto i 4 px (isteresi:
+  niente rimbalzi vicino alla soglia).
+- **«+ Nuovo»** (tasto `N`): crea un elemento da qualsiasi pagina. Ogni voce porta all'elenco con
+  `?crea=1`, che apre la finestra di creazione già esistente (`useOpenFromUrl`) e poi toglie il
+  parametro. Compaiono solo le voci per cui il server conferma lettura e scrittura; il
+  salvataggio ricontrolla. Catalogo in `components/shell/navigation.ts` (`CREATE_ACTIONS`).
+- **Ricerca e comandi (⌘K / Ctrl K, oppure `/`)**: Recenti (ultime 8 schede aperte, solo nel
+  browser e separate per azienda: indirizzo e titolo, nessun dato inviato), «Crea», «Vai a» e i
+  risultati cercati sul server con RLS. Scrivere «nuovo cliente» trova l'azione.
+- **Barra in basso (telefono e tablet)**: Home, due sezioni principali secondo i permessi
+  (Interventi, Rapportini, Attività, Clienti in quest'ordine), Cerca e «+ Nuovo». Il menu
+  completo resta in alto a sinistra. Il contenuto lascia 96 px in fondo e i toast salgono sopra
+  la barra.
+- **Tasti rapidi**: ⌘K/Ctrl K o `/` ricerca, `N` nuovo, `[` comprime il menu laterale. Non
+  scattano mentre si scrive in un campo.
 - **Notifiche**: pannello con le notifiche dell'utente nell'azienda attiva (tabella
   `notifications`). Badge con il conteggio non lette. Nessuna notifica inventata: se non ce ne
   sono, stato vuoto.

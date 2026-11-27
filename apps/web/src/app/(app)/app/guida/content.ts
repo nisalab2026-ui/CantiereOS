@@ -87,7 +87,21 @@ export const GUIDE: GuideTopic[] = [
       {
         q: "Come cerco un cliente, un documento o un modulo?",
         a: [
-          "Usa la barra «Cerca…» in alto, oppure premi Ctrl K (⌘ K sul Mac) da qualsiasi pagina. Cerca tra clienti, fornitori, personale, squadre, scadenze, documenti, attività, pagamenti, comunicazioni e moduli, anche per codice o numero impianto.",
+          "Usa la barra «Cerca…» in alto, oppure premi Ctrl K (⌘ K sul Mac) o il tasto / da qualsiasi pagina. Cerca tra clienti, fornitori, personale, squadre, scadenze, documenti, attività, pagamenti, comunicazioni e moduli, anche per codice o numero impianto.",
+          "Senza scrivere nulla vedi le ultime schede che hai aperto (Recenti): restano solo in questo browser. Sul telefono trovi «Cerca» nella barra in basso.",
+        ],
+      },
+      {
+        q: "Come creo velocemente un cliente, un'attività o un intervento?",
+        a: [
+          "Premi «+ Nuovo» in alto (o il tasto N) e scegli cosa creare: si apre subito la finestra giusta. Puoi anche premere Ctrl K e scrivere, per esempio, «nuovo cliente». Sul telefono il tasto tondo «+» è nella barra in basso.",
+          "Vedi solo ciò che il tuo ruolo può creare.",
+        ],
+      },
+      {
+        q: "Ci sono altri tasti rapidi?",
+        a: [
+          "Il tasto [ comprime o espande il menu a sinistra. I tasti rapidi non scattano mentre scrivi in un campo.",
         ],
       },
       {

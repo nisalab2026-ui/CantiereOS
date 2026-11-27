@@ -12,18 +12,22 @@ import { FormField, Input, Select } from "@/components/ui/input";
 import { errorProp } from "@/lib/form-helpers";
 import type { FormState } from "@/lib/messages";
 import { createReportAction } from "./actions";
+import { useOpenFromUrl } from "@/lib/open-from-url";
 
 const todayRome = () =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome" }).format(new Date());
 
 /** "Nuovo rapportino": commessa, cantiere e giorno; il numero lo assegna il database. */
 export function NewReportDialog({
+  openFromUrl = false,
   projects,
   defaultProjectId,
   variant = "primary",
   label = "Nuovo rapportino",
   size = "md",
 }: {
+  /** Apre la finestra se l'indirizzo ha ?crea=1 (menu «+ Nuovo»). */
+  openFromUrl?: boolean;
   projects: WorkReportOptions["projects"];
   defaultProjectId?: string;
   variant?: "primary" | "secondary";
@@ -32,6 +36,10 @@ export function NewReportDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [round, setRound] = useState(0);
+  useOpenFromUrl(openFromUrl, () => {
+    setOpen(true);
+    setRound((r) => r + 1);
+  });
   return (
     <Dialog
       open={open}

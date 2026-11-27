@@ -16,6 +16,8 @@ test("titolare: crea un cliente dalla finestra «Nuovo cliente» con validazione
   owner = await createOwner(page, "ui", company);
   await page.getByRole("link", { name: "Clienti", exact: true }).click();
   await expect(page).toHaveURL(/\/app\/clienti$/);
+  // l'indirizzo cambia prima che la pagina nuova sostituisca la panoramica
+  await expect(page.getByRole("heading", { level: 1, name: "Clienti" })).toBeVisible();
   await expect(page.getByTestId("empty-state")).toContainText("Ancora nessun cliente");
 
   await page.getByRole("button", { name: "Nuovo cliente" }).click();

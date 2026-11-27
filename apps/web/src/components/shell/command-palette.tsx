@@ -3,6 +3,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Command } from "cmdk";
 import {
+  Clock,
   ClipboardCheck,
   Building2,
   CalendarClock,
@@ -12,6 +13,7 @@ import {
   ListTodo,
   type LucideIcon,
   MessagesSquare,
+  Plus,
   Search,
   Truck,
   UsersRound,
@@ -21,7 +23,35 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { SearchKind, SearchResult } from "@cantiereos/core";
 import { searchAction } from "@/app/(app)/shell-actions";
-import { visibleNav } from "./navigation";
+import { visibleCreateActions, visibleNav } from "./navigation";
+import { readRecent, type RecentItem } from "./recent";
+
+/** Evento per aprire la ricerca da altri punti (barra in basso sul telefono). */
+export const OPEN_SEARCH_EVENT = "cos:open-search";
+
+/** Vero se l'utente sta scrivendo: i tasti rapidi a lettera singola non devono scattare. */
+export function isTyping(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null;
+  if (!el) return false;
+  return (
+    el.isContentEditable ||
+    el.tagName === "INPUT" ||
+    el.tagName === "TEXTAREA" ||
+    el.tagName === "SELECT"
+  );
+}
+
+const norm = (t: string) =>
+  t
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+const groupClass =
+  "text-xs text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5";
+const itemClass =
+  "flex cursor-default items-center gap-2 rounded-md px-2 py-2 text-sm text-foreground data-[selected=true]:bg-accent";
 
 const KIND: Record<SearchKind, { label: string; icon: LucideIcon; href: (id: string) => string }> =
   {
@@ -42,15 +72,23 @@ const KIND: Record<SearchKind, { label: string; icon: LucideIcon; href: (id: str
   };
 
 /**
- * Ricerca globale (⌘K / Ctrl K): pagine del menu (filtrate per permesso) e
- * risultati cercati sul server nell'azienda attiva.
+ * Ricerca e comandi (⌘K / Ctrl K, oppure «/»): schede aperte di recente,
+ * azioni di creazione e pagine (filtrate per permesso), più i risultati
+ * cercati sul server nell'azienda attiva.
  */
-export function CommandPalette({ permissions }: { permissions: string[] }) {
+export function CommandPalette({
+  permissions,
+  tenantId,
+}: {
+  permissions: string[];
+  tenantId: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [term, setTerm] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [pending, start] = useTransition();
+  const [recent, setRecent] = useState<RecentItem[]>([]);
   const seq = useRef(0);
 
   useEffect(() => {
@@ -58,11 +96,23 @@ export function CommandPalette({ permissions }: { permissions: string[] }) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setOpen((o) => !o);
+      } else if (e.key === "/" && !e.metaKey && !e.ctrlKey && !isTyping(e.target)) {
+        e.preventDefault();
+        setOpen(true);
       }
     };
+    const show = () => setOpen(true);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener(OPEN_SEARCH_EVENT, show);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener(OPEN_SEARCH_EVENT, show);
+    };
   }, []);
+
+  useEffect(() => {
+    if (open) setRecent(readRecent(tenantId));
+  }, [open, tenantId]);
 
   useEffect(() => {
     if (term.trim().length < 2) {
@@ -84,7 +134,14 @@ export function CommandPalette({ permissions }: { permissions: string[] }) {
     setTerm("");
     router.push(href);
   };
-  const pages = visibleNav(permissions);
+  const q = norm(term);
+  const pages = visibleNav(permissions).filter((p) => !q || norm(p.label).includes(q));
+  const actions = visibleCreateActions(permissions).filter(
+    (a) => !q || norm(`nuovo ${a.label}`).includes(q) || norm(`crea ${a.label}`).includes(q),
+  );
+  const recentShown = q
+    ? recent.filter((r) => norm(`${r.title} ${r.section}`).includes(q)).slice(0, 4)
+    : recent.slice(0, 5);
   const grouped = (Object.keys(KIND) as SearchKind[])
     .map((k) => ({ kind: k, items: results.filter((r) => r.kind === k) }))
     .filter((g) => g.items.length > 0);
@@ -117,17 +174,22 @@ export function CommandPalette({ permissions }: { permissions: string[] }) {
                 <Command.Input
                   value={term}
                   onValueChange={setTerm}
-                  placeholder="Cerca clienti, fornitori, personale, squadre o pagine…"
+                  placeholder="Cerca clienti, documenti, pagine o comandi (es. «nuovo cliente»)…"
                   className="h-12 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                   maxLength={100}
                 />
               </div>
               <Command.List className="max-h-[50vh] overflow-y-auto p-2">
-                {term.trim().length >= 2 && !pending && results.length === 0 && (
-                  <Command.Empty className="px-3 py-6 text-center text-sm text-muted-foreground">
-                    Nessun risultato per “{term.trim()}”.
-                  </Command.Empty>
-                )}
+                {term.trim().length >= 2 &&
+                  !pending &&
+                  results.length === 0 &&
+                  actions.length === 0 &&
+                  pages.length === 0 &&
+                  recentShown.length === 0 && (
+                    <Command.Empty className="px-3 py-6 text-center text-sm text-muted-foreground">
+                      Nessun risultato per “{term.trim()}”.
+                    </Command.Empty>
+                  )}
                 {pending && (
                   <p className="px-3 py-2 text-xs text-muted-foreground">Ricerca in corso…</p>
                 )}
@@ -159,17 +221,47 @@ export function CommandPalette({ permissions }: { permissions: string[] }) {
                     </Command.Group>
                   );
                 })}
-                {term.trim().length < 2 && (
-                  <Command.Group
-                    heading="Pagine"
-                    className="text-xs text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5"
-                  >
+                {recentShown.length > 0 && (
+                  <Command.Group heading="Recenti" className={groupClass}>
+                    {recentShown.map((r) => (
+                      <Command.Item
+                        key={r.href}
+                        value={`recent-${r.href}`}
+                        onSelect={() => go(r.href)}
+                        className={itemClass}
+                        data-testid="recent-item"
+                      >
+                        <Clock className="size-4 text-muted-foreground" aria-hidden />
+                        <span className="flex-1 truncate">{r.title}</span>
+                        <span className="text-xs text-muted-foreground">{r.section}</span>
+                      </Command.Item>
+                    ))}
+                  </Command.Group>
+                )}
+                {actions.length > 0 && (
+                  <Command.Group heading="Crea" className={groupClass}>
+                    {actions.map((a) => (
+                      <Command.Item
+                        key={a.href}
+                        value={`new-${a.href}`}
+                        onSelect={() => go(a.href)}
+                        className={itemClass}
+                      >
+                        <Plus className="size-4 text-muted-foreground" aria-hidden />
+                        <span className="flex-1">Nuovo: {a.label}</span>
+                        <a.icon className="size-4 text-muted-foreground" aria-hidden />
+                      </Command.Item>
+                    ))}
+                  </Command.Group>
+                )}
+                {pages.length > 0 && (
+                  <Command.Group heading="Vai a" className={groupClass}>
                     {pages.map((p) => (
                       <Command.Item
                         key={p.href}
                         value={p.href}
                         onSelect={() => go(p.href)}
-                        className="flex cursor-default items-center gap-2 rounded-md px-2 py-2 text-sm text-foreground data-[selected=true]:bg-accent"
+                        className={itemClass}
                       >
                         <p.icon className="size-4 text-muted-foreground" aria-hidden />
                         {p.label}
@@ -179,7 +271,8 @@ export function CommandPalette({ permissions }: { permissions: string[] }) {
                 )}
               </Command.List>
               <div className="flex items-center gap-1 border-t border-border px-3 py-2 text-xs text-muted-foreground">
-                <CornerDownLeft className="size-3" aria-hidden /> per aprire · Esc per chiudere
+                <CornerDownLeft className="size-3" aria-hidden /> per aprire · ↑↓ per scegliere ·
+                Esc per chiudere · «/» apre la ricerca
               </div>
             </Command>
           </DialogPrimitive.Content>

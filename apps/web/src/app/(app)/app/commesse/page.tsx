@@ -144,7 +144,7 @@ export default async function ProjectsPage({
         description="I lavori concordati con i clienti e i loro cantieri. Moduli, attività e documenti si collegano alla commessa e ne formano il riepilogo."
         actions={
           options ? (
-            <ProjectDialog mode="create" options={options} canFinance={canFinance} />
+            <ProjectDialog mode="create" openFromUrl options={options} canFinance={canFinance} />
           ) : undefined
         }
       />

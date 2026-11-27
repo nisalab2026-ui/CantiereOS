@@ -169,6 +169,11 @@ body {
   outline-offset: 2px;
 }
 
+/* Il campo di ⌘K riempie la finestra, che è già evidenziata: niente cornice doppia. */
+[cmdk-input]:focus-visible {
+  outline: none;
+}
+
 /* --- Superfici "Cantiere digitale" ---------------------------------------- */
 .bg-card {
   backdrop-filter: blur(var(--glass-blur));

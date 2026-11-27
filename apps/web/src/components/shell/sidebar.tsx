@@ -4,7 +4,7 @@ import { BrandMark } from "@/components/brand-logo";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import type { CompanyMembership } from "@cantiereos/core";
 import { cn } from "@/lib/cn";
 import { setSidebarCollapsed } from "@/app/(app)/shell-actions";
@@ -86,6 +86,20 @@ export function Sidebar({
     setCollapsed(next);
     start(() => setSidebarCollapsed(next));
   };
+  // «[» comprime o espande il menu, come negli strumenti da tastiera.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "[" || e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = e.target as HTMLElement | null;
+      if (el?.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el?.tagName ?? "")) {
+        return;
+      }
+      e.preventDefault();
+      document.getElementById("sidebar-toggle")?.click();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   return (
     <aside
       className={cn(
@@ -107,6 +121,8 @@ export function Sidebar({
         <button
           type="button"
           onClick={toggle}
+          id="sidebar-toggle"
+          title={collapsed ? "Espandi menu ( [ )" : "Comprimi menu ( [ )"}
           className="flex h-8 items-center gap-2 rounded-md px-2 text-xs text-navy-muted hover:bg-navy-accent hover:text-navy-foreground"
           aria-label={collapsed ? "Espandi menu" : "Comprimi menu"}
         >

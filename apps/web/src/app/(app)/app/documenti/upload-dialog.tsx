@@ -16,6 +16,7 @@ import {
   type UploadMeta,
 } from "./actions";
 import { CATEGORY_OPTIONS, formatBytes, type FolderOption, type SubjectOptions } from "./shared";
+import { useOpenFromUrl } from "@/lib/open-from-url";
 
 const ACCEPT =
   ".pdf,.jpg,.jpeg,.png,.webp,.gif,.heic,.docx,.xlsx,.pptx,.odt,.ods,.doc,.xls,.txt,.csv,.p7m,.xml";
@@ -74,6 +75,7 @@ export function UploadDialog({
   canDeadline,
   storageReady,
   triggerLabel = "Carica documenti",
+  openFromUrl = false,
 }: {
   folders: FolderOption[];
   subjects: SubjectOptions;
@@ -84,9 +86,12 @@ export function UploadDialog({
   canDeadline: boolean;
   storageReady: boolean;
   triggerLabel?: string;
+  /** Apre la finestra se l'indirizzo ha ?crea=1 (menu «+ Nuovo»). */
+  openFromUrl?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  useOpenFromUrl(openFromUrl, () => setOpen(true));
   const [items, setItems] = useState<Item[]>([]);
   const [error, setError] = useState<string | undefined>();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});

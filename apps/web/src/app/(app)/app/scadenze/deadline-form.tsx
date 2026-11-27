@@ -11,6 +11,7 @@ import { FormField, Input, Select, Textarea } from "@/components/ui/input";
 import { errorProp, fieldAttrs } from "@/lib/form-helpers";
 import type { FormState } from "@/lib/messages";
 import { createDeadlineAction, updateDeadlineAction } from "./actions";
+import { useOpenFromUrl } from "@/lib/open-from-url";
 
 export interface Option {
   id: string;
@@ -62,6 +63,7 @@ const RECURRENCE: [string, string][] = [
 
 /** Pulsante + finestra per creare o modificare una scadenza. */
 export function DeadlineDialog({
+  openFromUrl = false,
   mode,
   subjects,
   members,
@@ -69,6 +71,8 @@ export function DeadlineDialog({
   lockSubject = false,
   triggerLabel,
 }: {
+  /** Apre la finestra se l'indirizzo ha ?crea=1 (menu «+ Nuovo»). */
+  openFromUrl?: boolean;
   mode: "create" | "edit";
   subjects: SubjectOptions;
   members: Option[];
@@ -79,6 +83,10 @@ export function DeadlineDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [round, setRound] = useState(0);
+  useOpenFromUrl(openFromUrl, () => {
+    setOpen(true);
+    setRound((r) => r + 1);
+  });
   return (
     <Dialog
       open={open}

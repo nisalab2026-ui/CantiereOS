@@ -171,6 +171,7 @@ export default async function DocumentsPage({
             )}
             {canWrite && subjects && (
               <UploadDialog
+                openFromUrl
                 folders={folderOptions(folders)}
                 subjects={subjects}
                 defaults={current ? { folderId: current.id } : {}}
