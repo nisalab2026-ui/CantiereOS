@@ -23,7 +23,10 @@ test("incasso dalla scheda cliente, saldo e comunicazione con richiamo", async (
   await newCustomer.getByLabel("Nome o ragione sociale").fill("Condominio Aurora");
   await newCustomer.getByRole("button", { name: "Crea cliente" }).click();
   await expect(newCustomer).toHaveCount(0);
-  await page.getByTestId("data-table").getByRole("link", { name: "Condominio Aurora" }).click();
+  await page
+    .getByTestId("data-table")
+    .getByRole("link", { name: "Condominio Aurora", exact: true })
+    .click();
   await expect(page.getByTestId("customer-title")).toHaveText("Condominio Aurora");
   const customerUrl = page.url();
 

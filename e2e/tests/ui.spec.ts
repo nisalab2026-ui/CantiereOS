@@ -18,7 +18,9 @@ test("titolare: crea un cliente dalla finestra «Nuovo cliente» con validazione
   await expect(page).toHaveURL(/\/app\/clienti$/);
   // l'indirizzo cambia prima che la pagina nuova sostituisca la panoramica
   await expect(page.getByRole("heading", { level: 1, name: "Clienti" })).toBeVisible();
-  await expect(page.getByTestId("empty-state")).toContainText("Ancora nessun cliente");
+  await expect(page.getByTestId("table-scroll").getByTestId("empty-state")).toContainText(
+    "Ancora nessun cliente",
+  );
 
   await page.getByRole("button", { name: "Nuovo cliente" }).click();
   const dialog = page.getByRole("dialog", { name: "Nuovo cliente" });
@@ -53,7 +55,9 @@ test("titolare: crea un cliente dalla finestra «Nuovo cliente» con validazione
   await page.goto("/app/clienti?q=bianchi");
   await expect(page.getByTestId("table-total")).toContainText("1 risultato");
   await page.goto("/app/clienti?q=inesistente");
-  await expect(page.getByTestId("empty-state")).toContainText("Nessun cliente trovato");
+  await expect(page.getByTestId("table-scroll").getByTestId("empty-state")).toContainText(
+    "Nessun cliente trovato",
+  );
 });
 
 test("ricerca globale con Ctrl K porta al cliente", async ({ page }) => {
