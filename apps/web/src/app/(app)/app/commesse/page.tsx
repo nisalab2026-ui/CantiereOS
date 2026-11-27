@@ -105,6 +105,7 @@ export default async function ProjectsPage({
           {
             key: "contract",
             header: "Contratto",
+            align: "right" as const,
             className: "hidden text-right lg:table-cell",
             render: (r: ProjectRow) =>
               r.contractCents !== null ? (

@@ -1,10 +1,10 @@
 import { listSuppliers, SUPPLIER_SORTS, type SupplierRow } from "@cantiereos/core";
-import { Truck } from "lucide-react";
+import { Mail, Phone, Truck } from "lucide-react";
 import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { ExportButton } from "@/components/export-button";
 import { Card } from "@/components/ui/card";
-import { DataTable, type Column } from "@/components/ui/data-table";
+import { DataTable, RowAction, type Column } from "@/components/ui/data-table";
 import { FilterBar } from "@/components/ui/filter-bar";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState, ForbiddenState } from "@/components/ui/states";
@@ -55,7 +55,8 @@ export default async function SuppliersPage({
       key: "code",
       header: "Codice",
       sortKey: "code",
-      render: (r) => <span className="font-mono text-xs">{r.code ?? "—"}</span>,
+      mono: true,
+      render: (r) => r.code ?? "—",
     },
     { key: "category", header: "Categoria", sortKey: "category", render: (r) => r.category ?? "—" },
     {
@@ -119,6 +120,12 @@ export default async function SuppliersPage({
           dir={params.dir}
           pathname={PATH}
           searchParams={sp}
+          rowActions={(r) => (
+            <>
+              {r.phone && <RowAction href={`tel:${r.phone}`} label="Chiama" icon={Phone} />}
+              {r.email && <RowAction href={`mailto:${r.email}`} label="Scrivi" icon={Mail} />}
+            </>
+          )}
           empty={
             <EmptyState
               icon={Truck}

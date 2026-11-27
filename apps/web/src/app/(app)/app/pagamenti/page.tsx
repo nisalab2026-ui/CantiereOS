@@ -112,6 +112,7 @@ export default async function PaymentsPage({
       key: "amount",
       header: "Importo",
       sortKey: "amount",
+      align: "right",
       className: "text-right",
       render: (r) => (
         <div className="text-right">

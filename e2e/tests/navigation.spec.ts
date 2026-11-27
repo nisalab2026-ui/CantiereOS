@@ -29,8 +29,18 @@ test("+ Nuovo, Recenti, azioni da ⌘K e barra compatta", async ({ page }) => {
   await dialog.getByRole("button", { name: "Crea cliente" }).click();
   await expect(page).toHaveURL(/\/app\/clienti\?id=[0-9a-f-]{36}&creato=1$/);
 
-  // Apro la scheda: finisce nei Recenti di ⌘K.
+  // Pannello laterale dall'azione rapida della riga: anteprima senza lasciare l'elenco.
   await page.goto("/app/clienti");
+  await page.getByTestId("row-preview").first().click();
+  const drawer = page.getByTestId("drawer");
+  await expect(drawer.getByRole("heading", { name: "Verdi Impianti Srl" })).toBeVisible();
+  await expect(page).toHaveURL(/\/app\/clienti\?anteprima=[0-9a-f-]{36}$/);
+  await expect(page.locator("[data-testid=data-table] tbody tr[data-selected]")).toHaveCount(1);
+  await page.keyboard.press("Escape");
+  await expect(drawer).toHaveCount(0);
+  await expect(page).toHaveURL(/\/app\/clienti$/);
+
+  // Apro la scheda: finisce nei Recenti di ⌘K.
   await page.getByRole("link", { name: "Verdi Impianti Srl" }).first().click();
   await expect(page.getByRole("heading", { level: 1, name: "Verdi Impianti Srl" })).toBeVisible();
   await page.goto("/app");

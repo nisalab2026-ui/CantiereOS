@@ -760,3 +760,25 @@ a:hover > .brand-mark {
     animation: none;
   }
 }
+
+/* Pannello laterale da destra (Drawer): entra e esce scorrendo */
+@keyframes cos-drawer-in {
+  from {
+    transform: translate3d(100%, 0, 0);
+  }
+  to {
+    transform: none;
+  }
+}
+.cos-drawer[data-state="open"] {
+  animation: cos-drawer-in 260ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.cos-drawer[data-state="closed"] {
+  animation: cos-drawer-in 180ms ease-in reverse forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cos-drawer[data-state="open"],
+  .cos-drawer[data-state="closed"] {
+    animation: none;
+  }
+}

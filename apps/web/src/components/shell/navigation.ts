@@ -1,6 +1,7 @@
 import {
   CalendarRange,
   Briefcase,
+  Building,
   ClipboardCheck,
   ClipboardList,
   Building2,
@@ -17,6 +18,7 @@ import {
   Truck,
   Users,
   UsersRound,
+  UserRound,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -133,6 +135,13 @@ export const NAV_ITEMS: NavItem[] = [
     group: "anagrafiche",
   },
   {
+    href: "/app/azienda",
+    label: "Dati azienda",
+    icon: Building,
+    permission: "tenant.manage",
+    group: "azienda",
+  },
+  {
     href: "/app/membri",
     label: "Utenti e accessi",
     icon: Users,
@@ -146,6 +155,7 @@ export const NAV_ITEMS: NavItem[] = [
     permission: "audit.read",
     group: "azienda",
   },
+  { href: "/account/profilo", label: "Profilo", icon: UserRound, group: "account" },
   { href: "/account/sicurezza", label: "Sicurezza", icon: ShieldCheck, group: "account" },
   { href: "/app/guida", label: "Guida", icon: LifeBuoy, group: "account" },
 ];
