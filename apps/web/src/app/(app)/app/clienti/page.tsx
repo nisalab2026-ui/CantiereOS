@@ -1,19 +1,20 @@
-import { CUSTOMER_SORTS, listCustomers, type CustomerRow } from "@cantiereos/core";
-import { Building2 } from "lucide-react";
+import { CUSTOMER_SORTS, getCustomer, listCustomers, type CustomerRow } from "@cantiereos/core";
+import { Building2, Mail, PanelRightOpen, Phone } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Notice } from "@/components/ui";
 import { Badge } from "@/components/ui/badge";
 import { ExportButton } from "@/components/export-button";
 import { Card } from "@/components/ui/card";
-import { DataTable, type Column } from "@/components/ui/data-table";
+import { DataTable, PREVIEW_PARAM, RowAction, type Column } from "@/components/ui/data-table";
 import { FilterBar } from "@/components/ui/filter-bar";
 import { PageHeader } from "@/components/ui/page-header";
 import { TabsNav } from "@/components/ui/tabs-nav";
 import { EmptyState, ForbiddenState } from "@/components/ui/states";
 import { asCurrentUser, getAppContext } from "@/lib/auth";
-import { parseListParams, type SearchParams } from "@/lib/list-params";
+import { listHref, parseListParams, type SearchParams } from "@/lib/list-params";
 import { sectionGate } from "@/lib/permissions";
+import { CustomerPreview } from "./customer-preview";
 import { NewCustomerDialog } from "./new-customer-dialog";
 
 export const metadata: Metadata = { title: "Clienti" };
@@ -42,19 +43,27 @@ export default async function CustomersPage({
     filters: { type: Object.keys(PARTY_TYPES), status: ["active", "inactive"] },
   });
   const id = typeof sp.id === "string" ? sp.id : undefined;
-  const page = await asCurrentUser((tx) =>
-    listCustomers(tx, access, {
-      q: params.q,
-      sort: params.sort,
-      dir: params.dir,
-      page: params.page,
-      pageSize: params.pageSize,
-      ...(id ? { id } : {}),
-      ...(params.filters.type ? { type: params.filters.type } : {}),
-      ...(params.filters.status ? { status: params.filters.status as "active" | "inactive" } : {}),
-    }),
+  const previewId = typeof sp[PREVIEW_PARAM] === "string" ? sp[PREVIEW_PARAM] : undefined;
+  const [page, preview] = await asCurrentUser(
+    async (tx) =>
+      [
+        await listCustomers(tx, access, {
+          q: params.q,
+          sort: params.sort,
+          dir: params.dir,
+          page: params.page,
+          pageSize: params.pageSize,
+          ...(id ? { id } : {}),
+          ...(params.filters.type ? { type: params.filters.type } : {}),
+          ...(params.filters.status
+            ? { status: params.filters.status as "active" | "inactive" }
+            : {}),
+        }),
+        previewId ? await getCustomer(tx, access, previewId) : null,
+      ] as const,
   );
   const filtered = Boolean(params.q || params.filters.type || params.filters.status || id);
+  const closePreview = listHref(PATH, sp, { [PREVIEW_PARAM]: null });
 
   const columns: Column<CustomerRow>[] = [
     {
@@ -78,7 +87,8 @@ export default async function CustomersPage({
       key: "code",
       header: "Codice",
       sortKey: "code",
-      render: (r) => <span className="font-mono text-xs">{r.code ?? "—"}</span>,
+      mono: true,
+      render: (r) => r.code ?? "—",
     },
     { key: "type", header: "Tipo", render: (r) => PARTY_TYPES[r.partyType] },
     {
@@ -162,6 +172,19 @@ export default async function CustomersPage({
           dir={params.dir}
           pathname={PATH}
           searchParams={sp}
+          {...(preview ? { selectedId: preview.id } : {})}
+          rowActions={(r) => (
+            <>
+              <RowAction
+                href={listHref(PATH, sp, { [PREVIEW_PARAM]: r.id })}
+                label={`Anteprima di ${r.displayName}`}
+                icon={PanelRightOpen}
+                testId="row-preview"
+              />
+              {r.phone && <RowAction href={`tel:${r.phone}`} label="Chiama" icon={Phone} />}
+              {r.email && <RowAction href={`mailto:${r.email}`} label="Scrivi" icon={Mail} />}
+            </>
+          )}
           empty={
             filtered ? (
               <EmptyState
@@ -183,6 +206,14 @@ export default async function CustomersPage({
           }
         />
       </Card>
+      {preview && (
+        <CustomerPreview
+          key={preview.id}
+          c={preview}
+          closeHref={closePreview}
+          canWrite={canWrite}
+        />
+      )}
     </div>
   );
 }

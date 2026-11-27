@@ -103,6 +103,7 @@ export default async function ReportsPage({
     {
       key: "hours",
       header: "Ore",
+      align: "right",
       className: "hidden text-right sm:table-cell",
       render: (r) => <span className="block text-right tabular-nums">{formatHours(r.hours)}</span>,
     },
