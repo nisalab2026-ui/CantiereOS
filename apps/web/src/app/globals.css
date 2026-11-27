@@ -39,7 +39,7 @@
   --map-tile-filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.55);
   --aurora-1: rgb(22 163 74 / 0.6);
   --aurora-2: rgb(16 185 129 / 0.4);
-  --aurora-3: rgb(132 204 22 / 0.4);
+  --aurora-3: rgb(20 184 166 / 0.3);
   --canvas:
     radial-gradient(1200px 600px at 85% -10%, rgb(21 128 61 / 0.22), transparent 60%),
     linear-gradient(rgb(74 180 120 / 0.03) 1px, transparent 1px) 0 0 / 40px 40px,
@@ -79,7 +79,7 @@
   --map-tile-filter: saturate(0.75) contrast(0.96);
   --aurora-1: rgb(34 170 90 / 0.45);
   --aurora-2: rgb(16 185 129 / 0.36);
-  --aurora-3: rgb(163 230 53 / 0.34);
+  --aurora-3: rgb(74 222 128 / 0.32);
   --canvas: #f4faf6;
   color-scheme: light;
 }
@@ -116,7 +116,7 @@
     --map-tile-filter: saturate(0.75) contrast(0.96);
     --aurora-1: rgb(34 170 90 / 0.45);
     --aurora-2: rgb(16 185 129 / 0.36);
-    --aurora-3: rgb(163 230 53 / 0.34);
+    --aurora-3: rgb(74 222 128 / 0.32);
     --canvas: #f4faf6;
     color-scheme: light;
   }
@@ -660,6 +660,198 @@ a:hover > .brand-mark {
 }
 @media (prefers-reduced-motion: reduce) {
   .cos-pin {
+    animation: none;
+  }
+}
+
+/* --- Percorso della giornata (app sul campo) ----------------------------- */
+.cos-stop {
+  background: none;
+  border: 0;
+}
+.cos-stop > span {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 30%, rgb(255 255 255 / 0.45), transparent 50%), var(--stop);
+  border: 2px solid rgb(255 255 255 / 0.95);
+  box-shadow:
+    0 6px 16px -4px color-mix(in oklab, var(--stop) 70%, transparent),
+    0 0 0 5px color-mix(in oklab, var(--stop) 18%, transparent);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  animation: cos-pin-drop 420ms cubic-bezier(0.2, 0.9, 0.3, 1.3) backwards;
+  animation-delay: calc(250ms + var(--i, 0) * 140ms);
+}
+/* la linea si disegna dalla prima all'ultima tappa */
+.cos-route {
+  stroke: var(--primary);
+  stroke-dasharray: 2400;
+  stroke-dashoffset: 2400;
+  animation: cos-route-draw 1.6s cubic-bezier(0.6, 0, 0.2, 1) 0.2s forwards;
+}
+@keyframes cos-route-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cos-stop > span,
+  .cos-route {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+/* --- Marchio animato (components/brand-logo.tsx) ---------------------------------------------- */
+.brand-mark .brand-mark-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: brand-draw 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.brand-mark .brand-mark-draw:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.brand-mark .brand-mark-draw:nth-child(3) {
+  animation-delay: 0.35s;
+}
+.brand-mark .brand-mark-draw:nth-child(4) {
+  animation-delay: 0.5s;
+}
+.brand-mark .brand-mark-load {
+  transform-origin: 24.5px 9.5px;
+  transform-box: view-box;
+  opacity: 0;
+  animation:
+    brand-drop 0.6s 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards,
+    brand-swing 3.2s 1.3s ease-in-out infinite;
+}
+.brand-mark .brand-mark-sheen {
+  animation: brand-sheen 6s ease-in-out infinite;
+}
+.brand-logo:hover .brand-mark,
+a:hover > .brand-mark {
+  transform: rotate(-4deg) scale(1.06);
+}
+.brand-mark {
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 6px 14px rgb(21 128 61 / 0.35));
+}
+.brand-logo-os {
+  background: linear-gradient(100deg, #16a34a, #10b981, #84cc16, #16a34a);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: brand-os 8s linear infinite;
+}
+@keyframes brand-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes brand-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes brand-swing {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(6deg);
+  }
+  75% {
+    transform: rotate(-6deg);
+  }
+}
+@keyframes brand-sheen {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+@keyframes brand-os {
+  to {
+    background-position: 300% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark .brand-mark-draw,
+  .brand-mark .brand-mark-load,
+  .brand-mark .brand-mark-sheen,
+  .brand-logo-os {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+.brand-mark-still .brand-mark-draw,
+.brand-mark-still .brand-mark-load {
+  animation: none;
+  stroke-dashoffset: 0;
+  opacity: 1;
+}
+
+/* Avvisi a scomparsa */
+@keyframes cos-toast-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes cos-toast-out {
+  to {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0) scale(0.97);
+  }
+}
+.cos-toast {
+  animation: cos-toast-in 260ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.cos-toast-out {
+  animation: cos-toast-out 200ms ease-in forwards;
+}
+
+/* Chiusura di menu e finestre: stessa curva dell'apertura, al contrario */
+@keyframes cos-pop-out {
+  to {
+    opacity: 0;
+    transform: translate3d(0, 4px, 0) scale(0.98);
+  }
+}
+[data-radix-popper-content-wrapper] > [data-state="closed"],
+.cos-pop[data-state="closed"] {
+  animation: cos-pop-out 140ms ease-in forwards;
+}
+.cos-overlay[data-state="closed"] {
+  animation: cos-fade 140ms ease-in reverse forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cos-toast,
+  .cos-toast-out,
+  .cos-pop[data-state="closed"],
+  .cos-overlay[data-state="closed"],
+  [data-radix-popper-content-wrapper] > [data-state="closed"] {
     animation: none;
   }
 }

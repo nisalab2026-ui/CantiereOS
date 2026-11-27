@@ -8,7 +8,9 @@ import {
   listFolders,
   listSubjectOptions,
   listEmployeeCostRates,
+  listLinkableAccounts,
 } from "@cantiereos/core";
+import { AccountLink } from "./account-link";
 import { CostRates } from "./cost-rates";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -80,6 +82,7 @@ export default async function EmployeePage({
     if (!e) return null;
     return {
       e,
+      accounts: canWrite && tab === "panoramica" ? await listLinkableAccounts(tx, access) : null,
       rates:
         canFinance && tab === "panoramica" ? await listEmployeeCostRates(tx, access, id) : null,
       open: canDeadlines
@@ -122,7 +125,8 @@ export default async function EmployeePage({
     };
   });
   if (!data) notFound();
-  const { e, rates, open, all, openTasks, comms, history, options, docs, docOptions } = data;
+  const { e, accounts, rates, open, all, openTasks, comms, history, options, docs, docOptions } =
+    data;
   const name = `${e.firstName} ${e.lastName}`;
   const base = `/app/personale/${id}`;
   const overdue = open?.rows.filter((r) => r.state === "overdue").length ?? 0;
@@ -233,7 +237,7 @@ export default async function EmployeePage({
                   },
                   {
                     label: "Account CantiereOS",
-                    value: e.hasAccount ? "Collegato" : "Nessun account",
+                    value: e.account ? e.account.name : "Nessun account",
                   },
                   {
                     label: "Squadre",
@@ -246,6 +250,21 @@ export default async function EmployeePage({
             </CardBody>
           </Card>
           <div className="space-y-4">
+            {accounts && (
+              <Card>
+                <CardHeader
+                  title="Accesso alla web app"
+                  description="Collega l'account con cui la persona entra in CantiereOS: vedrà i suoi interventi su /campo."
+                />
+                <CardBody>
+                  <AccountLink
+                    employeeId={e.id}
+                    current={e.account?.id ?? null}
+                    accounts={accounts}
+                  />
+                </CardBody>
+              </Card>
+            )}
             {open && (
               <Card>
                 <CardHeader

@@ -108,14 +108,29 @@ export const GUIDE: GuideTopic[] = [
   {
     id: "panoramica",
     title: "Panoramica",
-    summary: "La pagina iniziale con ciò che richiede attenzione.",
+    summary:
+      "La pagina iniziale: numeri dell'azienda, ciò che richiede attenzione, la tua disposizione.",
     icon: "dashboard",
     href: "/app",
     entries: [
       {
         q: "Cosa mostra la Panoramica?",
         a: [
-          "I numeri che richiedono attenzione (scadenze in ritardo, entro 7 giorni, senza responsabile, assegnate a te), l'elenco delle cose da gestire subito e l'andamento delle scadenze nei prossimi mesi. Tocca un riquadro per aprire l'elenco filtrato.",
+          "Per titolare, ufficio e responsabili: gli indicatori principali (incassato nel periodo con il confronto, da incassare, interventi di oggi, clienti, rapportini da approvare, attività urgenti), l'andamento degli incassi, le scadenze che richiedono attenzione, gli interventi del giorno con la squadra, le tue attività e il lavoro da chiudere. Tocca un numero per aprire l'elenco già filtrato.",
+          "Vedi solo i riquadri dei dati che il tuo ruolo può vedere: chi non vede i pagamenti non vede gli incassi.",
+        ],
+      },
+      {
+        q: "Cosa vuol dire «Incassato»?",
+        a: [
+          "La somma dei pagamenti in entrata segnati come incassati, per data d'incasso. Non è il fatturato: quello arriverà con il modulo fatture.",
+          "In alto scegli il periodo: questo mese, mese scorso o trimestre. Il periodo in corso si confronta con gli stessi giorni del periodo prima.",
+        ],
+      },
+      {
+        q: "Posso scegliere cosa vedere?",
+        a: [
+          "Sì: «Personalizza» in alto ti fa nascondere, mostrare e riordinare i riquadri. La scelta vale solo per te, in questa azienda, su ogni computer e telefono. «Ripristina» torna alla disposizione iniziale.",
         ],
       },
     ],
@@ -150,6 +165,41 @@ export const GUIDE: GuideTopic[] = [
         q: "Cosa c'è nel riepilogo?",
         a: [
           "Il margine previsto (contratto meno costo previsto) e il conteggio di attività, moduli e documenti collegati alla commessa che puoi vedere. Ogni modifica a commessa, cantieri e importi resta nella cronologia con autore e valori prima e dopo.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "interventi",
+    title: "Interventi e web app",
+    summary:
+      "Lavori con giorno, orario e indirizzo: l'ufficio li pianifica, la squadra li svolge dal telefono.",
+    icon: "calendar",
+    href: "/app/interventi",
+    permission: "work_orders.read",
+    entries: [
+      {
+        q: "Come pianifico un intervento?",
+        a: [
+          "Interventi → «Nuovo intervento»: cosa fare, giorno e orario, cliente o commessa (l'indirizzo arriva da cantiere, sede o cliente, oppure lo scrivi tu) e chi ci va. Puoi aggiungere una squadra intera: ne copia le persone e il capo squadra. Chi viene assegnato riceve subito un avviso.",
+        ],
+      },
+      {
+        q: "Come vede i suoi lavori un dipendente?",
+        a: [
+          "Dal telefono apre CantiereOS su /campo (si può aggiungere alla schermata Home come un'app). Trova i lavori di oggi, il calendario, la mappa del giro e lo storico, con «Naviga» verso l'indirizzo e i pulsanti grandi Inizia, Sospendi e Completa. Perché li veda, la persona deve essere collegata al suo account: scheda della persona → «Accesso alla web app».",
+        ],
+      },
+      {
+        q: "Chi può fare cosa con gli interventi?",
+        a: [
+          "Titolare, amministratori, responsabili e ufficio pianificano, spostano e annullano. Il tecnico vede solo gli interventi in cui è in squadra e può solo cambiarne lo stato e scrivere le note dal campo. Eliminare è riservato a titolare e amministratori. I limiti li applica il database, non solo la pagina.",
+        ],
+      },
+      {
+        q: "Cosa succede se sposto o annullo un intervento?",
+        a: [
+          "La squadra riceve un avviso. Ogni cambio di stato resta nello storico dell'intervento con data, ora e motivo (obbligatorio per sospendere e annullare).",
         ],
       },
     ],

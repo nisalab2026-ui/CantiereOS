@@ -1,4 +1,5 @@
 import {
+  CalendarRange,
   Briefcase,
   ClipboardCheck,
   ClipboardList,
@@ -37,6 +38,13 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Commesse",
     icon: Briefcase,
     permission: "projects.read",
+    group: "lavoro",
+  },
+  {
+    href: "/app/interventi",
+    label: "Interventi",
+    icon: CalendarRange,
+    permission: "work_orders.read",
     group: "lavoro",
   },
   {

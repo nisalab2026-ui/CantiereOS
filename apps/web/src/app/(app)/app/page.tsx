@@ -1,5 +1,15 @@
 import {
+  DASHBOARD_LAYOUT_KEY,
+  DASHBOARD_PERIODS,
+  DASHBOARD_WIDGET_LABELS,
+  dashboardLayoutSchema,
+  getCommandCenter,
   getDashboard,
+  getPreference,
+  resolveDashboardLayout,
+  type CommandCenter,
+  type DashboardPeriod,
+  type DashboardWidget,
   getDeadlineSummary,
   getDocumentExpirySummary,
   getPaymentSummary,
@@ -44,6 +54,8 @@ import { TaskMiniList } from "./attivita/task-mini-list";
 import { Money } from "./pagamenti/payment-bits";
 import { PrioritySection, RecentChanges } from "./priority";
 import { TodayReportCard } from "./rapportini/today-card";
+import { CustomizeDashboard } from "./_dashboard/customize";
+import { CashTrend, KpiStrip, PeriodSwitch, Queues, WorkOrdersToday } from "./command-center";
 
 export const metadata: Metadata = { title: "Panoramica" };
 
@@ -67,11 +79,21 @@ export default async function DashboardPage({
   const canReport = access.permissions.has("work_reports.write");
   const canApproveReports = access.permissions.has("work_reports.approve");
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome" }).format(new Date());
-  const { data, deadlines, docs, activity, tasks, payments, reports, map } = await asCurrentUser(
-    async (tx) => {
+  const period: DashboardPeriod = (DASHBOARD_PERIODS as readonly string[]).includes(
+    sp.periodo ?? "",
+  )
+    ? (sp.periodo as DashboardPeriod)
+    : "month";
+  const { data, deadlines, docs, activity, tasks, payments, reports, map, cc, layout } =
+    await asCurrentUser(async (tx) => {
       const d = await getDashboard(tx, access);
+      const center = d.kind === "admin" || d.kind === "manager";
       return {
         data: d,
+        cc: center ? await getCommandCenter(tx, access, period, today) : null,
+        layout: center
+          ? await getPreference(tx, access, DASHBOARD_LAYOUT_KEY, dashboardLayoutSchema)
+          : null,
         reports:
           canReport || canApproveReports
             ? {
@@ -118,8 +140,13 @@ export default async function DashboardPage({
               }
             : null,
       };
-    },
-  );
+    });
+
+  const center =
+    cc && (data.kind === "admin" || data.kind === "manager")
+      ? commandCenterWidgets({ data, cc, deadlines, docs, activity, tasks, payments, map })
+      : null;
+  const arranged = center ? resolveDashboardLayout(layout, center.available) : null;
 
   return (
     <div className="space-y-6" data-testid={`dashboard-${data.kind}`}>
@@ -135,6 +162,20 @@ export default async function DashboardPage({
             {company.isDemo && <DemoBadge />}
           </span>
         }
+        actions={
+          center && arranged ? (
+            <>
+              <PeriodSwitch current={period} />
+              <CustomizeDashboard
+                items={[...arranged.visible, ...arranged.hidden].map((id) => ({
+                  id,
+                  label: DASHBOARD_WIDGET_LABELS[id],
+                  visible: arranged.visible.includes(id),
+                }))}
+              />
+            </>
+          ) : undefined
+        }
       />
       {company.isDemo && (
         <p
@@ -145,21 +186,185 @@ export default async function DashboardPage({
         </p>
       )}
       {reports && <TodayReportCard {...reports} />}
-      <DashboardBody
-        data={data}
-        deadlines={deadlines}
-        docs={docs}
-        activity={activity}
-        map={map && <MapOverview m={map} />}
-        tasks={
-          <>
-            {tasks && <MyTasks {...tasks} />}
-            {payments && <PaymentsOverview s={payments} />}
-          </>
-        }
-      />
+      {center && arranged ? (
+        <>
+          {arranged.visible.map((id, i) => (
+            <div
+              key={id}
+              className="cos-enter"
+              style={{ "--i": Math.min(i, 6) } as React.CSSProperties}
+              data-widget={id}
+            >
+              {center.nodes[id]}
+            </div>
+          ))}
+          {arranged.visible.length === 0 && (
+            <EmptyState
+              icon={UsersRound}
+              title="Hai nascosto tutti i riquadri"
+              description="Usa «Personalizza» per scegliere cosa vedere in panoramica."
+            />
+          )}
+        </>
+      ) : (
+        <DashboardBody
+          data={data}
+          deadlines={deadlines}
+          docs={docs}
+          activity={activity}
+          map={map && <MapOverview m={map} />}
+          tasks={
+            <>
+              {tasks && <MyTasks {...tasks} />}
+              {payments && <PaymentsOverview s={payments} />}
+            </>
+          }
+        />
+      )}
     </div>
   );
+}
+
+/**
+ * Riquadri della panoramica di titolare, ufficio e responsabili. Un riquadro
+ * esiste solo se la persona ha il permesso di vederne i dati.
+ */
+function commandCenterWidgets({
+  data,
+  cc,
+  deadlines,
+  docs,
+  activity,
+  tasks,
+  payments,
+  map,
+}: {
+  data: DashboardData;
+  cc: CommandCenter;
+  deadlines: DeadlineSummary | null;
+  docs: { expired: number; expiring: number } | null;
+  activity: HistoryEvent[] | null;
+  tasks: { summary: TaskSummary; mine: TaskRow[] } | null;
+  payments: PaymentSummary | null;
+  map: MapData | null;
+}): { available: DashboardWidget[]; nodes: Partial<Record<DashboardWidget, React.ReactNode>> } {
+  const nodes: Partial<Record<DashboardWidget, React.ReactNode>> = {};
+  const q = cc.queues;
+  if (cc.cash || payments || cc.workOrders || cc.customers || q.reportsToApprove || q.urgentTasks) {
+    nodes.kpis = <KpiStrip cc={cc} payments={payments} />;
+  }
+  if (cc.cash || payments) {
+    nodes.cash = (
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        {cc.cash && <CashTrend cash={cc.cash} />}
+        {payments && <PaymentsOverview s={payments} stacked={Boolean(cc.cash)} />}
+      </div>
+    );
+  }
+  if (deadlines) nodes.priority = <PrioritySection s={deadlines} docs={docs} />;
+  if (cc.workOrders) nodes.work_orders = <WorkOrdersToday w={cc.workOrders} today={cc.today} />;
+  if (tasks) nodes.tasks = <MyTasks {...tasks} />;
+  if (q.reportsToApprove || q.formsOpen || q.urgentTasks) nodes.queues = <Queues q={q} />;
+  if (map) nodes.map = <MapOverview m={map} />;
+  if (activity !== null && data.kind === "admin")
+    nodes.activity = <RecentChanges events={activity} />;
+  nodes.organization = <Organization data={data} hideCustomers={cc.customers !== null} />;
+  return { available: Object.keys(nodes) as DashboardWidget[], nodes };
+}
+
+/** Numeri dell'organizzazione: utenti, inviti, anagrafiche, squadre. */
+function Organization({ data, hideCustomers }: { data: DashboardData; hideCustomers: boolean }) {
+  if (data.kind === "admin") {
+    return (
+      <section className="space-y-3" aria-label="Azienda">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {data.activeMembers !== null && (
+            <KpiCard
+              index={0}
+              label="Utenti attivi"
+              value={data.activeMembers}
+              {...(data.seats !== null ? { suffix: `/ ${data.seats} posti` } : {})}
+              icon={Users}
+              href="/app/membri"
+            />
+          )}
+          {data.pendingInvitations !== null && (
+            <KpiCard
+              index={1}
+              label="Inviti in attesa"
+              value={data.pendingInvitations}
+              icon={MailPlus}
+              href="/app/membri"
+            />
+          )}
+          {data.customers !== null && !hideCustomers && (
+            <KpiCard
+              index={2}
+              label="Clienti attivi"
+              value={data.customers}
+              icon={Building2}
+              href="/app/clienti"
+            />
+          )}
+          {data.suppliers !== null && (
+            <KpiCard
+              index={3}
+              label="Fornitori attivi"
+              value={data.suppliers}
+              icon={Truck}
+              href="/app/fornitori"
+            />
+          )}
+          {data.employees !== null && (
+            <KpiCard
+              index={4}
+              label="Personale attivo"
+              value={data.employees}
+              icon={HardHat}
+              href="/app/personale"
+            />
+          )}
+        </div>
+        {data.trialEndsAt && (
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <CalendarClock className="size-4" aria-hidden />
+            Periodo di prova fino al {formatDate(data.trialEndsAt)}.
+          </p>
+        )}
+      </section>
+    );
+  }
+  if (data.kind === "manager") {
+    return (
+      <section className="space-y-4" aria-label="Organizzazione">
+        <div className="grid gap-4 sm:grid-cols-3">
+          {data.employees !== null && (
+            <KpiCard
+              index={0}
+              label="Personale attivo"
+              value={data.employees}
+              icon={HardHat}
+              href="/app/personale"
+            />
+          )}
+          {data.customers !== null && !hideCustomers && (
+            <KpiCard
+              index={1}
+              label="Clienti attivi"
+              value={data.customers}
+              icon={Building2}
+              href="/app/clienti"
+            />
+          )}
+          {data.sites !== null && (
+            <KpiCard index={2} label="Sedi dei clienti" value={data.sites} icon={Building2} />
+          )}
+        </div>
+        {data.teams !== null && <Teams teams={data.teams} title="Squadre" />}
+      </section>
+    );
+  }
+  return null;
 }
 
 function DashboardBody({
@@ -180,116 +385,9 @@ function DashboardBody({
   const priority = deadlines ? <PrioritySection s={deadlines} docs={docs} /> : null;
   switch (data.kind) {
     case "admin":
-      return (
-        <>
-          {priority}
-          {tasks}
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {data.activeMembers !== null && (
-              <KpiCard
-                index={0}
-                label="Utenti attivi"
-                value={data.activeMembers}
-                {...(data.seats !== null ? { suffix: `/ ${data.seats} posti` } : {})}
-                icon={Users}
-                href="/app/membri"
-              />
-            )}
-            {data.pendingInvitations !== null && (
-              <KpiCard
-                index={1}
-                label="Inviti in attesa"
-                value={data.pendingInvitations}
-                icon={MailPlus}
-                href="/app/membri"
-              />
-            )}
-            {data.customers !== null && (
-              <KpiCard
-                index={2}
-                label="Clienti attivi"
-                value={data.customers}
-                icon={Building2}
-                href="/app/clienti"
-              />
-            )}
-            {data.suppliers !== null && (
-              <KpiCard
-                index={3}
-                label="Fornitori attivi"
-                value={data.suppliers}
-                icon={Truck}
-                href="/app/fornitori"
-              />
-            )}
-            {data.employees !== null && (
-              <KpiCard
-                index={4}
-                label="Personale attivo"
-                value={data.employees}
-                icon={HardHat}
-                href="/app/personale"
-              />
-            )}
-          </div>
-          {data.trialEndsAt && (
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CalendarClock className="size-4" aria-hidden />
-              Periodo di prova fino al {formatDate(data.trialEndsAt)}.
-            </p>
-          )}
-          {map && (
-            <div className="cos-enter" style={{ "--i": 5 } as React.CSSProperties}>
-              {map}
-            </div>
-          )}
-          {activity !== null && (
-            <div className="cos-enter" style={{ "--i": 6 } as React.CSSProperties}>
-              <RecentChanges events={activity} />
-            </div>
-          )}
-        </>
-      );
     case "manager":
-      return (
-        <>
-          {priority}
-          {tasks}
-          <div className="grid gap-4 sm:grid-cols-3">
-            {data.employees !== null && (
-              <KpiCard
-                index={0}
-                label="Personale attivo"
-                value={data.employees}
-                icon={HardHat}
-                href="/app/personale"
-              />
-            )}
-            {data.customers !== null && (
-              <KpiCard
-                index={1}
-                label="Clienti attivi"
-                value={data.customers}
-                icon={Building2}
-                href="/app/clienti"
-              />
-            )}
-            {data.sites !== null && (
-              <KpiCard index={2} label="Sedi dei clienti" value={data.sites} icon={Building2} />
-            )}
-          </div>
-          {map && (
-            <div className="cos-enter" style={{ "--i": 3 } as React.CSSProperties}>
-              {map}
-            </div>
-          )}
-          {data.teams !== null && (
-            <div className="cos-enter" style={{ "--i": 4 } as React.CSSProperties}>
-              <Teams teams={data.teams} title="Squadre" />
-            </div>
-          )}
-        </>
-      );
+      // titolare, ufficio e responsabili usano il centro di controllo
+      return null;
     case "technician":
       return (
         <>
@@ -460,7 +558,7 @@ function MyTasks({ summary, mine }: { summary: TaskSummary; mine: TaskRow[] }) {
 }
 
 /** Pagamenti attesi: ogni numero porta alla lista già filtrata. */
-function PaymentsOverview({ s }: { s: PaymentSummary }) {
+function PaymentsOverview({ s, stacked = false }: { s: PaymentSummary; stacked?: boolean }) {
   const stats = [
     {
       label: "Da incassare",
@@ -493,7 +591,13 @@ function PaymentsOverview({ s }: { s: PaymentSummary }) {
           </Link>
         }
       />
-      <div className="grid divide-y divide-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+      <div
+        className={
+          stacked
+            ? "grid divide-y divide-border"
+            : "grid divide-y divide-border sm:grid-cols-3 sm:divide-x sm:divide-y-0"
+        }
+      >
         {stats.map((x) => (
           <Link key={x.label} href={x.href} className="px-5 py-4 hover:bg-accent/40">
             <p className="text-xs text-muted-foreground">{x.label}</p>

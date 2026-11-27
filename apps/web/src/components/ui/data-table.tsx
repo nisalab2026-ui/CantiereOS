@@ -10,6 +10,10 @@ export interface Column<T> {
   /** chiave di ordinamento lato server (whitelist della pagina) */
   sortKey?: string;
   align?: "left" | "right";
+  /**
+   * Classi della colonna. Se manca, sul telefono restano visibili solo la prima
+   * e l'ultima colonna (di solito nome e stato): le altre compaiono da sm in su.
+   */
   className?: string;
   render: (row: T) => React.ReactNode;
 }
@@ -44,6 +48,8 @@ export function DataTable<T extends { id: string }>({
   caption: string;
 }) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
+  const colClass = (c: Column<T>, i: number) =>
+    c.className ?? (i === 0 || i === columns.length - 1 ? undefined : "hidden sm:table-cell");
   return (
     <div>
       <div className="overflow-x-auto">
@@ -51,7 +57,7 @@ export function DataTable<T extends { id: string }>({
           <caption className="sr-only">{caption}</caption>
           <thead>
             <tr className="border-b border-border bg-background/60 text-left">
-              {columns.map((c) => {
+              {columns.map((c, ci) => {
                 const active = c.sortKey && c.sortKey === sort;
                 const nextDir = active && dir === "asc" ? "desc" : "asc";
                 const Icon = active ? (dir === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
@@ -63,7 +69,7 @@ export function DataTable<T extends { id: string }>({
                     className={cn(
                       "px-4 py-2.5 text-xs font-medium text-muted-foreground",
                       c.align === "right" && "text-right",
-                      c.className,
+                      colClass(c, ci),
                     )}
                   >
                     {c.sortKey ? (
@@ -93,13 +99,13 @@ export function DataTable<T extends { id: string }>({
                 className="cos-enter border-b border-border transition-colors last:border-0 hover:bg-accent/40"
                 style={{ "--i": Math.min(i, 12) } as React.CSSProperties}
               >
-                {columns.map((c) => (
+                {columns.map((c, ci) => (
                   <td
                     key={c.key}
                     className={cn(
                       "px-4 py-2.5 align-middle",
                       c.align === "right" && "text-right tabular-nums",
-                      c.className,
+                      colClass(c, ci),
                     )}
                   >
                     {c.render(row)}

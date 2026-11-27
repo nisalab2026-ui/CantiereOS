@@ -198,7 +198,7 @@ export function FormFiller({
         </div>
       )}
 
-      <section className="grid gap-4 rounded-lg border border-border bg-card/60 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-4">
+      <section className="grid gap-4 rounded-lg border border-border bg-card/60 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3 sm:[&>*:first-child]:col-span-full">
         <Field
           id="sub-title"
           label="Titolo"

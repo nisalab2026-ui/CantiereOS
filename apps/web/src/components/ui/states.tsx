@@ -1,9 +1,22 @@
+import type React from "react";
 import type { LucideIcon } from "lucide-react";
 import { AlertTriangle, ShieldX } from "lucide-react";
 import { cn } from "@/lib/cn";
 
-export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-md bg-accent", className)} aria-hidden />;
+export function Skeleton({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      className={cn("animate-pulse rounded-md bg-accent", className)}
+      style={style}
+      aria-hidden
+    />
+  );
 }
 
 /** Stato vuoto: spiega cosa comparirà. L'azione c'è solo se è reale e permessa. */

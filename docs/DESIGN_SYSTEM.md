@@ -86,6 +86,8 @@ Mai comunicare uno stato **solo** con il colore: c'è sempre un'etichetta o un'i
   - le animazioni d'ingresso usano `fill-mode: backwards`: a fine animazione non resta alcun
     `transform` sugli elementi, che altrimenti impedirebbe la sfocatura del vetro in Chrome. In CSS
     scrivere `-webkit-backdrop-filter` **prima** di `backdrop-filter` (la build tiene solo l'ultima);
+  - finestre, menu e popover hanno anche un'animazione di chiusura (dissolvenza breve), non solo di
+    apertura;
   - Con `prefers-reduced-motion: reduce` animazioni e inclinazioni si spengono.
 - Bersagli touch: almeno 40 px (44 px nelle schermate del tecnico).
 
@@ -185,11 +187,20 @@ creato (`?id=…`); un componente `Toast` arriverà quando servirà davvero.
 Ogni pagina con dati gestisce quattro stati:
 
 1. **Caricamento** — `loading.tsx` con skeleton della stessa forma (no spinner a pagina intera).
+   Il `loading.tsx` dell'area `/app` sceglie la forma dall'indirizzo: panoramica, elenco o
+   scheda di dettaglio.
 2. **Vuoto** — `EmptyState` che spiega cosa comparirà e, se possibile, come crearlo.
 3. **Errore** — `error.tsx` con `ErrorState`; nessun dettaglio tecnico all'utente, solo il
    riferimento (`digest`) che compare anche nei log del server. Una sezione senza permesso mostra
    `ForbiddenState` (non un reindirizzamento silenzioso).
 4. **Dati** — il contenuto.
+
+**Conferme e errori dei moduli.** Un salvataggio riuscito sul posto (senza cambio di pagina) si
+annuncia con un avviso a scomparsa (`toast()` di `components/ui/toaster.tsx`, mostrato da
+`FormAlert` quando riceve `message`): in basso a destra, `role="status"`, sparisce da solo dopo
+5 secondi, si chiude con la ✕, al massimo tre insieme, lo stesso testo non si ripete. Gli errori
+restano **dentro il modulo** (`role="alert"`, `data-testid="form-error"`), vicino ai campi, e non
+spariscono da soli.
 
 ## 7. Dashboard per ruolo
 
@@ -197,12 +208,27 @@ La dashboard si sceglie dal **ruolo verificato sul server** nell'azienda attiva:
 
 | Dashboard       | Ruoli                            | Contenuto (solo dati reali dell'azienda)                                            |
 | --------------- | -------------------------------- | ----------------------------------------------------------------------------------- |
-| Amministrazione | owner, admin, back_office        | utenti e posti del piano, inviti in attesa, anagrafiche, attività recenti (audit)   |
-| Responsabile    | operations_manager, site_manager | squadre e composizione, personale, clienti e sedi                                   |
+| Amministrazione | owner, admin, back_office        | centro di controllo (sotto) + utenti e posti del piano, inviti, anagrafiche, audit  |
+| Responsabile    | operations_manager, site_manager | centro di controllo (sotto) + squadre, personale, clienti e sedi                    |
 | Tecnico         | technician                       | la propria scheda dipendente e squadre; agenda quando esisterà il modulo interventi |
 
-Le sezioni dei moduli non ancora realizzati (cantieri, rapportini, scadenze) **non** compaiono
-con numeri finti: arrivano con i rispettivi moduli.
+Le sezioni dei moduli non ancora realizzati **non** compaiono con numeri finti: arrivano con i
+rispettivi moduli.
+
+**Centro di controllo** (`app/(app)/app/command-center.tsx`, dati da `getCommandCenter` del core).
+Riquadri: indicatori principali (incassato nel periodo con variazione, da incassare, interventi di
+oggi, clienti attivi e nuovi, rapportini da approvare, attività urgenti), incassi (andamento a 6
+mesi + pagamenti attesi), scadenze che richiedono attenzione, interventi di oggi e della settimana
+con la squadra, le tue attività, da chiudere, mappa, ultime modifiche, azienda e squadre.
+
+- Un riquadro esiste solo se chi guarda ha il permesso sui suoi dati; ogni numero è un link alla
+  lista già filtrata.
+- «Incassato» = pagamenti in entrata segnati come pagati, per data d'incasso. Non si chiama
+  fatturato finché non esiste il modulo fatture.
+- Filtro di periodo con link (`?periodo=last-month|quarter`): il periodo in corso si confronta con
+  lo stesso tratto del periodo prima (1–26 novembre contro 1–26 ottobre).
+- «Personalizza» mostra, nasconde e riordina i riquadri; la scelta è per persona e azienda nella
+  tabella `user_preferences` (ADR-018), «Ripristina» la cancella. I riquadri nuovi compaiono in coda.
 
 ## 8. Scrittura
 
